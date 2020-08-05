@@ -18,6 +18,7 @@ package com.sirius.sdk.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 /**
  * <p>Base58 is a way to encode Bitcoin addresses as numbers and letters. Note that this is not the same base58 as used by
@@ -86,15 +87,11 @@ public class Base58 {
         }
 
         byte[] output = copyOfRange(temp, j, temp.length);
-        try {
-            String string = new String(output, "US-ASCII");
-            if (string.length() > 22 && string.startsWith("1")) {
-                string = string.substring(1);
-            }
-            return string;
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+        String string = new String(output, StandardCharsets.US_ASCII);
+        if (string.length() > 22 && string.startsWith("1")) {
+            string = string.substring(1);
         }
+        return string;
     }
 
     public static byte[] decode(String input) throws IllegalArgumentException {

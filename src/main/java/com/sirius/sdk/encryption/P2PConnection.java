@@ -22,8 +22,8 @@ public class P2PConnection {
      */
 
     public byte[] pack(String message){
-
-        return new byte[]{};
+        //return new Ed25519().packMessage(message, theirVerKey,myKeys[0],myKeys[1] );
+        return null;
     }
 
     /**

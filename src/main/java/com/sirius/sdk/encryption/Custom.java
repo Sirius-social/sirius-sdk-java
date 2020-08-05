@@ -1,10 +1,18 @@
 package com.sirius.sdk.encryption;
 
+import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.interfaces.Random;
+import com.goterl.lazycode.lazysodium.interfaces.SecretBox;
+import com.goterl.lazycode.lazysodium.interfaces.Sign;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.Main;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
+import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
-import org.libsodium.jni.Sodium;
-import org.libsodium.jni.crypto.Random;
+import sun.nio.cs.US_ASCII;
 
+
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class Custom {
@@ -12,11 +20,12 @@ public class Custom {
     /**
      * Convert a base 64 string to bytes.
      *
-     * @param value input base64 value
-     * @param urlSafe  flag if needed to convert to urlsafe presentation
+     * @param value   input base64 value
+     * @param urlSafe flag if needed to convert to urlsafe presentation
      * @return bytes array
      */
     public byte[] b64ToBytes(String value, boolean urlSafe) {
+       byte[] valueBytes =  value.getBytes(StandardCharsets.US_ASCII);
      /*   if isinstance(value, str):
         value = value.encode('ascii')
         if urlsafe:
@@ -27,10 +36,11 @@ public class Custom {
         return base64.b64decode(value)
 */
         byte[] encodedByte;
-        if(urlSafe){
-            encodedByte = Base64.getUrlDecoder().decode(value);
-        }else{
-            encodedByte = Base64.getDecoder().decode(value);
+        if (urlSafe) {
+            int missing_padding = valueBytes.length % 4;
+            encodedByte = Base64.getUrlDecoder().decode(valueBytes);
+        } else {
+            encodedByte = Base64.getDecoder().decode(valueBytes);
         }
         return encodedByte;
     }
@@ -38,18 +48,21 @@ public class Custom {
     /**
      * Convert a bytes to base 64 string.
      *
-     * @param bytes input bytes array
+     * @param bytes   input bytes array
      * @param urlSafe flag if needed to convert to urlsafe presentation
      * @return base64 presentation
      */
     public String bytesToB64(byte[] bytes, boolean urlSafe) {
+        if(bytes == null){
+            return null;
+        }
         byte[] decodedByte;
-        if(urlSafe){
+        if (urlSafe) {
             decodedByte = Base64.getUrlEncoder().encode(bytes);
-        }else{
+        } else {
             decodedByte = Base64.getEncoder().encode(bytes);
         }
-        return new String(decodedByte);
+        return new String(decodedByte,StandardCharsets.US_ASCII);
     }
 
 
@@ -72,24 +85,21 @@ public class Custom {
         return Base58.encode(value);
     }
 
-
-    public void createKeypair(byte[] seed) {
+    /**
+     * Create a public and private signing keypair from a seed value.
+     *
+     * @param seed (bytes) Seed for keypair
+     * @return A tuple of (public key, secret key)
+     */
+    public KeyPair createKeypair(byte[] seed) throws SiriusCryptoError, SodiumException {
         //  Sodium.crypto_sign_seed_keypair()
+        if (seed != null) {
+            validateSeed(seed);
+        } else {
+            seed = randomSeed();
+        }
+        return LibSodium.getInstance().getLazySodium().cryptoSignSeedKeypair(seed);
     }
-/*    def create_keypair(seed: bytes = None) -> (bytes, bytes):
-            """
-    Create a public and private signing keypair from a seed value.
-
-    :param seed: (bytes) Seed for keypair
-    :return A tuple of (public key, secret key)
-    """
-            if seed:
-    validate_seed(seed)
-    else:
-    seed = random_seed()
-    pk, sk = nacl.bindings.crypto_sign_seed_keypair(seed)
-            return pk, sk*/
-
 
     /**
      * Generate a random seed value.
@@ -97,32 +107,46 @@ public class Custom {
      * @return A new random seed
      */
     public byte[] randomSeed() {
-        return new Random().randomBytes(Sodium.crypto_secretbox_keybytes());
+
+        return LibSodium.getInstance().getLazySodium().randomBytesBuf(SecretBox.KEYBYTES);
+
+        //   return new Random().randomBytes(Sodium.crypto_secretbox_keybytes());
     }
 
     /**
-     *   Convert a seed parameter to standard format and check length.
-     * @param message  The seed to validate
-     * @param bytes The seed to validate
-     * @return  The validated and encoded seed
+     * Convert a seed parameter to standard format and check length.
+     *
+     * @param message The seed to validate
+     * @return The validated and encoded seed
      */
-    public byte[] validateSeed(String message,  byte[] bytes) {
-
-        return null;
+    public byte[] validateSeed(String message) throws SiriusCryptoError {
+        if (message == null) {
+            return null;
+        }
+        byte[] bytes;
+        if (message.contains("=")) {
+            bytes = b64ToBytes(message, false);
+        } else {
+            bytes = message.getBytes(StandardCharsets.US_ASCII);
+        }
+        return validateSeed(bytes);
     }
- /*   def validate_seed(seed: Union[str, bytes]) -> Optional[bytes]:
- 
-            if not seed:
-            return None
-    if isinstance(seed, str):
-            if "=" in seed:
-    seed = b64_to_bytes(seed)
-        else:
-    seed = seed.encode("ascii")
-            if not isinstance(seed, bytes):
-    raise SiriusCryptoError("Seed value is not a string or bytes")
-    if len(seed) != 32:
-    raise SiriusCryptoError("Seed value must be 32 bytes in length")
-    return seed*/
+
+    /**
+     * Convert a seed parameter to standard format and check length.
+     *
+     * @param bytes The seed to validate
+     * @return The validated and encoded seed
+     */
+    public byte[] validateSeed(byte[] bytes) throws SiriusCryptoError {
+        if (bytes == null) {
+            return null;
+        }
+        if (bytes.length != 32) {
+            throw new SiriusCryptoError("Seed value must be 32 bytes in length");
+        }
+        return bytes;
+    }
+
 
 }
