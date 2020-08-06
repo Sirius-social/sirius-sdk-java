@@ -83,4 +83,44 @@ public class TestEncryption {
         assert sender_vk, verkey_sender
         assert recip_vk, verkey_recipient*/
     }
+
+
+    @Test
+    public void test_fixture() {
+        Custom custom = new Custom();
+        KeyPair keyPairRecipient = null;
+        try {
+            keyPairRecipient = custom.createKeypair("000000000000000000000000000SEED1".getBytes(StandardCharsets.US_ASCII));
+
+            String verkey_recipient = custom.bytesToB58(keyPairRecipient.getPublicKey().getAsBytes());
+            String sigkey_recipient = custom.bytesToB58(keyPairRecipient.getSecretKey().getAsBytes());
+
+            KeyPair keyPairSender = custom.createKeypair("000000000000000000000000000SEED2".getBytes(StandardCharsets.US_ASCII));
+            String verkeySender = custom.bytesToB58(keyPairSender.getPublicKey().getAsBytes());
+            String sigkeySender = custom.bytesToB58(keyPairSender.getSecretKey().getAsBytes());
+
+            Ed25519 ed25519 = new Ed25519();
+         //   List<String> verkeys = new ArrayList<>();
+          //  verkeys.add(verkeyRecipient);
+
+            String packed= "{\"protected\": \"eyJlbmMiOiAieGNoYWNoYTIwcG9seTEzMDVfaWV0ZiIsICJ0eXAiOiAiSldNLzEuMCIsICJhbGciOiAiQXV0aGNyeXB0IiwgInJlY2lwaWVudHMiOiBbeyJlbmNyeXB0ZWRfa2V5IjogInBKcW1xQS1IVWR6WTNWcFFTb2dySGx4WTgyRnc3Tl84YTFCSmtHU2VMT014VUlwT0RQWTZsMVVsaVVvOXFwS0giLCAiaGVhZGVyIjogeyJraWQiOiAiM1ZxZ2ZUcDZRNFZlRjhLWTdlVHVXRFZBWmFmRDJrVmNpb0R2NzZLR0xtZ0QiLCAic2VuZGVyIjogIjRlYzhBeFRHcWtxamd5NHlVdDF2a0poeWlYZlNUUHo1bTRKQjk1cGZSMG1JVW9KajAwWmswNmUyUEVDdUxJYmRDck8xeTM5LUhGTG5NdW5YQVJZWk5rZ2pyYV8wYTBQODJpbVdNcWNHc1FqaFd0QUhOcUw1OGNkUUYwYz0iLCAiaXYiOiAiVU1PM2o1ZHZwQnFMb2Rvd3V0c244WEMzTkVqSWJLb2oifX1dfQ==\", \"iv\": \"MchkHF2M-4hneeUJ\", \"ciphertext\": \"UgcdsV-0rIkP25eJuRSROOuqiTEXp4NToKjPMmqqtJs-Ih1b5t3EEbrrHxeSfPsHtlO6J4OqA1jc5uuD3aNssUyLug==\", \"tag\": \"sQD8qgJoTrRoyQKPeCSBlQ==\"}";
+
+            UnpackModel unpackedModel = ed25519.unpackMessage(packed, verkey_recipient, sigkey_recipient);
+
+           /* message = json.dumps({
+                    'content':'Test encryption строка'
+    })*/
+            /*assert message == unpacked
+            assert sender_vk,verkey_sender
+            assert recip_vk,verkey_recipient*/
+        } catch (SiriusCryptoError siriusCryptoError) {
+            siriusCryptoError.printStackTrace();
+        } catch (SodiumException e) {
+            e.printStackTrace();
+        } catch (SiriusInvalidType siriusInvalidType) {
+            siriusInvalidType.printStackTrace();
+        }
+    }
+
+
 }
