@@ -574,8 +574,37 @@ authenticator
         return ffi.buffer(ciphertext, len(padded))[crypto_box_BOXZEROBYTES:]
     }*/
 
-    public String cryptoBoxEasy(String message, byte[] nonce, KeyPair keyPair) throws SodiumException {
-        byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
+    public byte[] cryptoBoxSealEasy( byte[] messageBytes, Key publicKey) throws SodiumException {
+        byte[] keyBytes = publicKey.getAsBytes();
+       // byte[] messageBytes = this.bytes(message);
+        byte[] cipher = new byte[48 + messageBytes.length];
+        if (!LibSodium.getInstance().getNativeBox().cryptoBoxSeal(cipher, messageBytes, (long)messageBytes.length, keyBytes)) {
+            throw new SodiumException("Could not encrypt message.");
+        } else {
+            return cipher;
+        }
+    }
+    public byte[] encrypt(String m, String additionalData, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
+        return this.encrypt(m, additionalData, (byte[])null, nPub, k, method);
+    }
+
+    public byte[] encrypt(String m, String additionalData, byte[] nSec, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
+        byte[] messageBytes = m.getBytes(StandardCharsets.US_ASCII);
+        byte[] additionalDataBytes = additionalData == null ? new byte[0] : additionalData.getBytes(StandardCharsets.US_ASCII);
+        long additionalBytesLen = additionalData == null ? 0L : (long)additionalDataBytes.length;
+        byte[] keyBytes = k.getAsBytes();
+        byte[] cipherBytes;
+       if (method.equals(com.goterl.lazycode.lazysodium.interfaces.AEAD.Method.CHACHA20_POLY1305_IETF)) {
+            cipherBytes = new byte[messageBytes.length + 16];
+            LibSodium.getInstance().getLazySodium().cryptoAeadChaCha20Poly1305IetfEncrypt(cipherBytes, (long[])null, messageBytes, (long)messageBytes.length, additionalDataBytes, additionalBytesLen, nSec, nPub, keyBytes);
+            return cipherBytes;
+        }
+       return null;
+    }
+
+
+    public byte[] cryptoBoxEasy( byte[] messageBytes, byte[] nonce, KeyPair keyPair) throws SodiumException {
+        //byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
 
         ByteArrayOutputStream bObj = new ByteArrayOutputStream();
         bObj.reset();
@@ -604,7 +633,7 @@ authenticator
 
             }
             byte[] message16 = bObj2.toByteArray();
-            return new String(message16,StandardCharsets.US_ASCII);
+            return message16;
 
             //return new String(cipherBytes);
         }
@@ -648,7 +677,7 @@ authenticator
         }
     }
 
-    public String cryptoBoxSealEasy(String messageString, Key publicKey) throws SodiumException {
+    public byte[] cryptoBoxSealEasy(String messageString, Key publicKey) throws SodiumException {
         byte[] keyBytes = publicKey.getAsBytes();
         byte[] message = messageString.getBytes(StandardCharsets.US_ASCII);
         int _mlen = message.length;
@@ -657,12 +686,26 @@ authenticator
         if (!LibSodium.getInstance().getNativeBox().cryptoBoxSeal(ciphertext, message, (long)_mlen, keyBytes)) {
             throw new SodiumException("Could not encrypt message.");
         } else {
-            return new String(ciphertext,StandardCharsets.US_ASCII);
+            return ciphertext;
         }
     }
 
     public String cryptoBoxSealOpenEasy(String cipherString, KeyPair keyPair) throws SodiumException {
         byte[] cipherText = cipherString.getBytes(StandardCharsets.US_ASCII);
+        int _clen = cipherText.length;
+        int _mlen = _clen - 48;
+
+        byte[] plaintext = new byte[_mlen];
+        boolean res = LibSodium.getInstance().getNativeBox().cryptoBoxSealOpen(plaintext, cipherText, (long)_clen, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        if (!res) {
+            throw new SodiumException("Could not decrypt your message.");
+        } else {
+            return new String(plaintext,StandardCharsets.US_ASCII);
+        }
+    }
+
+    public String cryptoBoxSealOpenEasy(byte[] cipherText, KeyPair keyPair) throws SodiumException {
+       // byte[] cipherText = cipherString.getBytes(StandardCharsets.US_ASCII);
         int _clen = cipherText.length;
         int _mlen = _clen - 48;
 

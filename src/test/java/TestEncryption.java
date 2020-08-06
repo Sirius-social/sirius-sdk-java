@@ -31,7 +31,7 @@ public class TestEncryption {
             KeyPair keyPairSender = custom.createKeypair(seed2.getBytes(StandardCharsets.US_ASCII));
             String verkeySender = custom.bytesToB58(keyPairSender.getPublicKey().getAsBytes());
             String sigkeySender = custom.bytesToB58(keyPairSender.getSecretKey().getAsBytes());
-            String string = "Test encryption строка";
+            String string = "Test encryption";
             JSONObject enc_message = new JSONObject();
             enc_message.put("content", string);
             String message = enc_message.toString();
