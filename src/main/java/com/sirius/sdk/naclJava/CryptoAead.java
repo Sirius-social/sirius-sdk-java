@@ -8,6 +8,7 @@ import com.goterl.lazycode.lazysodium.interfaces.Sign;
 import com.goterl.lazycode.lazysodium.utils.Key;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
+import com.sirius.sdk.utils.Base58;
 
 
 import java.io.ByteArrayOutputStream;
@@ -532,21 +533,21 @@ authenticator
 
 
 
-    public String decrypt(String cipher, byte[] additionalData, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
+    public byte[] decrypt(byte[] cipher, byte[] additionalData, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
         return this.decrypt(cipher, additionalData, (byte[]) null, nPub, k, method);
     }
 
-    public String decrypt(String cipher, byte[] additionalData, byte[] nSec, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
-        byte[] cipherBytes = cipher.getBytes(StandardCharsets.US_ASCII);
+    public byte[] decrypt(byte[] cipher, byte[] additionalData, byte[] nSec, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
+        //byte[] cipherBytes = cipher.getBytes(StandardCharsets.US_ASCII);
         byte[] additionalDataBytes = additionalData == null ? new byte[0] : additionalData;
         long additionalBytesLen = additionalData == null ? 0L : (long) additionalDataBytes.length;
         byte[] keyBytes = k.getAsBytes();
         byte[] messageBytes;
         if (method.equals(com.goterl.lazycode.lazysodium.interfaces.AEAD.Method.CHACHA20_POLY1305_IETF)) {
-            messageBytes = new byte[cipherBytes.length - 16];
+            messageBytes = new byte[cipher.length - 16];
             long[] mlen = new long[messageBytes.length];
-            LibSodium.getInstance().getLazySodium().cryptoAeadChaCha20Poly1305IetfDecrypt(messageBytes, null, nSec, cipherBytes, (long) cipherBytes.length, additionalDataBytes, additionalBytesLen, nPub, keyBytes);
-            return new String(messageBytes,StandardCharsets.US_ASCII);
+            LibSodium.getInstance().getNativeAaed().cryptoAeadChaCha20Poly1305IetfDecrypt(messageBytes, null, nSec, cipher, (long) cipher.length, additionalDataBytes, additionalBytesLen, nPub, keyBytes);
+            return messageBytes;
         }
         return null;
     }
@@ -574,7 +575,7 @@ authenticator
         return ffi.buffer(ciphertext, len(padded))[crypto_box_BOXZEROBYTES:]
     }*/
 
-    public byte[] cryptoBoxSealEasy( byte[] messageBytes, Key publicKey) throws SodiumException {
+    public byte[] cryptoBoxSeal(byte[] messageBytes, Key publicKey) throws SodiumException {
         byte[] keyBytes = publicKey.getAsBytes();
        // byte[] messageBytes = this.bytes(message);
         byte[] cipher = new byte[48 + messageBytes.length];
@@ -603,7 +604,7 @@ authenticator
     }
 
 
-    public byte[] cryptoBoxEasy( byte[] messageBytes, byte[] nonce, KeyPair keyPair) throws SodiumException {
+    public byte[] cryptoBox(byte[] messageBytes, byte[] nonce, KeyPair keyPair) throws SodiumException {
         //byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
 
         ByteArrayOutputStream bObj = new ByteArrayOutputStream();
@@ -617,7 +618,7 @@ authenticator
         }
         byte[] cipherBytes = new byte[32 + messageBytes.length];
         byte[] messageBytesPadded = bObj.toByteArray();
-        boolean res = LibSodium.getInstance().getNativeBox().cryptoBoxEasy(cipherBytes, messageBytesPadded, (long)messageBytesPadded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        boolean res = LibSodium.getInstance().getNativeBox().cryptoBox(cipherBytes, messageBytesPadded, (long)messageBytesPadded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
         if (!res) {
             throw new SodiumException("Could not encrypt your message.");
         } else {
@@ -639,9 +640,11 @@ authenticator
         }
     }
 
-    public String cryptoBoxOpenEasy(String cipherText, byte[] nonce, KeyPair keyPair) throws SodiumException {
-        byte[] cipher = cipherText.getBytes(StandardCharsets.US_ASCII);
-        byte[] message = new byte[cipher.length + 16];
+    public byte[] cryptoBoxOpen(byte[] cipherText, byte[] nonce, KeyPair keyPair) throws SodiumException {
+       // byte[] cipher = cipherText.getBytes(StandardCharsets.US_ASCII);
+        String base58chiper = Base58.encode(cipherText);
+
+        byte[] message = new byte[cipherText.length + 16];
         byte[] cipherBytesPadding = new byte[16];
         ByteArrayOutputStream bObj = new ByteArrayOutputStream();
         bObj.reset();
@@ -649,13 +652,17 @@ authenticator
         for (byte cipherBytesPadding1 :cipherBytesPadding ){
             bObj.write(cipherBytesPadding1);
         }
-        for (byte mesByte : cipher ){
+        for (byte mesByte : cipherText ){
             bObj.write(mesByte);
         }
         byte[] padded = bObj.toByteArray();
 
-
-        boolean res =  LibSodium.getInstance().getNativeBox().cryptoBoxOpenEasy(message, padded, (long)padded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        String mesage58 = Base58.encode(message);
+        String padded58 = Base58.encode(padded);
+        String publickey58 = Base58.encode(keyPair.getPublicKey().getAsBytes());
+        String secretkey58 = Base58.encode(keyPair.getSecretKey().getAsBytes());
+        String nonce58 = Base58.encode(nonce);
+        boolean res =  LibSodium.getInstance().getNativeBox().cryptoBoxOpen(message, padded, (long)padded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
         if (!res) {
             throw new SodiumException("Could not decrypt your message.");
         } else {
@@ -673,11 +680,11 @@ authenticator
             }
 
             byte[] messageAfter32 = bObj2.toByteArray();
-            return new String(messageAfter32,StandardCharsets.US_ASCII);
+            return messageAfter32;
         }
     }
 
-    public byte[] cryptoBoxSealEasy(String messageString, Key publicKey) throws SodiumException {
+    public byte[] cryptoBoxSeal(String messageString, Key publicKey) throws SodiumException {
         byte[] keyBytes = publicKey.getAsBytes();
         byte[] message = messageString.getBytes(StandardCharsets.US_ASCII);
         int _mlen = message.length;
@@ -690,7 +697,7 @@ authenticator
         }
     }
 
-    public String cryptoBoxSealOpenEasy(String cipherString, KeyPair keyPair) throws SodiumException {
+    public String cryptoBoxSealOpen(String cipherString, KeyPair keyPair) throws SodiumException {
         byte[] cipherText = cipherString.getBytes(StandardCharsets.US_ASCII);
         int _clen = cipherText.length;
         int _mlen = _clen - 48;
@@ -704,7 +711,7 @@ authenticator
         }
     }
 
-    public String cryptoBoxSealOpenEasy(byte[] cipherText, KeyPair keyPair) throws SodiumException {
+    public byte[] cryptoBoxSealOpen(byte[] cipherText, KeyPair keyPair) throws SodiumException {
        // byte[] cipherText = cipherString.getBytes(StandardCharsets.US_ASCII);
         int _clen = cipherText.length;
         int _mlen = _clen - 48;
@@ -714,7 +721,7 @@ authenticator
         if (!res) {
             throw new SodiumException("Could not decrypt your message.");
         } else {
-            return new String(plaintext,StandardCharsets.US_ASCII);
+            return plaintext;
         }
     }
 

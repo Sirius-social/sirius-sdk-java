@@ -1,4 +1,6 @@
+import com.google.gson.Gson;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.models.TestModel;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.encryption.Ed25519;
@@ -55,8 +57,7 @@ public class TestEncryption {
 
             Assert.assertEquals(unpackedModel.getSender_vk(),verkeySender);
             Assert.assertEquals(unpackedModel.getRecip_vk(),verkeyRecipient);
-       //     Assert.assertEquals(message,unpackedModel.getMessage());
-            //    assert message == unpacked
+            Assert.assertEquals(message,unpackedModel.getMessage());
         } catch (SiriusCryptoError siriusCryptoError) {
             siriusCryptoError.printStackTrace();
         } catch (SodiumException e) {
@@ -87,5 +88,44 @@ public class TestEncryption {
         assert message == unpacked
         assert sender_vk, verkey_sender
         assert recip_vk, verkey_recipient*/
+    }
+
+    @Test
+    public void test_fixture() {
+        Custom custom = new Custom();
+        KeyPair keyPairRecipient = null;
+        try {
+            keyPairRecipient = custom.createKeypair("000000000000000000000000000SEED1".getBytes(StandardCharsets.US_ASCII));
+
+            String verkey_recipient = custom.bytesToB58(keyPairRecipient.getPublicKey().getAsBytes());
+            String sigkey_recipient = custom.bytesToB58(keyPairRecipient.getSecretKey().getAsBytes());
+
+            KeyPair keyPairSender = custom.createKeypair("000000000000000000000000000SEED2".getBytes(StandardCharsets.US_ASCII));
+            String verkeySender = custom.bytesToB58(keyPairSender.getPublicKey().getAsBytes());
+            String sigkeySender = custom.bytesToB58(keyPairSender.getSecretKey().getAsBytes());
+
+            Ed25519 ed25519 = new Ed25519();
+            //   List<String> verkeys = new ArrayList<>();
+            //  verkeys.add(verkeyRecipient);
+
+            String packed= "{\"protected\": \"eyJlbmMiOiAieGNoYWNoYTIwcG9seTEzMDVfaWV0ZiIsICJ0eXAiOiAiSldNLzEuMCIsICJhbGciOiAiQXV0aGNyeXB0IiwgInJlY2lwaWVudHMiOiBbeyJlbmNyeXB0ZWRfa2V5IjogInBKcW1xQS1IVWR6WTNWcFFTb2dySGx4WTgyRnc3Tl84YTFCSmtHU2VMT014VUlwT0RQWTZsMVVsaVVvOXFwS0giLCAiaGVhZGVyIjogeyJraWQiOiAiM1ZxZ2ZUcDZRNFZlRjhLWTdlVHVXRFZBWmFmRDJrVmNpb0R2NzZLR0xtZ0QiLCAic2VuZGVyIjogIjRlYzhBeFRHcWtxamd5NHlVdDF2a0poeWlYZlNUUHo1bTRKQjk1cGZSMG1JVW9KajAwWmswNmUyUEVDdUxJYmRDck8xeTM5LUhGTG5NdW5YQVJZWk5rZ2pyYV8wYTBQODJpbVdNcWNHc1FqaFd0QUhOcUw1OGNkUUYwYz0iLCAiaXYiOiAiVU1PM2o1ZHZwQnFMb2Rvd3V0c244WEMzTkVqSWJLb2oifX1dfQ==\", \"iv\": \"MchkHF2M-4hneeUJ\", \"ciphertext\": \"UgcdsV-0rIkP25eJuRSROOuqiTEXp4NToKjPMmqqtJs-Ih1b5t3EEbrrHxeSfPsHtlO6J4OqA1jc5uuD3aNssUyLug==\", \"tag\": \"sQD8qgJoTrRoyQKPeCSBlQ==\"}";
+
+            UnpackModel unpackedModel = ed25519.unpackMessage(packed, verkey_recipient, sigkey_recipient);
+
+            String unpacked = unpackedModel.getMessage();
+            String senderVk =  unpackedModel.getSender_vk();
+            String recipVk =  unpackedModel.getRecip_vk();
+
+            String testMessage =  "{\"content\": \"Test encryption \\u0441\\u0442\\u0440\\u043e\\u043a\\u0430\"}";
+            Assert.assertEquals(senderVk,verkeySender);
+            Assert.assertEquals(recipVk,verkey_recipient);
+           Assert.assertEquals(testMessage,unpacked);
+        } catch (SiriusCryptoError siriusCryptoError) {
+            siriusCryptoError.printStackTrace();
+        } catch (SodiumException e) {
+            e.printStackTrace();
+        } catch (SiriusInvalidType siriusInvalidType) {
+            siriusInvalidType.printStackTrace();
+        }
     }
 }
