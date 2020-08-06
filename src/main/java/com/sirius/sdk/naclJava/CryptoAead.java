@@ -1,13 +1,16 @@
 package com.sirius.sdk.naclJava;
 
+import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.interfaces.AEAD;
+import com.goterl.lazycode.lazysodium.interfaces.Box;
 import com.goterl.lazycode.lazysodium.interfaces.Sign;
 import com.goterl.lazycode.lazysodium.utils.Key;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
 
 
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class CryptoAead {
@@ -542,43 +545,181 @@ authenticator
         if (method.equals(com.goterl.lazycode.lazysodium.interfaces.AEAD.Method.CHACHA20_POLY1305_IETF)) {
             messageBytes = new byte[cipherBytes.length - 16];
             long[] mlen = new long[messageBytes.length];
-            LibSodium.getInstance().getLazySodium().cryptoAeadChaCha20Poly1305IetfDecrypt(messageBytes, mlen, nSec, cipherBytes, (long) cipherBytes.length, additionalDataBytes, additionalBytesLen, nPub, keyBytes);
+            LibSodium.getInstance().getLazySodium().cryptoAeadChaCha20Poly1305IetfDecrypt(messageBytes, null, nSec, cipherBytes, (long) cipherBytes.length, additionalDataBytes, additionalBytesLen, nPub, keyBytes);
             return new String(messageBytes,StandardCharsets.US_ASCII);
         }
         return null;
     }
 
- /*   def crypto_box(message, nonce, pk, sk):
+    /**
+     * Encrypts and returns a message ``message`` using the secret key ``sk``,
+     *     public key ``pk``, and the nonce ``nonce``.
+     *
+     *     :param message: bytes
+     *     :param nonce: bytes
+     *     :param pk: bytes
+     *     :param sk: bytes
+     *     :rtype: bytes
+     */
+  /*  public String  crypto_box(byte[] message, byte[]nonce, byte[]pk, byte[]sk){
+      //  Box.
+        padded = (b"\x00" * crypto_box_ZEROBYTES) + message
+        ciphertext = ffi.new("unsigned char[]", len(padded))
+
+        rc = lib.crypto_box(ciphertext, padded, len(padded), nonce, pk, sk)
+        ensure(rc == 0,
+                'Unexpected library error',
+                raising=exc.RuntimeError)
+
+        return ffi.buffer(ciphertext, len(padded))[crypto_box_BOXZEROBYTES:]
+    }*/
+
+    public String cryptoBoxEasy(String message, byte[] nonce, KeyPair keyPair) throws SodiumException {
+        byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
+
+        ByteArrayOutputStream bObj = new ByteArrayOutputStream();
+        bObj.reset();
+        byte[] cipherBytesPadding = new byte[32];
+        for (byte cipherBytesPadding1 :cipherBytesPadding ){
+            bObj.write(cipherBytesPadding1);
+        }
+        for (byte mesByte : messageBytes ){
+            bObj.write(mesByte);
+        }
+        byte[] cipherBytes = new byte[32 + messageBytes.length];
+        byte[] messageBytesPadded = bObj.toByteArray();
+        boolean res = LibSodium.getInstance().getNativeBox().cryptoBoxEasy(cipherBytes, messageBytesPadded, (long)messageBytesPadded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        if (!res) {
+            throw new SodiumException("Could not encrypt your message.");
+        } else {
+            ByteArrayOutputStream bObj2 = new ByteArrayOutputStream();
+            bObj2.reset();
+            int i=0;
+            for (byte mesByte : cipherBytes ){
+                if(i<=15){
+                    i++;
+                    continue;
+                }
+                bObj2.write(mesByte);
+
+            }
+            byte[] message16 = bObj2.toByteArray();
+            return new String(message16,StandardCharsets.US_ASCII);
+
+            //return new String(cipherBytes);
+        }
+    }
+
+    public String cryptoBoxOpenEasy(String cipherText, byte[] nonce, KeyPair keyPair) throws SodiumException {
+        byte[] cipher = cipherText.getBytes(StandardCharsets.US_ASCII);
+        byte[] message = new byte[cipher.length + 16];
+        byte[] cipherBytesPadding = new byte[16];
+        ByteArrayOutputStream bObj = new ByteArrayOutputStream();
+        bObj.reset();
+
+        for (byte cipherBytesPadding1 :cipherBytesPadding ){
+            bObj.write(cipherBytesPadding1);
+        }
+        for (byte mesByte : cipher ){
+            bObj.write(mesByte);
+        }
+        byte[] padded = bObj.toByteArray();
+
+
+        boolean res =  LibSodium.getInstance().getNativeBox().cryptoBoxOpenEasy(message, padded, (long)padded.length, nonce, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        if (!res) {
+            throw new SodiumException("Could not decrypt your message.");
+        } else {
+           // new byte[32]{message}
+            ByteArrayOutputStream bObj2 = new ByteArrayOutputStream();
+            bObj2.reset();
+            int i=0;
+            for (byte mesByte : message ){
+                if(i<=31){
+                    i++;
+                    continue;
+                }
+                bObj2.write(mesByte);
+
+            }
+
+            byte[] messageAfter32 = bObj2.toByteArray();
+            return new String(messageAfter32,StandardCharsets.US_ASCII);
+        }
+    }
+
+    public String cryptoBoxSealEasy(String messageString, Key publicKey) throws SodiumException {
+        byte[] keyBytes = publicKey.getAsBytes();
+        byte[] message = messageString.getBytes(StandardCharsets.US_ASCII);
+        int _mlen = message.length;
+        int _clen = 48 + _mlen;
+        byte[] ciphertext = new byte[_clen];
+        if (!LibSodium.getInstance().getNativeBox().cryptoBoxSeal(ciphertext, message, (long)_mlen, keyBytes)) {
+            throw new SodiumException("Could not encrypt message.");
+        } else {
+            return new String(ciphertext,StandardCharsets.US_ASCII);
+        }
+    }
+
+    public String cryptoBoxSealOpenEasy(String cipherString, KeyPair keyPair) throws SodiumException {
+        byte[] cipherText = cipherString.getBytes(StandardCharsets.US_ASCII);
+        int _clen = cipherText.length;
+        int _mlen = _clen - 48;
+
+        byte[] plaintext = new byte[_mlen];
+        boolean res = LibSodium.getInstance().getNativeBox().cryptoBoxSealOpen(plaintext, cipherText, (long)_clen, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes());
+        if (!res) {
+            throw new SodiumException("Could not decrypt your message.");
+        } else {
+            return new String(plaintext,StandardCharsets.US_ASCII);
+        }
+    }
+
+
+
+/*
+
+    def crypto_box_seal(message, pk):
             """
-    Encrypts and returns a message ``message`` using the secret key ``sk``,
-    public key ``pk``, and the nonce ``nonce``.
+    Encrypts and returns a message ``message`` using an ephemeral secret key
+    and the public key ``pk``.
+    The ephemeral public key, which is embedded in the sealed box, is also
+    used, in combination with ``pk``, to derive the nonce needed for the
+    underlying box construct.
 
     :param message: bytes
-    :param nonce: bytes
     :param pk: bytes
-    :param sk: bytes
     :rtype: bytes
-    """
-            if len(nonce) != crypto_box_NONCEBYTES:
-    raise exc.ValueError("Invalid nonce size")
 
-    if len(pk) != crypto_box_PUBLICKEYBYTES:
+    .. versionadded:: 1.2
+    """
+    ensure(isinstance(message, bytes),
+           "input message must be bytes",
+    raising=TypeError)
+
+    ensure(isinstance(pk, bytes),
+           "public key must be bytes",
+    raising=TypeError)
+
+            if len(pk) != crypto_box_PUBLICKEYBYTES:
     raise exc.ValueError("Invalid public key")
 
-    if len(sk) != crypto_box_SECRETKEYBYTES:
-    raise exc.ValueError("Invalid secret key")
+    _mlen = len(message)
+    _clen = crypto_box_SEALBYTES + _mlen
 
-    padded = (b"\x00" * crypto_box_ZEROBYTES) + message
-            ciphertext = ffi.new("unsigned char[]", len(padded))
+            ciphertext = ffi.new("unsigned char[]", _clen)
 
-    rc = lib.crypto_box(ciphertext, padded, len(padded), nonce, pk, sk)
+    rc = lib.crypto_box_seal(ciphertext, message, _mlen, pk)
     ensure(rc == 0,
            'Unexpected library error',
            raising=exc.RuntimeError)
 
-    return ffi.buffer(ciphertext, len(padded))[crypto_box_BOXZEROBYTES:]
+    return ffi.buffer(ciphertext, _clen)[:]
+*/
 
 
+
+/*
     def crypto_box_open(ciphertext, nonce, pk, sk):
             """
     Decrypts and returns an encrypted message ``ciphertext``, using the secret
@@ -609,5 +750,17 @@ authenticator
     return ffi.buffer(plaintext, len(padded))[crypto_box_ZEROBYTES:]
 
 */
+
+ /*   public String cryptoBoxSealEasy(String message, Key publicKey) throws SodiumException {
+        byte[] keyBytes = publicKey.getAsBytes();
+        byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
+
+        byte[] cipher = new byte[Box.SEALBYTES + messageBytes.length];
+        if (!LibSodium.getInstance().getNativeBox().cryptoBoxSeal(cipher, messageBytes, (long)messageBytes.length, keyBytes)) {
+            throw new SodiumException("Could not encrypt message.");
+        } else {
+            return new String(cipher,StandardCharsets.US_ASCII);
+        }
+    }*/
 
 }

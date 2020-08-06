@@ -6,6 +6,7 @@ import com.sirius.sdk.encryption.UnpackModel;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -51,6 +52,10 @@ public class TestEncryption {
             System.out.println(unpackedModel.getSender_vk());
             System.out.println(unpackedModel.getRecip_vk());
 
+
+            Assert.assertEquals(unpackedModel.getSender_vk(),verkeySender);
+            Assert.assertEquals(unpackedModel.getRecip_vk(),verkeyRecipient);
+       //     Assert.assertEquals(message,unpackedModel.getMessage());
             //    assert message == unpacked
         } catch (SiriusCryptoError siriusCryptoError) {
             siriusCryptoError.printStackTrace();

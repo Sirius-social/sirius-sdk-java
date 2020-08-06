@@ -65,12 +65,16 @@ public class Ed25519 {
             Key sk = convertedKeyPair.getSecretKey();
             if (from_verkey != null) {
                 String sender_vk = custom.bytesToB58(from_verkey);
-                enc_sender = LibSodium.getInstance().getLazySodium().cryptoBoxSealEasy(sender_vk, target_pk);
+               // LibSodium.getInstance().getNativeBox().cryptoBoxSeal()
+
+                enc_sender = new CryptoAead().cryptoBoxSealEasy(sender_vk, target_pk);
                 nonce = LibSodium.getInstance().getLazySodium().randomBytesBuf(Box.NONCEBYTES);
             //    LibSodium.getInstance().getLazySecretBox().cryptoSecretBoxEasy()
               //  LibSodium.getInstance().getNativeBox().
-               enc_cek = LibSodium.getInstance().getLazySodium().cryptoBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
-           
+               // enc_cek =    new CryptoAead().crypto_box(cek.getAsBytes(), nonce, target_pk.getAsBytes(), sk.getAsBytes());
+                enc_cek =    new CryptoAead().cryptoBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
+            //  enc_cek = LibSodium.getInstance().getLazySodium().cryptoBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
+
               //  enc_cek = LibSodium.getInstance().getLazySodium().cryptoSecretBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
             } else {
                 enc_sender = null;
@@ -152,7 +156,13 @@ public class Ed25519 {
             String sender_vk = null;
             String cek = null;
             if(nonce!=null && enc_sender!=null){
-                sender_vk = LibSodium.getInstance().getLazySodium().cryptoBoxSealOpenEasy(new String(enc_sender), convertedKeyPair);
+               //String enc_sender = LazySodium.toBin(enc_sender);
+                String enc_senderHex = new String(enc_sender,StandardCharsets.US_ASCII);
+              //  byte[] encSenderBytes =  LazySodium.toBin(enc_senderHex);
+               // String enc_sender2 = new String(encSenderBytes,StandardCharsets.US_ASCII);
+                sender_vk = new CryptoAead().cryptoBoxSealOpenEasy(enc_senderHex, convertedKeyPair);
+             //     byte[] sender_vkBytes =  LazySodium.toBin(sender_vk);
+               // String sender_vkstring = new String(sender_vkBytes,StandardCharsets.US_ASCII);
                 byte[] senderBytes = custom.b58ToBytes(sender_vk);
                 Key senderKey = Key.fromBytes(senderBytes);
                 KeyPair senderKeyPair = new KeyPair(senderKey,senderKey);
@@ -160,8 +170,10 @@ public class Ed25519 {
 
                 Key sender_pk = senderConvertedKeyPair.getPublicKey();
                 KeyPair openKeyPair = new KeyPair(sender_pk,convertedKeyPair.getSecretKey());
-                cek = LibSodium.getInstance().getLazySodium().cryptoBoxOpenEasy(new String(encrypted_key,StandardCharsets.US_ASCII),nonce,openKeyPair);
-
+                cek =   new CryptoAead().cryptoBoxOpenEasy(new String(encrypted_key,StandardCharsets.US_ASCII),nonce,openKeyPair);
+              //  String cekHex = LibSodium.getInstance().getLazySodium().cryptoBoxOpenEasy(new String(encrypted_key,StandardCharsets.US_ASCII),nonce,openKeyPair);
+                //  byte[] cekStringBytes =  LazySodium.toBin(cekHex);
+                //  cek  = new String(cekStringBytes,StandardCharsets.US_ASCII);
             }else{
                 sender_vk = null;
                 cek =  LibSodium.getInstance().getLazySodium().cryptoBoxSealOpenEasy(new String(encrypted_key,StandardCharsets.US_ASCII), convertedKeyPair);
@@ -186,7 +198,9 @@ public class Ed25519 {
     ) {
 
         byte[] nonce = LibSodium.getInstance().getLazySodium().randomBytesBuf(AEAD.CHACHA20POLY1305_IETF_NPUBBYTES);
-        String output = LibSodium.getInstance().getLazyAaed().encrypt(message, add_data, nonce, key, AEAD.Method.CHACHA20_POLY1305_IETF);
+        String outputHex = LibSodium.getInstance().getLazyAaed().encrypt(message, add_data, nonce, key, AEAD.Method.CHACHA20_POLY1305_IETF);
+       byte[] outputBytes = LazySodium.toBin(outputHex);
+        String output = new String(outputBytes,StandardCharsets.US_ASCII);
         int mlen = message.length();
         String ciphertext = output.substring(0,mlen);
         String tag = output.substring(mlen);
@@ -205,8 +219,8 @@ public class Ed25519 {
      */
     public String decryptPlaintext(String ciphertext, byte[] recips_bin, byte[] nonce, byte[] key) {
         Key keys = Key.fromBytes(key);
-        String output = new CryptoAead().decrypt(ciphertext, recips_bin, nonce, keys, AEAD.Method.CHACHA20_POLY1305_IETF);
-        //String output = LibSodium.getInstance().getLazyAaed().decrypt(ciphertext, new String(recips_bin,StandardCharsets.US_ASCII), nonce, keys, AEAD.Method.CHACHA20_POLY1305_IETF);
+        //String output = new CryptoAead().decrypt(ciphertext, recips_bin, nonce, keys, AEAD.Method.CHACHA20_POLY1305_IETF);
+        String output = LibSodium.getInstance().getLazyAaed().decrypt(ciphertext, new String(recips_bin,StandardCharsets.US_ASCII), nonce, keys, AEAD.Method.CHACHA20_POLY1305_IETF);
         return output;
     }
 
@@ -329,7 +343,10 @@ public class Ed25519 {
             buff.put(tag);
             byte[] combined = buff.array();
 
+
+
              payload_bin = new String(combined,  StandardCharsets.US_ASCII);
+         //   payload_bin = new String(LazySodium.toBin(payload_bin),StandardCharsets.US_ASCII);
             System.out.println("payload_bin="+payload_bin);
             String message = decryptPlaintext(payload_bin, protected_bin.getBytes(StandardCharsets.US_ASCII),
                     nonce, decryptModel.cek.getBytes(StandardCharsets.US_ASCII));
