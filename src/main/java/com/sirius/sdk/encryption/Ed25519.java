@@ -2,6 +2,7 @@ package com.sirius.sdk.encryption;
 
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.interfaces.*;
+import com.goterl.lazycode.lazysodium.models.Pair;
 import com.goterl.lazycode.lazysodium.utils.Key;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
@@ -14,7 +15,8 @@ import java.io.ByteArrayOutputStream;
 import java.lang.String;
 
 import com.sirius.sdk.utils.Base58;
-import javafx.util.Pair;
+
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,7 +44,7 @@ public class Ed25519 {
     public Pair<String, Key> prepare_pack_recipient_keys(
             List<byte[]> to_verkeys,
             byte[] from_verkey,
-            byte[] from_sigkey, KeyPair keyPair
+            byte[] from_sigkey
     ) throws SiriusCryptoError, SodiumException {
         if ((from_verkey != null && from_sigkey == null) || (from_verkey == null && from_sigkey != null)) {
             throw new SiriusCryptoError("Both verkey and sigkey needed to authenticated encrypt message");
@@ -58,25 +60,11 @@ public class Ed25519 {
             KeyPair keyPairToConvert = new KeyPair(Key.fromBytes(target_vk), Key.fromBytes(from_sigkey));
             KeyPair convertedKeyPair = LibSodium.getInstance().getLazySodium().convertKeyPairEd25519ToCurve25519(keyPairToConvert);
             Key target_pk = convertedKeyPair.getPublicKey();
-            Key sk = convertedKeyPair.getSecretKey();
             if (from_verkey != null) {
                 String sender_vk = custom.bytesToB58(from_verkey);
-               // LibSodium.getInstance().getNativeBox().cryptoBoxSeal()
-
-                //System.out.println("sender_vk_IN="+sender_vk);
                 enc_sender = new CryptoAead().cryptoBoxSeal(sender_vk, target_pk);
-                //System.out.println("enc_sender_IN="+enc_sender);
-            //    enc_sender =  LazySodium.toHex(enc_sender.getBytes(StandardCharsets.US_ASCII));
-             //   System.out.println("enc_senderHEX_IN="+enc_sender);
-
                 nonce = LibSodium.getInstance().getLazySodium().randomBytesBuf(Box.NONCEBYTES);
-            //    LibSodium.getInstance().getLazySecretBox().cryptoSecretBoxEasy()
-              //  LibSodium.getInstance().getNativeBox().
-               // enc_cek =    new CryptoAead().crypto_box(cek.getAsBytes(), nonce, target_pk.getAsBytes(), sk.getAsBytes());
                 enc_cek =    new CryptoAead().cryptoBox(cek.getAsBytes(), nonce, convertedKeyPair);
-            //  enc_cek = LibSodium.getInstance().getLazySodium().cryptoBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
-
-              //  enc_cek = LibSodium.getInstance().getLazySodium().cryptoSecretBoxEasy(new String(cek.getAsBytes(),StandardCharsets.US_ASCII), nonce, convertedKeyPair);
             } else {
                 enc_sender = null;
                 nonce = null;
@@ -141,10 +129,6 @@ public class Ed25519 {
                 continue;
             }
             KeyPair convertedKeyPair = LibSodium.getInstance().getLazySodium().convertKeyPairEd25519ToCurve25519(keyPair);
-            String publickey58 = Base58.encode(convertedKeyPair.getPublicKey().getAsBytes());
-            String secretkey58 = Base58.encode(convertedKeyPair.getSecretKey().getAsBytes());
-            System.out.println("publickey58="+publickey58);
-            System.out.println("secretkey58="+secretkey58);
             byte[] encrypted_key = custom.b64ToBytes(recip.getString("encrypted_key"), true);
             String iv = headerObj.optString("iv");
             String sender = headerObj.optString("sender");
@@ -160,34 +144,15 @@ public class Ed25519 {
             byte[] sender_vk = null;
             byte[] cek = null;
             if(nonce!=null && enc_sender!=null){
-             //   byte[] enc_sender1 = LazySodium.toBin(new String(enc_sender,StandardCharsets.US_ASCII));
-              //  String enc_senderHex = new String(enc_sender1,StandardCharsets.US_ASCII);
-              //  byte[] encSenderBytes =  LazySodium.toBin(enc_senderHex);
-               // String enc_sender2 = new String(encSenderBytes,StandardCharsets.US_ASCII);
-              //  System.out.println("enc_senderHEX_OUt="+new String(enc_sender,StandardCharsets.US_ASCII));
-             //   System.out.println("enc_sender_OUt="+enc_senderHex);
+
                 sender_vk = new CryptoAead().cryptoBoxSealOpen(enc_sender, convertedKeyPair);
-             //     byte[] sender_vkBytes =  LazySodium.toBin(sender_vk);
-               // String sender_vkstring = new String(sender_vkBytes,StandardCharsets.US_ASCII);
                 byte[] senderBytes = custom.b58ToBytes(new String(sender_vk,StandardCharsets.US_ASCII));
                 Key senderKey = Key.fromBytes(senderBytes);
                 KeyPair senderKeyPair = new KeyPair(senderKey,senderKey);
                 KeyPair senderConvertedKeyPair = LibSodium.getInstance().getLazySodium().convertKeyPairEd25519ToCurve25519(senderKeyPair);
-
                 Key sender_pk = senderConvertedKeyPair.getPublicKey();
-
-                String senderPkBase58 = Base58.encode(sender_pk.getAsBytes());
-                String nonceBase58 = Base58.encode(nonce);
-                String encrypted_keyBase58 = Base58.encode(encrypted_key);
-
-
                 KeyPair openKeyPair = new KeyPair(sender_pk,convertedKeyPair.getSecretKey());
-                String openKeyPairsecret58 = Base58.encode(openKeyPair.getSecretKey().getAsBytes());
-
                 cek =   new CryptoAead().cryptoBoxOpen(encrypted_key,nonce,openKeyPair);
-              //  String cekHex = LibSodium.getInstance().getLazySodium().cryptoBoxOpenEasy(new String(encrypted_key,StandardCharsets.US_ASCII),nonce,openKeyPair);
-                //  byte[] cekStringBytes =  LazySodium.toBin(cekHex);
-                //  cek  = new String(cekStringBytes,StandardCharsets.US_ASCII);
             }else{
                 sender_vk = null;
                 cek = new CryptoAead().cryptoBoxSealOpen(encrypted_key, convertedKeyPair);
@@ -298,25 +263,18 @@ public class Ed25519 {
 
         byte[] from_verkey = ensureIsBytes(fromVerkey);
         byte[] from_sigkey = ensureIsBytes(fromSigkey);
-        String verkey1 = Base58.encode(from_verkey);
-        String from_sigkey1 = Base58.encode(from_sigkey);
-        System.out.println(verkey1);
-        System.out.println(from_sigkey1);
-        KeyPair keyPair = new KeyPair(Key.fromBytes(from_verkey), Key.fromBytes(from_sigkey));
-        Pair<String, Key> stringKeyPair = prepare_pack_recipient_keys(toVerKeysBytes, from_verkey, from_sigkey, keyPair);
-        String recips_json = stringKeyPair.getKey();
+
+        Pair<String, Key> stringKeyPair = prepare_pack_recipient_keys(toVerKeysBytes, from_verkey, from_sigkey);
+        String recips_json = stringKeyPair.first;
         String recips_b64 = custom.bytesToB64(recips_json.getBytes(StandardCharsets.US_ASCII), true);
 
-        EncryptModel model = encryptPlaintext(message, recips_b64, stringKeyPair.getValue());
-        System.out.println("packMEss nonce before="+new String(model.nonce,StandardCharsets.US_ASCII));
-        System.out.println("packMEss chiper before="+new String(model.ciphertext,StandardCharsets.US_ASCII));
-        System.out.println("packMEss tag before="+new String(model.tag,StandardCharsets.US_ASCII));
+        EncryptModel model = encryptPlaintext(message, recips_b64, stringKeyPair.second);
+
         String nonce64 = custom.bytesToB64(model.nonce, true);
         String ciphertext64 = custom.bytesToB64(model.ciphertext, true);
         String tag64 = custom.bytesToB64(model.tag, true);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("protected", recips_b64);
-        System.out.println("packMessage nonce="+nonce64);
         jsonObject.put("iv", nonce64);
         jsonObject.put("ciphertext", ciphertext64);
         jsonObject.put("tag", tag64);
@@ -343,11 +301,6 @@ public class Ed25519 {
         byte[] my_verkey = ensureIsBytes(myVerkey);
         byte[] my_sigkey = ensureIsBytes(mySigkey);
 
-        String verkey1 = Base58.encode(my_verkey);
-        String from_sigkey1 = Base58.encode(my_sigkey);
-        System.out.println(verkey1);
-        System.out.println(from_sigkey1);
-
         KeyPair keyPair = new KeyPair(Key.fromBytes(my_verkey), Key.fromBytes(my_sigkey));
         String error = "";
         try {
@@ -358,7 +311,7 @@ public class Ed25519 {
             byte[] recips_json = custom.b64ToBytes(protected_bin, true);
             error = "Invalid packed message recipients";
             JSONObject recips_outer = new JSONObject(new String(recips_json));
-            System.out.println("JSON ="+new String(recips_json));
+
             String alg = recips_outer.getString("alg");
             boolean is_authcrypt = alg.equals("Authcrypt");
             if (!is_authcrypt && !alg.equals("Anoncrypt")) {
@@ -383,21 +336,8 @@ public class Ed25519 {
               String tagTExt =   encMessJson.getString("tag");
 
             byte[] ciphertext = custom.b64ToBytes(encMessJson.getString("ciphertext"), true);
-
-            System.out.println("nonce BEFORE 64 decode="+(ivNonce));
-            System.out.println("nonce AFTER 64 decode="+ new String(custom.b64ToBytes(ivNonce,true)));
             byte[] nonce = custom.b64ToBytes(ivNonce, true);
             byte[] tag = custom.b64ToBytes(encMessJson.getString("tag"), true);
-
-
-            String ciphertext58 = Base58.encode(ciphertext);
-            String tag58 = Base58.encode(tag);
-            String nonce58 = Base58.encode(nonce);
-
-            String payload_bin = new String(ciphertext,  StandardCharsets.US_ASCII) + new String(tag, StandardCharsets.US_ASCII);
-            System.out.println("tag="+ new String(tag));
-            System.out.println("ciphertext="+new String(ciphertext));
-            System.out.println("payload_bin="+payload_bin);
 
             byte[] allByteArray = new byte[ciphertext.length + tag.length];
             ByteBuffer buff = ByteBuffer.wrap(allByteArray);
@@ -405,12 +345,6 @@ public class Ed25519 {
             buff.put(tag);
             byte[] combined = buff.array();
 
-
-
-           //  payload_bin = new String(combined,  StandardCharsets.US_ASCII);
-         //   payload_bin = new String(LazySodium.toBin(payload_bin),StandardCharsets.US_ASCII);
-     //       System.out.println("payload_bin="+payload_bin);
-            String payload58 = Base58.encode(combined);
             String message = decryptPlaintext(combined, protected_bin.getBytes(StandardCharsets.US_ASCII),
                     nonce, decryptModel.cek);
             return new UnpackModel(message,new String(decryptModel.sender_vk,StandardCharsets.US_ASCII),decryptModel.recip_vk_b58);
