@@ -2,17 +2,17 @@ package com.sirius.sdk.encryption;
 
 public class DecryptModel {
 
-    public DecryptModel(String cek,String sender_vk,  String recip_vk_b58) {
+    public DecryptModel(byte[] cek,byte[] sender_vk,  String recip_vk_b58) {
         this.sender_vk = sender_vk;
         this.cek = cek;
         this.recip_vk_b58 = recip_vk_b58;
     }
 
-    public String getSender_vk() {
+    public byte[] getSender_vk() {
         return sender_vk;
     }
 
-    public String getCek() {
+    public byte[] getCek() {
         return cek;
     }
 
@@ -20,7 +20,7 @@ public class DecryptModel {
         return recip_vk_b58;
     }
 
-    String sender_vk ;
-    String cek ;
+    byte[] sender_vk ;
+    byte[] cek ;
     String recip_vk_b58;
 }

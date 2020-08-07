@@ -17,6 +17,10 @@ public class LibSodium {
     public AEAD.Lazy getLazyAaed() {
         return (AEAD.Lazy) getLazySodium();
     }
+    public AEAD.Native getNativeAaed() {
+        return (AEAD.Native) getLazySodium();
+    }
+
     public Box.Lazy getLazyBox() {
         return (Box.Lazy) getLazySodium();
     }

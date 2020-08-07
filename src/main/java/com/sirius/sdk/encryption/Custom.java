@@ -1,15 +1,15 @@
 package com.sirius.sdk.encryption;
 
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
-import com.goterl.lazycode.lazysodium.interfaces.Random;
+
 import com.goterl.lazycode.lazysodium.interfaces.SecretBox;
-import com.goterl.lazycode.lazysodium.interfaces.Sign;
+
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
-import com.sirius.sdk.Main;
+
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
-import sun.nio.cs.US_ASCII;
+
 
 
 import java.nio.charset.StandardCharsets;
