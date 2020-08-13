@@ -97,6 +97,6 @@ public class TestEncryption {
             siriusInvalidType.printStackTrace();
         }
     }
-    
+
 
 }
