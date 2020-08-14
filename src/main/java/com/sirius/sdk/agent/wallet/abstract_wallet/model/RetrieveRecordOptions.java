@@ -1,4 +1,4 @@
-package com.sirius.sdk.wallet.abstract_wallet.model;
+package com.sirius.sdk.agent.wallet.abstract_wallet.model;
 
 import com.google.gson.Gson;
 import com.sirius.sdk.base.JsonSerializable;

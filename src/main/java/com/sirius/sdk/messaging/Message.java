@@ -21,6 +21,13 @@ public class Message implements JsonSerializable<Message> {
     String id;
 
     JSONObject messageObj;
+    public String getType() {
+        return type;
+    }
+
+    public String getId() {
+        return id;
+    }
 
 
     public String prettyPrint() {

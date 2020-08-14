@@ -1,4 +1,4 @@
-package com.sirius.sdk.wallet.abstract_wallet.model;
+package com.sirius.sdk.agent.wallet.abstract_wallet.model;
 
 public enum PoolAction {
     POOL_RESTART,
