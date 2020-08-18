@@ -1,11 +1,11 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
-import com.goterl.lazycode.lazysodium.models.Pair;
+import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 
 import java.util.List;
 
-public abstract  class AbstractNonSecret {
+public abstract  class AbstractNonSecrets {
     /**
      *  Create a new non-secret record in the wallet
      * @param type allows to separate different record types collections

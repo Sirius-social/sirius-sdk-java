@@ -2,7 +2,7 @@ package com.sirius.sdk.encryption;
 
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.interfaces.*;
-import com.goterl.lazycode.lazysodium.models.Pair;
+import com.sirius.sdk.utils.Pair;
 import com.goterl.lazycode.lazysodium.utils.Key;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
@@ -13,8 +13,6 @@ import com.sirius.sdk.naclJava.LibSodium;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.String;
-
-import com.sirius.sdk.utils.Base58;
 
 
 import org.json.JSONArray;

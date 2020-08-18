@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.wallet.impl;
 
-import com.goterl.lazycode.lazysodium.models.Pair;
+import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractPairwise;
 
@@ -16,6 +16,7 @@ public class PairwiseProxy extends AbstractPairwise {
 
     @Override
     public boolean isPairwiseExist(String theirDid) {
+        rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/is_pairwise_exists");
         return false;
     }
 
@@ -44,3 +45,4 @@ public class PairwiseProxy extends AbstractPairwise {
         return null;
     }
 }
+

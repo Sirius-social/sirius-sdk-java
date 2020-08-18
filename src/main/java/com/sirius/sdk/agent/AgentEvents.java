@@ -8,7 +8,7 @@ import com.sirius.sdk.messaging.Message;
  *
  *     Reactive nature of Smart-Contract design
  */
-public class AgentEvents extends BaseAgentConnections{
+public class AgentEvents extends BaseAgentConnection {
 
     String tunnel;
     String balancingGroup;

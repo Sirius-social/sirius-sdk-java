@@ -1,7 +1,7 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
-import com.goterl.lazycode.lazysodium.models.Pair;
-import com.goterl.lazycode.lazysodium.models.Triple;
+import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.Triple;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.NYMRole;
 
 import java.util.List;

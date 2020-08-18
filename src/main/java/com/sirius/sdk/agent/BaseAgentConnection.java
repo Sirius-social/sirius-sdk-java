@@ -8,9 +8,9 @@ import com.sirius.sdk.messaging.Message;
 
 import java.nio.charset.StandardCharsets;
 
-public abstract class BaseAgentConnections {
+public abstract class BaseAgentConnection {
 
-    int IO_TIMEOUT = 30;
+    public static final int IO_TIMEOUT = 30;
     String MSG_TYPE_CONTEXT = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/context";
 
     String serverAddress;
@@ -28,7 +28,7 @@ public abstract class BaseAgentConnections {
     }
 
 
-    public BaseAgentConnections(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
+    public BaseAgentConnection(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.p2p = p2p;

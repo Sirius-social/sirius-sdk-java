@@ -1,4 +1,4 @@
-package com.goterl.lazycode.lazysodium.models;
+package com.sirius.sdk.utils;
 
 public final class Triple<T, U, Z> {
 

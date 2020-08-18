@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
-import com.goterl.lazycode.lazysodium.models.Pair;
+import com.sirius.sdk.utils.Pair;
 
 import java.util.List;
 

@@ -7,7 +7,7 @@ import com.sirius.sdk.encryption.P2PConnection;
  *
  *     Proactive form of Smart-Contract design
  */
-public class AgentRPC extends  BaseAgentConnections{
+public class AgentRPC extends BaseAgentConnection {
 
     public AgentRPC(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
         super(serverAddress, credentials, p2p, timeout);
@@ -16,6 +16,17 @@ public class AgentRPC extends  BaseAgentConnections{
     @Override
     public String path() {
         return "/rpc";
+    }
+
+    public Object remoteCall(String msgType,String params,boolean waitResponse){
+        return null;
+    }
+
+    public Object remoteCall(String msgType,String params){
+        return remoteCall(msgType,params,true);
+    }
+    public Object remoteCall(String msgType){
+        return remoteCall(msgType,null,true);
     }
 }
  /*"""
