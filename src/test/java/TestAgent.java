@@ -11,7 +11,7 @@ import java.util.List;
 
 public class TestAgent {
 
-
+//TODO do all tests
     @Test
     public void testAllAgentsPing() {
         ServerTestSuite testSuite = ServerTestSuite.newInstance();

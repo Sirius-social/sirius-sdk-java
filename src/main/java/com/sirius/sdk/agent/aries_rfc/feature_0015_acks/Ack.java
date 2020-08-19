@@ -1,11 +1,11 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0015_acks;
 
-import com.sirius.sdk.agent.aries_rfc.AriesBaseMessage;
+import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 
-public class AckMessage extends AriesBaseMessage {
+public class Ack extends AriesProtocolMessage {
 
 
-    public AckMessage(String message) {
+    public Ack(String message) {
         super(message);
     }
 

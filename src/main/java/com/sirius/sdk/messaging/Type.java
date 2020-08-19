@@ -1,6 +1,63 @@
 package com.sirius.sdk.messaging;
 
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Type {
+
+
+    public static final Pattern MTURI_RE = Pattern.compile("(.*?)([a-z0-9._-]+)/(\\d[^/]*)/([a-z0-9._-]+)$");
+    public static final String FORMAT_PATTERN = "%s%s/%s/%s";
+    String docUri;
+    String protocol;
+    String version;
+    Semver versionInfo;
+    String name;
+    String typeString;
+    String normalizedString;
+
+
+    public Type(String docUri, String protocol, Semver versionInfo, String name) {
+        this.docUri = docUri;
+        this.protocol = protocol;
+        this.versionInfo = versionInfo;
+        this.name = name;
+        // version = versionInfo.
+    }
+
+
+    public Type(String docUri, String protocol, String version, String name) {
+        this.docUri = docUri;
+        this.protocol = protocol;
+        this.version = version;
+        this.name = name;
+        this.versionInfo = Semver.fromStr(version);
+        typeString = String.format(FORMAT_PATTERN, docUri, protocol, version, name);
+        normalizedString = String.format(FORMAT_PATTERN, docUri, protocol, versionInfo, name);
+    }
+
+
+    /**
+     * Parse type from string.
+     *
+     * @param type
+     * @return
+     */
+    public static Type fromStr(String type) throws SiriusInvalidType {
+        Matcher matcher = MTURI_RE.matcher(type);
+        System.out.println();
+        if (!matcher.matches()) {
+            throw new SiriusInvalidType("Invalid message type");
+        }
+        if (matcher.groupCount() >= 4) {
+            return new Type(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4));
+        } else {
+            throw new SiriusInvalidType("Invalid message type");
+        }
+
+    }
 }
 
 
@@ -8,35 +65,6 @@ public class Type {
 MTURI_RE = re.compile(r'(.*?)([a-z0-9._-]+)/(\d[^/]*)/([a-z0-9._-]+)$')
 
 
-class Semver(VersionInfo):
-        """ Wrapper around the more complete VersionInfo class from semver package.
-
-        This wrapper enables abbreviated versions in message types
-        (i.e. 1.0 not 1.0.0).
-    """
-        SEMVER_RE = re.compile(
-        r'^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?$'
-        )
-
-@classmethod
-    def from_str(cls, version_str):
-            """ Parse version information from a string. """
-            matches = Semver.SEMVER_RE.match(version_str)
-            if matches:
-            args = list(matches.groups())
-            if not matches.group(3):
-            args.append('0')
-            return Semver(*map(int, filter(partial(is_not, None), args)))
-
-            parts = parse(version_str)
-
-            return cls(
-            parts['major'],
-            parts['minor'],
-            parts['patch'],
-            parts['prerelease'],
-            parts['build']
-            )
 
 
 class Type:

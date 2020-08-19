@@ -1,17 +1,34 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0048_trust;
 
-import com.sirius.sdk.agent.aries_rfc.AriesBaseMessage;
+import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 
 /**
  * Implementation of Pong part for trust_ping protocol
  * https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping
  */
-public class TrustPongMessage extends AriesBaseMessage {
+public class Pong extends AriesProtocolMessage {
+
+    public String getComment() {
+        return comment;
+    }
 
     String comment;
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public void setThreadId(String threadId) {
+        this.threadId = threadId;
+    }
+
+    public String getThreadId() {
+        return threadId;
+    }
+
     String threadId;
 
-    public TrustPongMessage(String message) {
+    public Pong(String message) {
         super(message);
         comment = getStringFromJSON("comment");
         threadId = getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
@@ -29,7 +46,7 @@ public class TrustPongMessage extends AriesBaseMessage {
         return "ping_response";
     }
 
-    public String getThreadId() {
+    public String getPingId() {
         try {
             return getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
         } catch (Exception e) {
