@@ -1,32 +1,187 @@
 package com.sirius.sdk.agent;
 
+import com.neovisionaries.ws.client.WebSocket;
+import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.errors.sirius_exceptions.*;
+import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.messaging.Type;
+import com.sirius.sdk.rpc.AddressedTunnel;
+import com.sirius.sdk.rpc.Future;
+import com.sirius.sdk.rpc.Parsing;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * RPC service.
- *
- *     Proactive form of Smart-Contract design
+ * <p>
+ * Proactive form of Smart-Contract design
  */
 public class AgentRPC extends BaseAgentConnection {
 
+    List<Endpoint> endpoints;
+    List<String> networks;
+    Map<String, WebSocket> websockets;
+    boolean preferAgentSide;
+    AddressedTunnel tunnelRpc;
+    AddressedTunnel tunnelСoprotocols;
+
+    public List<String> getNetworks() {
+        return networks;
+    }
+
+    public List<Endpoint> getEndpoints() {
+        return endpoints;
+    }
+
+
     public AgentRPC(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
         super(serverAddress, credentials, p2p, timeout);
+        endpoints = new ArrayList<>();
+        networks = new ArrayList<>();
+        tunnelRpc = null;
+        tunnelСoprotocols = null;
+        websockets = new HashMap<>();
+        preferAgentSide = true;
+
+        //self.__connector = aiohttp.TCPConnector(verify_ssl = False, keepalive_timeout = 60)
     }
 
     @Override
     public String path() {
-        return "/rpc";
+        return "rpc";
     }
 
-    public Object remoteCall(String msgType,String params,boolean waitResponse){
+
+    /**
+     * Call Agent services
+     *
+     * @param msgType
+     * @param params
+     * @param waitResponse wait for response
+     * @return
+     */
+    public Object remoteCall(String msgType, String params, boolean waitResponse)
+            throws SiriusConnectionClosed, SiriusInvalidType, SiriusRPCError, SiriusTimeoutRPC, SiriusPendingOperation {
+        if (!connector.isOpen()) {
+            throw new SiriusConnectionClosed("Open agent connection at first");
+        }
+        long expirationTime = 0;
+        if (timeout != 0) {
+            expirationTime = System.currentTimeMillis() + (timeout * 1000);
+        }
+
+        Future future = new Future(tunnelRpc, expirationTime);
+        Message request = Parsing.buildRequest(msgType, future, params);
+        Type msgTyp = Type.fromStr(msgType);
+        boolean isEncryptes = !"admin".equals(msgTyp.getProtocol()) && !"microledgers".equals(msgTyp.getProtocol());
+
+        boolean isPosted = tunnelRpc.post(request, isEncryptes);
+        if (!isPosted) {
+            throw new SiriusRPCError();
+        }
+        if (waitResponse) {
+            boolean success = future.waitPromise(timeout * 1000);
+            if (success) {
+                if (future.hasException()) {
+                } else {
+                    return future.getValue();
+                }
+            } else {
+                throw new SiriusTimeoutRPC();
+            }
+        }
         return null;
     }
 
-    public Object remoteCall(String msgType,String params){
-        return remoteCall(msgType,params,true);
+    public Object remoteCall(String msgType, String params)
+            throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
+        return remoteCall(msgType, params, true);
     }
-    public Object remoteCall(String msgType){
-        return remoteCall(msgType,null,true);
+
+    public Object remoteCall(String msgType)
+            throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
+        return remoteCall(msgType, null, true);
+    }
+
+
+    @Override
+    public void setup(Message context) {
+        super.setup(context);
+        //Extract proxy info
+        List<JSONObject> proxies = new ArrayList<>();
+        JSONArray proxiesArray = context.getJSONArrayFromJSON("~proxy");
+        if (proxiesArray != null) {
+            for (int i = 0; i < proxiesArray.length(); i++) {
+                proxies.add(proxiesArray.getJSONObject(i));
+            }
+        }
+        String channel_rpc = null;
+        String channel_sub_protocol = null;
+
+        for (JSONObject proxy : proxies) {
+            if ("reverse".equals(proxy.getString("id"))) {
+                channel_rpc = proxy.getJSONObject("data").getJSONObject("json").getString("address");
+            } else if ("sub-protocol".equals(proxy.getString("id"))) {
+                channel_sub_protocol = proxy.getJSONObject("data").getJSONObject("json").getString("address");
+            }
+        }
+        if (channel_rpc == null) {
+            throw new RuntimeException("rpc channel is empty");
+        }
+        if (channel_sub_protocol == null) {
+            throw new RuntimeException("sub-protocol channel is empty");
+        }
+        tunnelRpc = new AddressedTunnel(channel_rpc, connector, connector, p2p);
+        tunnelСoprotocols = new AddressedTunnel(channel_sub_protocol, connector, connector, p2p);
+        //Extract active endpoints
+        JSONArray endpointsArray = context.getJSONArrayFromJSON("~endpoints");
+        List<Endpoint> endpointsCollection = new ArrayList<>();
+        if (endpointsArray != null) {
+            for (int i = 0; i < endpointsArray.length(); i++) {
+                JSONObject endpointObj = endpointsArray.getJSONObject(i);
+                JSONObject bodyObj =     endpointObj.getJSONObject("data").getJSONObject("json");
+                String address = bodyObj.getString("address");
+                String frontendKey = bodyObj.optString("frontend_routing_key");
+                if(!frontendKey.isEmpty()){
+                    JSONArray routingKeys = bodyObj.getJSONArray("routing_keys");
+                    if(routingKeys!=null){
+                        for(int z=0;z<routingKeys.length();z++){
+                           JSONObject routingKey =  routingKeys.getJSONObject(z);
+                            boolean isDefault = routingKey.getBoolean("is_default");
+                            String key =  routingKey.getString("routing_key");
+                            List<String> routingKeysList = new ArrayList<>();
+                            routingKeysList.add(key);
+                            routingKeysList.add(frontendKey);
+                            endpointsCollection.add(new Endpoint(address,routingKeysList, isDefault));
+                        }
+                    }
+                }else{
+                    endpointsCollection.add(new Endpoint(address,new ArrayList<>(), false));
+                }
+            }
+        }
+        if( endpointsCollection.isEmpty()){
+            throw  new RuntimeException("Endpoints are empty");
+        }
+        endpoints = endpointsCollection;
+        //Extract Networks
+
+        List<String> networkList = new ArrayList<>();
+
+        JSONArray networksArray = context.getJSONArrayFromJSON("~networks");
+        for(int i=0;i<networksArray.length();i++){
+            String network = networksArray.getString(i);
+            networkList.add(network);
+        }
+        networks  = networkList;
+
+
     }
 }
  /*"""

@@ -1,23 +1,158 @@
 package helpers;
 
+import com.goterl.lazycode.lazysodium.LazySodium;
+import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
+import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.encryption.Custom;
+import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
+import com.sirius.sdk.rpc.AddressedTunnel;
+import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.StringUtils;
+import models.AgentParams;
+import models.P2PModel;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
 public class ConfTest {
 
+    String test_suite_baseurl;
+    String test_suite_overlay_address;
+    String old_agent_address;
+    String old_agent_overlay_address;
+    String old_agent_root;
+    Custom custom = new Custom();
+    private static ConfTest instance;
+    public static ConfTest newInstance() {
+        ConfTest confTest = new ConfTest();
+        confTest.configureTestEnv();
+        return confTest;
+    }
 
+    public static ConfTest getSingletonInstance() {
+        if(instance==null){
+            instance = newInstance();
+        }
+        return instance;
+    }
+
+    public void configureTestEnv() {
+        test_suite_baseurl = System.getenv("TEST_SUITE_BASE_URL");
+        if (test_suite_baseurl == null || test_suite_baseurl.isEmpty()) {
+            test_suite_baseurl = "http://localhost";
+        }
+        test_suite_overlay_address = "http://10.0.0.90";
+
+        old_agent_address = System.getenv("INDY_AGENT_BASE_URL");
+        if (old_agent_address == null || old_agent_address.isEmpty()) {
+            old_agent_address = "http://127.0.0.1:88";
+        }
+        old_agent_overlay_address = "http://10.0.0.52:8888";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("username", "root");
+        jsonObject.put("password", "root");
+        old_agent_root = jsonObject.toString();
+    }
+
+    public Pair<P2PModel, P2PModel> createP2P() {
+        try {
+            KeyPair keysAgent = custom.createKeypair("000000000000000000000000000AGENT".getBytes(StandardCharsets.US_ASCII));
+            KeyPair keysSdk = custom.createKeypair("00000000000000000000000000000SDK".getBytes(StandardCharsets.US_ASCII));
+
+            P2PConnection agent = new P2PConnection(
+                    StringUtils.bytesToBase58String(keysAgent.getPublicKey().getAsBytes()),
+                    StringUtils.bytesToBase58String(keysAgent.getSecretKey().getAsBytes()),
+                    StringUtils.bytesToBase58String(keysSdk.getPublicKey().getAsBytes()));
+
+            P2PConnection smartContract = new P2PConnection(
+                    StringUtils.bytesToBase58String(keysSdk.getPublicKey().getAsBytes()),
+                    StringUtils.bytesToBase58String(keysSdk.getSecretKey().getAsBytes()),
+                    StringUtils.bytesToBase58String(keysAgent.getPublicKey().getAsBytes()));
+
+            InMemoryChannel downstream = new InMemoryChannel();
+            InMemoryChannel upstream = new InMemoryChannel();
+            AddressedTunnel agentTunnel = new AddressedTunnel("memory://agent->sdk",upstream,downstream,agent);
+            AddressedTunnel sdkTunnel = new AddressedTunnel("memory://sdk->agent",downstream,upstream,smartContract);
+            P2PModel agentModel = new P2PModel(agent,agentTunnel);
+            P2PModel sdkModel = new P2PModel(smartContract,sdkTunnel);
+            return new Pair<>(agentModel,sdkModel);
+        } catch (SiriusCryptoError siriusCryptoError) {
+            siriusCryptoError.printStackTrace();
+        } catch (SodiumException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public ServerTestSuite getSuiteSingleton() {
+        ServerTestSuite serverTestSuite = ServerTestSuite.newInstance();
+        serverTestSuite.ensureIsAlive();
+        return serverTestSuite;
+    }
+
+    public IndyAgent getIndyAgentSingleton() {
+        return new IndyAgent();
+    }
+
+    public Agent getAgent(String name) {
+        AgentParams params = getSuiteSingleton().getAgentParams(name);
+        Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+                params.getConnection(), 10, null, name);
+        return agent;
+    }
+
+    public ServerTestSuite testSuite() {
+        return getSuiteSingleton();
+    }
+
+    public IndyAgent indyAgent() {
+        return getIndyAgentSingleton();
+    }
+
+    public Agent agent1() {
+        return getAgent("agent1");
+    }
+
+    public Agent agent2() {
+        return getAgent("agent2");
+    }
+
+    public Agent agent3() {
+        return getAgent("agent3");
+    }
+
+    public Agent agent4() {
+        return getAgent("agent4");
+    }
+
+    public Agent A() {
+        return getAgent("agent1");
+    }
+
+    public Agent B() {
+        return getAgent("agent2");
+    }
+
+    public Agent C() {
+        return getAgent("agent3");
+    }
+
+    public Agent D() {
+        return getAgent("agent4");
+    }
+
+    public String ledgerName() {
+
+        return "Ledger-" + LazySodium.toHex(UUID.randomUUID().toString().getBytes(StandardCharsets.US_ASCII));
+    }
 
 }
 
 /*
-    def pytest_configure():
-        # Address of TestSuite
-        pytest.test_suite_baseurl = os.getenv('TEST_SUITE_BASE_URL') or 'http://localhost'
-        pytest.test_suite_overlay_address = 'http://10.0.0.90'
-        # Back compatibility testing
-        pytest.old_agent_address = os.getenv('INDY_AGENT_BASE_URL') or 'http://127.0.0.1:88'
-        pytest.old_agent_overlay_address = 'http://10.0.0.52:8888'
-        pytest.old_agent_root = {
-        'username': 'root',
-        'password': 'root'
-        }
+
 
 
 @pytest.fixture()

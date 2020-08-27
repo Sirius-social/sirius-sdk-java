@@ -10,15 +10,20 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-public class  WebSocketConnector  extends BaseConnector{
+public class WebSocketConnector extends BaseConnector {
 
-    public  int defTimeout = 30;
+    public int defTimeout = 30;
     Charset encoding = StandardCharsets.UTF_8;
     String serverAddress;
     String path;
-    byte[] credentials ;
+    byte[] credentials;
     WebSocket webSocket;
+
     public WebSocketConnector(int defTimeout, Charset encoding, String serverAddress, String path, byte[] credentials) {
         this.defTimeout = defTimeout;
         this.encoding = encoding;
@@ -28,14 +33,14 @@ public class  WebSocketConnector  extends BaseConnector{
         initWebSocket();
     }
 
-    public WebSocketConnector( String serverAddress, String path, byte[] credentials) {
+    public WebSocketConnector(String serverAddress, String path, byte[] credentials) {
         this.serverAddress = serverAddress;
         this.path = path;
         this.credentials = credentials;
         initWebSocket();
     }
 
-    WebSocketListener webSocketListener =  new WebSocketListener() {
+    WebSocketListener webSocketListener = new WebSocketListener() {
         @Override
         public void onStateChanged(WebSocket webSocket, WebSocketState webSocketState) throws Exception {
 
@@ -68,12 +73,12 @@ public class  WebSocketConnector  extends BaseConnector{
 
         @Override
         public void onTextFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-            read(webSocketFrame,null,defTimeout);
+            read(webSocketFrame, null, defTimeout);
         }
 
         @Override
         public void onBinaryFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-            read(webSocketFrame,null,defTimeout);
+            read(webSocketFrame, null, defTimeout);
         }
 
         @Override
@@ -183,17 +188,17 @@ public class  WebSocketConnector  extends BaseConnector{
     };
 
 
-    public void initWebSocket(){
-        String url = serverAddress + "/"+path;
+    public void initWebSocket() {
+        String url = serverAddress + "/" + path;
         try {
-            webSocket =  new WebSocketFactory()
+            webSocket = new WebSocketFactory()
                     .setVerifyHostname(false)
-                    .setConnectionTimeout(defTimeout)
+                    .setConnectionTimeout(defTimeout * 1000)
                     .createSocket(url)
                     .addListener(webSocketListener)
                     .addExtension(WebSocketExtension.PERMESSAGE_DEFLATE)
                     .setPingInterval(60 * 3 * 1000).
-                            addHeader("origin",serverAddress).
+                            addHeader("origin", serverAddress).
                             addHeader("credentials", StringUtils.bytesToString(credentials));
 
         } catch (IOException e) {
@@ -202,8 +207,8 @@ public class  WebSocketConnector  extends BaseConnector{
     }
 
 
-    public boolean isOpen(){
-        if(webSocket!=null){
+    public boolean isOpen() {
+        if (webSocket != null) {
             return webSocket.isOpen();
         }
         return false;
@@ -211,7 +216,7 @@ public class  WebSocketConnector  extends BaseConnector{
 
     @Override
     public void open() {
-        if(!isOpen()){
+        if (!isOpen()) {
             try {
                 webSocket.connect();
             } catch (WebSocketException e) {
@@ -222,23 +227,36 @@ public class  WebSocketConnector  extends BaseConnector{
 
     @Override
     public void close() {
-        if(isOpen()){
+        if (isOpen()) {
             webSocket.disconnect();
         }
     }
 
+    CompletableFuture<byte[]> readFuture = new CompletableFuture<>();
+
     @Override
     public byte[] read(int timeout) {
+
+        try {
+            return readFuture.get(timeout, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
         return new byte[0];
     }
 
 
-    public byte[] read(WebSocketFrame frame, WebSocketException exception ,int timeout) {
-        if(exception!=null){
-          //  throw  new SiriusConnectionClosed();
+    public byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
+        if (exception != null) {
+            //  throw  new SiriusConnectionClosed();
         }
-        if(frame!=null){
-           return frame.getPayload();
+        if (frame != null) {
+            readFuture.complete(frame.getPayload());
+            return frame.getPayload();
         }
         return null;
    /*     try:
@@ -262,7 +280,7 @@ public class  WebSocketConnector  extends BaseConnector{
         return true;
     }
 
-    public boolean write(Message message){
+    public boolean write(Message message) {
         String payload = message.serialize();
         webSocket.sendText(payload);
         return true;

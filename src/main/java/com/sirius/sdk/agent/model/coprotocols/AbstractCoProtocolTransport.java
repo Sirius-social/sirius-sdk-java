@@ -1,5 +1,10 @@
 package com.sirius.sdk.agent.model.coprotocols;
 
+import com.sirius.sdk.agent.AgentRPC;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Abstraction application-level protocols in the context of interactions among agent-like things.
  *
@@ -12,6 +17,37 @@ package com.sirius.sdk.agent.model.coprotocols;
  *           - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0003-protocols
  */
 public abstract class AbstractCoProtocolTransport {
+
+    public AbstractCoProtocolTransport(AgentRPC rpc) {
+        this.rpc = rpc;
+    }
+
+    AgentRPC rpc;
+    String theirVK;
+    String myVerkey;
+    String endpoint;
+    List<String> routingKeys;
+    boolean isSetup;
+    /**
+     * Should be called in Descendant
+     * @param theirVerkey
+     * @param endpoint
+     * @param myVerkey
+     * @param routing_keys
+     */
+    public void  setup(String theirVerkey, String endpoint, String myVerkey, List<String> routing_keys){
+        this.theirVK = theirVerkey;
+        this.myVerkey= myVerkey;
+        this.endpoint = endpoint;
+        this.routingKeys = routing_keys;
+        if(routingKeys==null){
+            routingKeys = new ArrayList<>();
+        }
+        isSetup = true;
+    }
+
+
+
 }
 
 /*

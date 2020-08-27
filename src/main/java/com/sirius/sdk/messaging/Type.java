@@ -11,6 +11,35 @@ public class Type {
     public static final Pattern MTURI_RE = Pattern.compile("(.*?)([a-z0-9._-]+)/(\\d[^/]*)/([a-z0-9._-]+)$");
     public static final String FORMAT_PATTERN = "%s%s/%s/%s";
     String docUri;
+
+    public String getDocUri() {
+        return docUri;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public Semver getVersionInfo() {
+        return versionInfo;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getTypeString() {
+        return typeString;
+    }
+
+    public String getNormalizedString() {
+        return normalizedString;
+    }
+
     String protocol;
     String version;
     Semver versionInfo;

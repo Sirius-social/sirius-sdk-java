@@ -8,6 +8,7 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessageClass;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Constructor;
@@ -86,6 +87,7 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public Message(String message) {
+        System.out.println("message="+message);
         messageObj = new JSONObject(message);
         if (!messageObjectHasKey(FIELD_TYPE)) {
             //   throw new SiriusInvalidMessage("No @type in message");
@@ -131,6 +133,13 @@ public class Message implements JsonSerializable<Message> {
     public JSONObject getJSONOBJECTFromJSON(String key) {
         if (messageObjectHasKey(key)) {
             return messageObj.getJSONObject(key);
+        }
+        return null;
+    }
+
+    public JSONArray getJSONArrayFromJSON(String key) {
+        if (messageObjectHasKey(key)) {
+            return messageObj.getJSONArray(key);
         }
         return null;
     }

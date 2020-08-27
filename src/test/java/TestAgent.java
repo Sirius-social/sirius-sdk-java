@@ -1,8 +1,9 @@
 import com.sirius.sdk.agent.Agent;
+import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
-import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -11,10 +12,16 @@ import java.util.List;
 
 public class TestAgent {
 
-//TODO do all tests
+    ConfTest confTest;
+    @Before
+    public void configureTest() {
+        confTest = ConfTest.newInstance();
+    }
+
+    //TODO do all tests
     @Test
     public void testAllAgentsPing() {
-        ServerTestSuite testSuite = ServerTestSuite.newInstance();
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
         List<String> allAgentsList = new ArrayList<>();
         allAgentsList.add("agent1");
         allAgentsList.add("agent2");
