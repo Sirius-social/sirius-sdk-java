@@ -76,7 +76,6 @@ public class Type {
      */
     public static Type fromStr(String type) throws SiriusInvalidType {
         Matcher matcher = MTURI_RE.matcher(type);
-        System.out.println();
         if (!matcher.matches()) {
             throw new SiriusInvalidType("Invalid message type");
         }

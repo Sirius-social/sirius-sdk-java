@@ -7,6 +7,8 @@ import com.sirius.sdk.messaging.Type;
 import com.sun.deploy.ref.AppModel;
 import org.json.JSONObject;
 
+import java.util.UUID;
+
 public class Parsing {
     /**
      *
@@ -27,6 +29,9 @@ public class Parsing {
         }
         JSONObject jsonObject= new JSONObject();
         jsonObject.put("@type",msgType);
+        jsonObject.put("@id", UUID.randomUUID().toString());
+        jsonObject.put("@promise",future.promise().serializeToObj());
+        jsonObject.put("params",new JSONObject());
         return new Message(jsonObject.toString());
 
     }

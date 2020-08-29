@@ -1,10 +1,18 @@
 package com.sirius.sdk.rpc;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.goterl.lazycode.lazysodium.LazySodium;
+import com.sirius.sdk.base.JsonMessage;
+import com.sirius.sdk.base.JsonSerializable;
+import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValueEmpty;
+import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.StringUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -24,11 +32,12 @@ import java.util.UUID;
  * response awaiting routines.
  */
 public class Future {
+    public static final String MSG_TYPE = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/future";
 
     AddressedTunnel tunnel;
     long expirationTime;
     String id;
-    String value;
+    Object value;
     boolean readOk = false;
     Exception exception;
 
@@ -39,8 +48,6 @@ public class Future {
         this.tunnel = addressedTunnel;
         String uuid = UUID.randomUUID().toString();
         id = convertStringToHex(uuid);//TODO hex
-        System.out.println(id);
-        System.out.println(uuid);
     }
 
     public static String convertStringToHex(String str) {
@@ -76,7 +83,7 @@ public class Future {
     }
 
 
-    public static class FuturePromise {
+    public static class FuturePromise implements JsonSerializable<FuturePromise> {
         String id;
         String channel_address;
         long expiration_stamp;
@@ -86,7 +93,29 @@ public class Future {
             this.channel_address = channel_address;
             this.expiration_stamp = expiration_stamp;
         }
+
+
+        public JSONObject serializeToObj() {
+            JSONObject jsonObject = new JSONObject();
+             jsonObject.put("id",id);
+             jsonObject.put("channel_address",channel_address);
+             jsonObject.put("expiration_stamp",expiration_stamp);
+            return jsonObject;
+        }
+
+        @Override
+        public String serialize() {
+            Gson gson = new GsonBuilder().create();
+            return gson.toJson(this, FuturePromise.class);
+        }
+
+        @Override
+        public FuturePromise deserialize(String string) {
+            Gson gson = new GsonBuilder().create();
+            return gson.fromJson(string, FuturePromise.class);
+        }
     }
+
     /**
      * "Wait for response
      *
@@ -94,15 +123,49 @@ public class Future {
      * @return True/False
      */
     public boolean waitPromise(int timeout) {
-        if(readOk){
+        if (readOk) {
             return true;
         }
-        if(timeout == 0){
+        if (timeout == 0) {
             return false;
         }
 
         try {
-            tunnel.receive(timeout);
+            Message message = tunnel.receive(timeout);
+            String payload = message.serialize();
+            //(payload.get('~thread', {}).get('thid', None) == self.__id
+            JSONObject threadObj = message.getJSONOBJECTFromJSON("~thread");
+            String threadId = null;
+            if (threadObj != null) {
+                threadId = threadObj.getString("thid");
+            }
+            boolean isType = MSG_TYPE.equals(message.getType());
+            boolean isTypeId = id.equals(threadId);
+            if (MSG_TYPE.equals(message.getType()) && id.equals(threadId)) {
+                Object exception = message.getObjectFromJSON("exception");
+                if (exception == null) {
+                    Object value =   message.getObjectFromJSON("value");
+                    boolean is_tuple =   message.getBooleanFromJSON("is_tuple");
+                    boolean is_bytes =   message.getBooleanFromJSON("is_bytes");
+                    if(is_tuple){
+                        //TODO make Tuple
+                    }else if(is_bytes){
+                        Custom custom = new Custom();
+                        this.value =  custom.b64ToBytes(value.toString(),false);
+                    }else{
+                        this.value = value;
+                    }
+                    readOk  =true;
+                    return true;
+
+                } else {
+                    //   exception()
+                }
+            } else {
+               System.out.println("Unexpected payload" + message.serialize() + "Expected id: " + id);
+           }
+
+
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
         }
@@ -112,36 +175,39 @@ public class Future {
 
     /**
      * Get response value.
+     *
+     * @throws SiriusPendingOperation : response was not received yet. Call walt(0) to safely check value persists.
      * @return: value
-     *  @throws SiriusPendingOperation : response was not received yet. Call walt(0) to safely check value persists.
      */
-    public String getValue() throws SiriusPendingOperation {
-        if(readOk){
+    public Object getValue() throws SiriusPendingOperation {
+        if (readOk) {
             return value;
-        }else{
+        } else {
             throw new SiriusPendingOperation();
         }
     }
 
     /**
      * Check if response was interrupted with exception
+     *
+     * @throws SiriusPendingOperation: response was not received yet. Call walt(0) to safely check value persists.
      * @return: True if request have done with exception
-     * @throws  SiriusPendingOperation: response was not received yet. Call walt(0) to safely check value persists.
      */
-    public boolean  hasException() throws SiriusPendingOperation{
-        if(!readOk){
+    public boolean hasException() throws SiriusPendingOperation {
+        if (!readOk) {
             throw new SiriusPendingOperation();
         }
         return false;
     }
 
     /**
-     *Get exception that have interrupted response routine on server-side.
-     * @return  Exception instance or None if it does not exists
+     * Get exception that have interrupted response routine on server-side.
+     *
+     * @return Exception instance or None if it does not exists
      */
-    public Exception exception(){
+    public Exception exception() {
         try {
-            if(hasException()){
+            if (hasException()) {
 
             }
         } catch (SiriusPendingOperation siriusPendingOperation) {
@@ -169,11 +235,12 @@ public class Future {
 
     /**
      * Raise exception if exists
+     *
      * @throws SiriusValueEmpty: raises if exception is empty
      */
-    public void  raiseException() throws SiriusValueEmpty {
+    public void raiseException() throws SiriusValueEmpty {
         try {
-            if(hasException()){
+            if (hasException()) {
 
             }
         } catch (SiriusPendingOperation siriusPendingOperation) {

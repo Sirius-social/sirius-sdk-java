@@ -73,11 +73,12 @@ public class AgentRPC extends BaseAgentConnection {
         }
         long expirationTime = 0;
         if (timeout != 0) {
-            expirationTime = System.currentTimeMillis() + (timeout * 1000);
+            expirationTime = (System.currentTimeMillis() + (timeout * 1000))/1000;
         }
 
         Future future = new Future(tunnelRpc, expirationTime);
         Message request = Parsing.buildRequest(msgType, future, params);
+        String payload = request.serialize();
         Type msgTyp = Type.fromStr(msgType);
         boolean isEncryptes = !"admin".equals(msgTyp.getProtocol()) && !"microledgers".equals(msgTyp.getProtocol());
 

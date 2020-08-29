@@ -86,7 +86,11 @@ public class Agent extends TransportLayer {
 
     public boolean ping() {
         try {
-            rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/ping_agent", null);
+           Object response =  rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/ping_agent", null);
+           if(response instanceof Boolean){
+               return true;
+           }
+           return false;
         } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }

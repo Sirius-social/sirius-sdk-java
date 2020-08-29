@@ -98,17 +98,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onTextMessage(WebSocket webSocket, String s) throws Exception {
-
+           // System.out.println("onTextMessage1="+s);
         }
 
         @Override
         public void onTextMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-
+           // System.out.println("onTextMessage2="+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override
         public void onBinaryMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-
+          //  System.out.println("onBinaryMessage="+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override
@@ -236,7 +236,7 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public byte[] read(int timeout) {
-
+        readFuture = new CompletableFuture<>();
         try {
             return readFuture.get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -251,6 +251,7 @@ public class WebSocketConnector extends BaseConnector {
 
 
     public byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
+        System.out.println("read="+frame.getPayloadText());
         if (exception != null) {
             //  throw  new SiriusConnectionClosed();
         }

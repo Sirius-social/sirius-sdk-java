@@ -5,6 +5,7 @@ import com.sirius.sdk.base.WriteOnlyChannel;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
+
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
@@ -57,7 +58,7 @@ public class AddressedTunnel {
     public Message receive(int timeout) throws SiriusInvalidPayloadStructure {
         byte[] payload = input.read(timeout);
         try {
-            JSONObject jsonObject = new JSONObject(payload);
+            JSONObject jsonObject = new JSONObject(new String(payload,StandardCharsets.US_ASCII));
             if (jsonObject.has("protected")) {
                 String unpacked = p2p.unpack(new String(payload, StandardCharsets.US_ASCII));
                 context.setEncrypted(true);

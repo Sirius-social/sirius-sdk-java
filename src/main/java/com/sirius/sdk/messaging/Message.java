@@ -106,6 +106,16 @@ public class Message implements JsonSerializable<Message> {
 
     }
 
+    public Object getObjectFromJSON(String key) {
+        if (messageObjectHasKey(key)) {
+            if( messageObj.isNull(key)){
+                return null;
+            }
+            return messageObj.get(key);
+        }
+        return null;
+    }
+
     public String getStringFromJSON(String key) {
         if (messageObjectHasKey(key)) {
             String value = messageObj.getString(key);
@@ -151,7 +161,8 @@ public class Message implements JsonSerializable<Message> {
     @Override
     public String serialize() {
         Gson gson = new Gson();
-        return gson.toJson(this, this.getClass());
+      //  return gson.toJson(this, this.getClass());
+        return messageObj.toString();
 
     }
 

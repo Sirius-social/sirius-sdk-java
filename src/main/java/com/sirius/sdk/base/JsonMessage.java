@@ -12,6 +12,9 @@ public class JsonMessage {
         this.messageObj = new JSONObject(message);
     }
 
+    public JsonMessage() {
+    }
+
     public String prettyPrint() {
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting();

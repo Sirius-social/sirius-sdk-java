@@ -62,7 +62,6 @@ public class ServerTestSuite {
         if (agent == null || agent.isEmpty()) {
             throw new RuntimeException(String.format("TestSuite does not have agent with name %s", name));
         }
-        System.out.println(metadata);
         JSONObject p2pObject = agent.getJSONObject("p2p");
         String credentials = agent.getString("credentials");
         JSONObject entitiesObject = agent.getJSONObject("entities");
