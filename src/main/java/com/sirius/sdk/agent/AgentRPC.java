@@ -73,7 +73,7 @@ public class AgentRPC extends BaseAgentConnection {
         }
         long expirationTime = 0;
         if (timeout != 0) {
-            expirationTime = (System.currentTimeMillis() + (timeout * 1000))/1000;
+            expirationTime = (System.currentTimeMillis() + (timeout * 1000)) / 1000;
         }
 
         Future future = new Future(tunnelRpc, expirationTime);
@@ -116,7 +116,7 @@ public class AgentRPC extends BaseAgentConnection {
         super.setup(context);
         //Extract proxy info
         List<JSONObject> proxies = new ArrayList<>();
-        JSONArray proxiesArray = context.getJSONArrayFromJSON("~proxy");
+        JSONArray proxiesArray = context.getJSONArrayFromJSON("~proxy", null);
         if (proxiesArray != null) {
             for (int i = 0; i < proxiesArray.length(); i++) {
                 proxies.add(proxiesArray.getJSONObject(i));
@@ -141,50 +141,122 @@ public class AgentRPC extends BaseAgentConnection {
         tunnelRpc = new AddressedTunnel(channel_rpc, connector, connector, p2p);
         tunnelСoprotocols = new AddressedTunnel(channel_sub_protocol, connector, connector, p2p);
         //Extract active endpoints
-        JSONArray endpointsArray = context.getJSONArrayFromJSON("~endpoints");
+        JSONArray endpointsArray = context.getJSONArrayFromJSON("~endpoints", null);
         List<Endpoint> endpointsCollection = new ArrayList<>();
         if (endpointsArray != null) {
             for (int i = 0; i < endpointsArray.length(); i++) {
                 JSONObject endpointObj = endpointsArray.getJSONObject(i);
-                JSONObject bodyObj =     endpointObj.getJSONObject("data").getJSONObject("json");
+                JSONObject bodyObj = endpointObj.getJSONObject("data").getJSONObject("json");
                 String address = bodyObj.getString("address");
                 String frontendKey = bodyObj.optString("frontend_routing_key");
-                if(!frontendKey.isEmpty()){
+                if (!frontendKey.isEmpty()) {
                     JSONArray routingKeys = bodyObj.getJSONArray("routing_keys");
-                    if(routingKeys!=null){
-                        for(int z=0;z<routingKeys.length();z++){
-                           JSONObject routingKey =  routingKeys.getJSONObject(z);
+                    if (routingKeys != null) {
+                        for (int z = 0; z < routingKeys.length(); z++) {
+                            JSONObject routingKey = routingKeys.getJSONObject(z);
                             boolean isDefault = routingKey.getBoolean("is_default");
-                            String key =  routingKey.getString("routing_key");
+                            String key = routingKey.getString("routing_key");
                             List<String> routingKeysList = new ArrayList<>();
                             routingKeysList.add(key);
                             routingKeysList.add(frontendKey);
-                            endpointsCollection.add(new Endpoint(address,routingKeysList, isDefault));
+                            endpointsCollection.add(new Endpoint(address, routingKeysList, isDefault));
                         }
                     }
-                }else{
-                    endpointsCollection.add(new Endpoint(address,new ArrayList<>(), false));
+                } else {
+                    endpointsCollection.add(new Endpoint(address, new ArrayList<>(), false));
                 }
             }
         }
-        if( endpointsCollection.isEmpty()){
-            throw  new RuntimeException("Endpoints are empty");
+        if (endpointsCollection.isEmpty()) {
+            throw new RuntimeException("Endpoints are empty");
         }
         endpoints = endpointsCollection;
         //Extract Networks
 
         List<String> networkList = new ArrayList<>();
 
-        JSONArray networksArray = context.getJSONArrayFromJSON("~networks");
-        for(int i=0;i<networksArray.length();i++){
+        JSONArray networksArray = context.getJSONArrayFromJSON("~networks", new JSONArray());
+        for (int i = 0; i < networksArray.length(); i++) {
             String network = networksArray.getString(i);
             networkList.add(network);
         }
-        networks  = networkList;
+        networks = networkList;
 
 
     }
+
+    /**
+     * Send Message to other Indy compatible agent
+     *
+     * @param message     message
+     * @param their_vk    Verkey of recipients
+     * @param endpoint    Endpoint Address of recipient
+     * @param myVk        Verkey of sender (None for anocrypt mode)
+     * @param routingKeys Routing keys if it is exists
+     * @param coprotocol  True if message is part of co-protocol stream
+     *                    See:
+     *                    - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0003-protocols
+     *                    - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0008-message-id-and-threading
+     * @return Response message if coprotocol is True
+     */
+    public Message sendMessage(Message message, List<String> their_vk, String endpoint,
+                               String myVk, List<String> routingKeys, boolean coprotocol) throws SiriusConnectionClosed {
+        if(!connector.isOpen()){
+            throw  new SiriusConnectionClosed("Open agent connection at first");
+        }
+        return null;
+    }
 }
+  /*  async def send_message(
+            self, message: Message,
+            their_vk: Union[List[str], str], endpoint: str,
+            my_vk: Optional[str], routing_keys: Optional[List[str]],
+            coprotocol: bool=False
+    ) -> Optional[Message]:
+
+            if not self._connector.is_open:
+    raise SiriusConnectionClosed('Open agent connection at first')
+        if isinstance(their_vk, str):
+    recipient_verkeys = [their_vk]
+            else:
+    recipient_verkeys = their_vk
+            params = {
+            'message': message,
+            'routing_keys': routing_keys or [],
+            'recipient_verkeys': recipient_verkeys,
+            'sender_verkey': my_vk
+}
+        if self.__prefer_agent_side:
+                params['timeout'] = self.timeout
+                params['endpoint_address'] = endpoint
+                ok, body = await self.remote_call(
+                msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message',
+                params=params
+                )
+                else:
+                wired = await self.remote_call(
+                msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send',
+                params=params
+                )
+                if endpoint.startswith('ws://') or endpoint.startswith('wss://'):
+                ws = await self.__get_websocket(endpoint)
+                await ws.send_bytes(wired)
+                ok, body = True, b''
+                else:
+                ok, body = await http_send(wired, endpoint, timeout=self.timeout, connector=self.__connector)
+                body = body.decode()
+                if not ok:
+                raise SiriusRPCError(body)
+                else:
+                if coprotocol:
+                response = await self.read_protocol_message()
+                return response
+                else:
+                return None
+
+
+
+                }*/
  /*"""
     """
 

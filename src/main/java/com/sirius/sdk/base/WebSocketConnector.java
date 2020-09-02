@@ -250,7 +250,7 @@ public class WebSocketConnector extends BaseConnector {
     }
 
 
-    public byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
+    private byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
         System.out.println("read="+frame.getPayloadText());
         if (exception != null) {
             //  throw  new SiriusConnectionClosed();

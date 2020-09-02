@@ -22,7 +22,7 @@ public abstract class AbstractDID {
      * @param cid  bool, (optional; if not set then false is used;)
      * @return DID and verkey (for verification of signature)
      */
-    public abstract Pair<String,String> createAndStoreMyDid(String did, String seed, boolean cid);
+    public abstract Pair<String,String> createAndStoreMyDid(String did, String seed, Boolean cid);
 
     /**
      * Saves their DID for a pairwise connection in a secured Wallet,

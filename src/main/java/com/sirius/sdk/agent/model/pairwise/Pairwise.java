@@ -28,7 +28,7 @@ public class Pairwise {
     }
 
 
-    static class Their extends  TheirEndpoint{
+   public static class Their extends  TheirEndpoint{
         String did;
 
         public String getDid() {
@@ -48,7 +48,7 @@ public class Pairwise {
     }
 
 
-    static class Me{
+    public static class Me{
 
         String did;
         String verkey;

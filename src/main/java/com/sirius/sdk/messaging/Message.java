@@ -147,11 +147,16 @@ public class Message implements JsonSerializable<Message> {
         return null;
     }
 
-    public JSONArray getJSONArrayFromJSON(String key) {
+    public JSONArray getJSONArrayFromJSON(String key,JSONArray defaultValue) {
         if (messageObjectHasKey(key)) {
-            return messageObj.getJSONArray(key);
+           JSONArray object =  messageObj.getJSONArray(key);
+           if(object == null){
+               return defaultValue;
+           }
+           return object;
+
         }
-        return null;
+        return defaultValue;
     }
 
     public String generateId() {

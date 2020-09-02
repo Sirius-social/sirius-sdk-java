@@ -31,7 +31,11 @@ public class Parsing {
         jsonObject.put("@type",msgType);
         jsonObject.put("@id", UUID.randomUUID().toString());
         jsonObject.put("@promise",future.promise().serializeToObj());
-        jsonObject.put("params",new JSONObject());
+        JSONObject paramsObject = new JSONObject();
+        if(params!=null && !params.isEmpty() && params.startsWith("{")){
+            paramsObject = new JSONObject(params);
+        }
+        jsonObject.put("params",paramsObject);
         return new Message(jsonObject.toString());
 
     }

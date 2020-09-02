@@ -67,12 +67,10 @@ public class ServerTestSuite {
         JSONObject entitiesObject = agent.getJSONObject("entities");
         JSONObject smartContractObject = p2pObject.getJSONObject("smart_contract");
         JSONObject agentP2pObject = p2pObject.getJSONObject("agent");
-
         String myVerKey = smartContractObject.getString("verkey");
         String mySecretKey = smartContractObject.getString("secret_key");
         String theirVerkey = agentP2pObject.getString("verkey");
         P2PConnection connection = new P2PConnection(myVerKey, mySecretKey, theirVerkey);
-
         return new AgentParams(serverAddress, credentials, connection, entitiesObject);
     }
 

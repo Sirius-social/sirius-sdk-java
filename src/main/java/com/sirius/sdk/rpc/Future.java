@@ -10,8 +10,10 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValueEmpty;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.StringUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -46,20 +48,9 @@ public class Future {
      */
     public Future(AddressedTunnel addressedTunnel) {
         this.tunnel = addressedTunnel;
-        String uuid = UUID.randomUUID().toString();
-        id = convertStringToHex(uuid);//TODO hex
+        id = UUID.randomUUID().toString().hashCode()+"";
     }
 
-    public static String convertStringToHex(String str) {
-
-        // display in uppercase
-        //char[] chars = Hex.encodeHex(str.getBytes(StandardCharsets.UTF_8), false);
-
-        // display in lowercase, default
-        char[] chars = Hex.encodeHex(str.getBytes(StandardCharsets.UTF_8));
-
-        return String.valueOf(chars);
-    }
 
     /**
      * @param addressedTunnel communication tunnel for server-side cloud agent
@@ -148,7 +139,11 @@ public class Future {
                     boolean is_tuple =   message.getBooleanFromJSON("is_tuple");
                     boolean is_bytes =   message.getBooleanFromJSON("is_bytes");
                     if(is_tuple){
-                        //TODO make Tuple
+                        if (((JSONArray) value).length() == 2) {
+                            this.value = new Pair<String,String>(((JSONArray) value).getString(0),((JSONArray) value).getString(1));
+                        }else{
+                            this.value = value;
+                        }
                     }else if(is_bytes){
                         Custom custom = new Custom();
                         this.value =  custom.b64ToBytes(value.toString(),false);

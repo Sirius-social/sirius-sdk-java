@@ -7,7 +7,6 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.PurgeOptions;
 
 public class CacheProxy extends AbstractCache {
 
-
     AgentRPC rpc;
 
     public CacheProxy(AgentRPC rpc) {
