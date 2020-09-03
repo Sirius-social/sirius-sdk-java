@@ -1,11 +1,14 @@
 package com.sirius.sdk.agent.wallet.impl;
 
+import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractPairwise;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PairwiseProxy extends AbstractPairwise {
     AgentRPC rpc;
@@ -18,7 +21,10 @@ public class PairwiseProxy extends AbstractPairwise {
     @Override
     public boolean isPairwiseExist(String theirDid) {
         try {
-            rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/is_pairwise_exists");
+            RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
+                    .add("their_did",theirDid)
+                    .build();
+            rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/is_pairwise_exists",params);
         } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }

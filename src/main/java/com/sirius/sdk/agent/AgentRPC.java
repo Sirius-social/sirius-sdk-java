@@ -66,7 +66,7 @@ public class AgentRPC extends BaseAgentConnection {
      * @param waitResponse wait for response
      * @return
      */
-    public Object remoteCall(String msgType, String params, boolean waitResponse)
+    public Object remoteCall(String msgType,  RemoteParams params, boolean waitResponse)
             throws SiriusConnectionClosed, SiriusInvalidType, SiriusRPCError, SiriusTimeoutRPC, SiriusPendingOperation {
         if (!connector.isOpen()) {
             throw new SiriusConnectionClosed("Open agent connection at first");
@@ -87,7 +87,7 @@ public class AgentRPC extends BaseAgentConnection {
             throw new SiriusRPCError();
         }
         if (waitResponse) {
-            boolean success = future.waitPromise(timeout * 1000);
+            boolean success = future.waitPromise(timeout);
             if (success) {
                 if (future.hasException()) {
                 } else {
@@ -100,7 +100,7 @@ public class AgentRPC extends BaseAgentConnection {
         return null;
     }
 
-    public Object remoteCall(String msgType, String params)
+    public Object remoteCall(String msgType,  RemoteParams params)
             throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
         return remoteCall(msgType, params, true);
     }
@@ -204,6 +204,44 @@ public class AgentRPC extends BaseAgentConnection {
         if(!connector.isOpen()){
             throw  new SiriusConnectionClosed("Open agent connection at first");
         }
+        RemoteParams.RemoteParamsBuilder paramsBuilder =   RemoteParams.RemoteParamsBuilder.create()
+                .add("message",message);
+        if(routingKeys ==null){
+            routingKeys = new ArrayList<>();
+        }
+        paramsBuilder.add("routing_keys",routingKeys)
+                .add("recipient_verkeys",their_vk)
+                .add("sender_verkey",myVk);
+        if(preferAgentSide){
+            paramsBuilder.add("timeout",timeout);
+            paramsBuilder.add("endpoint_address",endpoint);
+            try {
+               Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message",paramsBuilder.build());
+
+            } catch (SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusRPCError) {
+                siriusRPCError.printStackTrace();
+            }
+        }else{
+            try {
+                Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send",paramsBuilder.build());
+            /*    wired = await self.remote_call(
+                        msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send',
+                        params=params
+                )
+                if endpoint.startswith('ws://') or endpoint.startswith('wss://'):
+                     ws = await self.__get_websocket(endpoint)
+                      await ws.send_bytes(wired)
+                       ok, body = True, b''
+                 else:
+                     ok, body = await http_send(wired, endpoint, timeout=self.timeout, connector=self.__connector)
+               body = body.decode()*/
+
+            } catch (SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusRPCError) {
+                siriusRPCError.printStackTrace();
+            }
+        }
+
+
         return null;
     }
 }

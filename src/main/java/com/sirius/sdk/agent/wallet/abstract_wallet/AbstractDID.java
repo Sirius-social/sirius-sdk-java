@@ -67,7 +67,7 @@ public abstract class AbstractDID {
      * @param did The DID to resolve key.
      * @return The DIDs ver key (key id).
      */
-    public abstract String keyLocalDid(String did);
+    public abstract String keyForLocalDid(String did);
 
     /**
      *      Returns ver key (key id) for the given DID.

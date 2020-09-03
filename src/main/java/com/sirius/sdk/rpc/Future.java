@@ -48,7 +48,7 @@ public class Future {
      */
     public Future(AddressedTunnel addressedTunnel) {
         this.tunnel = addressedTunnel;
-        id = UUID.randomUUID().toString().hashCode()+"";
+        id = UUID.randomUUID().toString();
     }
 
 
@@ -86,18 +86,17 @@ public class Future {
         }
 
 
-        public JSONObject serializeToObj() {
-            JSONObject jsonObject = new JSONObject();
-             jsonObject.put("id",id);
-             jsonObject.put("channel_address",channel_address);
-             jsonObject.put("expiration_stamp",expiration_stamp);
-            return jsonObject;
-        }
 
         @Override
         public String serialize() {
             Gson gson = new GsonBuilder().create();
             return gson.toJson(this, FuturePromise.class);
+        }
+
+        @Override
+        public JSONObject serializeToJSONObject() {
+            String object = serialize();
+            return new JSONObject(object);
         }
 
         @Override

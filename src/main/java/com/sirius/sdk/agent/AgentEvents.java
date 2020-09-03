@@ -51,11 +51,11 @@ public class AgentEvents extends BaseAgentConnection {
 
     }
 
-    public Message pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
+    public Message pull(int timeout) throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
         if (!connector.isOpen()) {
             throw new SiriusConnectionClosed("Open agent connection at first");
         }
-        byte[] data = connector.read(getTimeout());
+        byte[] data = connector.read(timeout);
         try {
             JSONObject payload = new JSONObject(data);
             if (payload.has("protected")) {

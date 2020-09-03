@@ -3,6 +3,7 @@ package com.sirius.sdk.messaging;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessageClass;
@@ -170,6 +171,16 @@ public class Message implements JsonSerializable<Message> {
         return messageObj.toString();
 
     }
+
+
+
+
+    @Override
+    public JSONObject serializeToJSONObject() {
+        String string = serialize();
+        return new JSONObject(string);
+    }
+
 
     @Override
     public Message deserialize(String string) {

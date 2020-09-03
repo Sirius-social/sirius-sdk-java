@@ -20,9 +20,9 @@ public class Listener {
     }
 
 
-    public Event getOne() {
+    public Event getOne(int timeout) {
         try {
-            Message event = source.pull();
+            Message event = source.pull(timeout);
             if (event.messageObjectHasKey("message")) {
                 JSONObject messObj = event.getJSONOBJECTFromJSON("message");
                 Pair<Boolean, Message> result = Message.restoreMessageInstance(messObj.toString());

@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.wallet.abstract_wallet.model;
 
 import com.google.gson.Gson;
 import com.sirius.sdk.base.JsonSerializable;
+import org.json.JSONObject;
 
 public class PurgeOptions implements JsonSerializable<PurgeOptions> {
     int maxAge = -1;
@@ -17,6 +18,12 @@ public class PurgeOptions implements JsonSerializable<PurgeOptions> {
     public String serialize() {
         Gson gson = new Gson();
         return  gson.toJson(this,PurgeOptions.class);
+    }
+
+    @Override
+    public JSONObject serializeToJSONObject() {
+        String string = serialize();
+        return new JSONObject(string);
     }
 
     @Override

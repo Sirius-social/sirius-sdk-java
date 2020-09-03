@@ -1,9 +1,13 @@
 package com.sirius.sdk.agent.wallet;
 
 import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.impl.*;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DynamicWallet {
     AnonCredsProxy anoncreds;
@@ -58,10 +62,11 @@ public class DynamicWallet {
     }
 
     public Object generateWalletKey(String seed){
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("seed",seed);
+        RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
+                .add("seed",seed)
+                  .build();
         try {
-            return rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/generate_wallet_key",jsonObject.toString());
+            return rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/generate_wallet_key",params);
         } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }

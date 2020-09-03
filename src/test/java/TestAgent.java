@@ -80,9 +80,9 @@ public class TestAgent {
 
         System.out.println(entity1);
         Agent agent1 = new Agent(agent1params.getServerAddress(), agent1params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                agent1params.getConnection(), 5, null, null);
+                agent1params.getConnection(), 10, null, null);
         Agent agent2 = new Agent(agent2params.getServerAddress(), agent2params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                agent2params.getConnection(), 5, null, null);
+                agent2params.getConnection(), 10, null, null);
         agent1.open();
         agent2.open();
         //Get endpoints
@@ -108,7 +108,7 @@ public class TestAgent {
         }
         //Prepare Message
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("@id", "trust-ping-message-" + UUID.randomUUID().toString().hashCode());
+        jsonObject.put("@id", "trust-ping-message" + UUID.randomUUID().hashCode());
         jsonObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping");
         jsonObject.put("comment", "Hi. Are you listening?");
         jsonObject.put("response_requested", true);
@@ -116,7 +116,7 @@ public class TestAgent {
         List<String> thierVerkeys = new ArrayList<>();
         thierVerkeys.add(entity2.getString("verkey"));
         agent1.sendMessage(trustPing, thierVerkeys, agent2Endpoint, entity1.getString("verkey"), new ArrayList<>());
-        Event event = agent2Listener.getOne();
+        Event event = agent2Listener.getOne(5);
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         Assert.assertNotNull(message);
         String type = message.getString("@type");

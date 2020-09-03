@@ -194,10 +194,11 @@ public class Agent extends TransportLayer {
 
     public String generateQrCode(String value){
         checkIsOpen();
-        JSONObject paramsObject = new JSONObject();
-        paramsObject.put("value",value);
+        RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
+                .add("value",value)
+                .build();
         try {
-            Object response =  rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/generate_qr",paramsObject.toString());
+            Object response =  rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/generate_qr",params);
             if(response instanceof String){
                 JSONObject responseObject = new JSONObject((String)response);
                 return  responseObject.getString("url");
