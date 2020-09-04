@@ -6,6 +6,7 @@ build/*
 .gradle
 /local.properties
 /.idea/caches
+.target/*
 /.idea/libraries
 /.idea/modules.xml
 /.idea/misc.xml
