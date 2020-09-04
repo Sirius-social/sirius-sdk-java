@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PairwiseProxy extends AbstractPairwise {
+public class PairwiseProxy extends AbstractPairwise  {
     AgentRPC rpc;
 
     public PairwiseProxy(AgentRPC rpc) {
@@ -18,17 +18,14 @@ public class PairwiseProxy extends AbstractPairwise {
     }
 
 
+
     @Override
     public boolean isPairwiseExist(String theirDid) {
-        try {
-            RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
-                    .add("their_did",theirDid)
-                    .build();
-            rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/is_pairwise_exists",params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
-            siriusConnectionClosed.printStackTrace();
-        }
-        return false;
+        return new RemoteCallWrapper<Boolean>(rpc).
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/is_pairwise_exists",
+                        RemoteParams.RemoteParamsBuilder.create()
+                .add("their_did", theirDid));
+
     }
 
     @Override
@@ -55,5 +52,6 @@ public class PairwiseProxy extends AbstractPairwise {
     public Pair<List<String>, Integer> search(String tags, int limit) {
         return null;
     }
+
 }
 

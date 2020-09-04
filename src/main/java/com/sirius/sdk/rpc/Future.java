@@ -139,7 +139,7 @@ public class Future {
                     boolean is_bytes =   message.getBooleanFromJSON("is_bytes");
                     if(is_tuple){
                         if (((JSONArray) value).length() == 2) {
-                            this.value = new Pair<String,String>(((JSONArray) value).getString(0),((JSONArray) value).getString(1));
+                            this.value = new Pair<Object,Object>(((JSONArray) value).get(0),((JSONArray) value).get(1));
                         }else{
                             this.value = value;
                         }

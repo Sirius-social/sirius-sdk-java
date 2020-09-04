@@ -73,7 +73,7 @@ public class Parsing {
         if (params == null) {
             return paramsObject;
         }
-        Map<String,Object> paramsMap =  params.getParams();
+        Map<String, Object> paramsMap = params.getParams();
         Set<String> keys = paramsMap.keySet();
         for (String key : keys) {
             Pair<String, Object> pair = serializeVariable(paramsMap.get(key));
@@ -94,25 +94,33 @@ public class Parsing {
         return paramsObject;
     }
 
-    public static  Object serializeObject(Object param) {
+    public static Object serializeObject(Object param) {
         Object varParam = null;
-        if (param instanceof Collection) {
+        String mimeType = CLS_MAP_REVERT.get(param.getClass());
+        if (mimeType != null && param instanceof JsonSerializable) {
+            varParam = ((JsonSerializable) param).serialize();
+        }else if (param instanceof Collection) {
             JSONArray jsonArray = new JSONArray();
             for (Object oneParam : (Collection) param) {
                 Object oneParamObject = serializeObject(oneParam);
                 jsonArray.put(oneParamObject);
             }
             varParam = jsonArray;
-        } else if(param instanceof byte[]){
+        } else if (param instanceof byte[]) {
             Custom custom = new Custom();
-            varParam =  custom.bytesToB64((byte[])param,false);
+            varParam = custom.bytesToB64((byte[]) param, false);
         } else if (param instanceof JsonSerializable) {
             varParam = ((JsonSerializable) param).serializeToJSONObject();
+        }else if(param instanceof  JSONObject){
+            varParam = param;
+        } else if(param instanceof  Integer){
+            varParam = param;
         } else {
             varParam = param.toString();
         }
         return varParam;
     }
+
     /**
      * Serialize input variable to JSON-compatible string
      *
@@ -123,8 +131,8 @@ public class Parsing {
         if (param == null) {
             return new Pair<>(null, null);
         }
-        String mimeType = CLS_MAP_REVERT.get(param);
-        if(param instanceof  byte[]){
+        String mimeType = CLS_MAP_REVERT.get(param.getClass());
+        if (param instanceof byte[]) {
             mimeType = "application/base64";
         }
         Object varParam = serializeObject(param);

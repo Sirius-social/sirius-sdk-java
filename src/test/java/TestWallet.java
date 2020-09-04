@@ -1,5 +1,6 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import org.json.JSONArray;
@@ -11,6 +12,7 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class TestWallet {
 
@@ -210,4 +212,225 @@ public class TestWallet {
         agent2.close();
     }
 
+
+    @Test
+    public void testRecordValue() {
+        Agent agent1 = confTest.agent1();
+        agent1.open();
+
+        String value = "my-value-" + UUID.randomUUID().toString();
+        String myId = "my-id-" + UUID.randomUUID().toString();
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value, null);
+        RetrieveRecordOptions opts = new RetrieveRecordOptions();
+        opts.checkAll();
+
+        String valueInfo = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        Assert.assertNotNull(valueInfo);
+        JSONObject valueInfoObject = new JSONObject(valueInfo);
+
+        Assert.assertEquals(myId, valueInfoObject.getString("id"));
+        Assert.assertEquals(new JSONObject().toString(), valueInfoObject.optJSONObject("tags").toString());
+        Assert.assertEquals(value, valueInfoObject.getString("value"));
+        Assert.assertEquals("type", valueInfoObject.getString("type"));
+
+        String valueNew = "my-new-value-" + UUID.randomUUID().toString();
+
+        agent1.getWallet().getNonSecrets().updateWalletRecordValue("type", myId, valueNew);
+
+        String valueInfoNew = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoObjectNew = new JSONObject(valueInfoNew);
+
+        Assert.assertEquals(valueNew, valueInfoObjectNew.getString("value"));
+
+        agent1.getWallet().getNonSecrets().deleteWalletRecord("type", myId);
+
+        agent1.close();
+    }
+
+
+    @Test
+    public void testRecordValueWithTags() {
+        Agent agent1 = confTest.agent1();
+        agent1.open();
+
+        String value = "my-value-" + UUID.randomUUID().toString();
+        String myId = "my-id-" + UUID.randomUUID().toString();
+        JSONObject tags = new JSONObject();
+        tags.put("tag1", "val1");
+        tags.put("~tag2", "val2");
+
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value, tags.toString());
+        RetrieveRecordOptions opts = new RetrieveRecordOptions();
+        opts.checkAll();
+
+        String valueInfo = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoObject = new JSONObject(valueInfo);
+
+        Assert.assertEquals(myId, valueInfoObject.getString("id"));
+        Assert.assertEquals(tags.toString(), valueInfoObject.optJSONObject("tags").toString());
+        Assert.assertEquals(value, valueInfoObject.getString("value"));
+        Assert.assertEquals("type", valueInfoObject.getString("type"));
+
+        JSONObject updTags = new JSONObject();
+        updTags.put("ext-tag", "val3");
+        agent1.getWallet().getNonSecrets().updateWalletRecordTags("type", myId, updTags.toString());
+
+        String valueInfoNew = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoNewObject = new JSONObject(valueInfoNew);
+
+        Assert.assertEquals(updTags.toString(), valueInfoNewObject.optJSONObject("tags").toString());
+
+        agent1.getWallet().getNonSecrets().addWalletRecordTags("type", myId, tags.toString());
+
+
+        String valueInfoNew2 = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoNew2Object = new JSONObject(valueInfoNew2);
+
+        updTags.put("tag1", "val1");
+        updTags.put("~tag2", "val2");
+
+        Assert.assertEquals(updTags.toString(), valueInfoNew2Object.optJSONObject("tags").toString());
+        List<String> tagsList = new ArrayList<>();
+        tagsList.add("ext-tag");
+        agent1.getWallet().getNonSecrets().deleteWalletRecord("type", myId, tagsList);
+
+        String valueInfoNew3 = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoNew3Object = new JSONObject(valueInfoNew3);
+
+        Assert.assertEquals(tags.toString(), valueInfoNew3Object.optJSONObject("tags").toString());
+
+        agent1.close();
+    }
+
+    @Test
+    public void testRecordValueWithTagsThenUpdate() {
+        Agent agent1 = confTest.agent1();
+        agent1.open();
+
+        String value = "my-value-" + UUID.randomUUID().toString();
+        String myId = "my-id-" + UUID.randomUUID().toString();
+
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value, null);
+        RetrieveRecordOptions opts = new RetrieveRecordOptions();
+        opts.checkAll();
+
+        String valueInfo = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfoObject = new JSONObject(valueInfo);
+
+        Assert.assertEquals(myId, valueInfoObject.getString("id"));
+        Assert.assertEquals(new JSONObject().toString(), valueInfoObject.optJSONObject("tags").toString());
+        Assert.assertEquals(value, valueInfoObject.getString("value"));
+        Assert.assertEquals("type", valueInfoObject.getString("type"));
+
+        JSONObject tags1 = new JSONObject();
+        tags1.put("tag1", "val1");
+        tags1.put("~tag2", "val2");
+
+        agent1.getWallet().getNonSecrets().updateWalletRecordTags("type", myId, tags1.toString());
+
+        String valueInfo1 = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfo1Object = new JSONObject(valueInfo1);
+
+        Assert.assertEquals(tags1.toString(), valueInfo1Object.optJSONObject("tags").toString());
+
+        JSONObject tags2 = new JSONObject();
+        tags1.put("tag3", "val3");
+
+        agent1.getWallet().getNonSecrets().updateWalletRecordTags("type", myId, tags2.toString());
+
+        String valueInfo2 = agent1.getWallet().getNonSecrets().getWalletRecord("type", myId, opts);
+        JSONObject valueInfo2Object = new JSONObject(valueInfo2);
+
+        Assert.assertEquals(tags2.toString(), valueInfo2Object.optJSONObject("tags").toString());
+
+        agent1.close();
+
+    }
+
+
+    @Test
+    public void testRecordSearch() {
+        Agent agent1 = confTest.agent1();
+        agent1.open();
+
+        String id1 = "id-1-" + UUID.randomUUID().toString();
+        String id2 = "id-2-" + UUID.randomUUID().toString();
+
+        String value1 = "value-1-" + UUID.randomUUID().toString();
+        String value2 = "value-2-" + UUID.randomUUID().toString();
+
+        String markerA = "A-" + UUID.randomUUID().toString();
+        String markerB = "B-" + UUID.randomUUID().toString();
+
+        RetrieveRecordOptions opts = new RetrieveRecordOptions();
+        opts.checkAll();
+
+        JSONObject tags1 = new JSONObject();
+        tags1.put("tag1", value1);
+        tags1.put("~tag2", "5");
+        tags1.put("marker", markerA);
+
+        JSONObject tags2 = new JSONObject();
+        tags2.put("tag3", "val3");
+        tags2.put("~tag4", value2);
+        tags2.put("marker", markerB);
+
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", id1, "value1", tags1.toString());
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", id2, "value2", tags2.toString());
+
+        JSONObject query = new JSONObject();
+        query.put("tag1", value1);
+
+        Pair<List<String>, Integer> recordsTotal = agent1.getWallet().getNonSecrets().walletSearch("type", query.toString(), opts, 1);
+
+        List<String> searchList = recordsTotal.first;
+        System.out.println("searchList=" + searchList);
+        System.out.println("recordsTotal.second=" + recordsTotal.second);
+
+        Assert.assertEquals(1, (int) recordsTotal.second);
+        for (int i = 0; i < recordsTotal.first.size(); i++) {
+            Assert.assertTrue((recordsTotal.first.get(i).toString()).contains(value1));
+        }
+
+
+        JSONObject queryNew = new JSONObject();
+        JSONArray queryArr = new JSONArray();
+        JSONObject querytag1 = new JSONObject();
+        querytag1.put("tag1", value1);
+        JSONObject querytag2 = new JSONObject();
+        querytag2.put("~tag4", value2);
+        queryArr.put(querytag1);
+        queryArr.put(querytag2);
+        queryNew.put("$or", queryArr);
+
+        Pair<List<String>, Integer> recordsTotal2 = agent1.getWallet().getNonSecrets().walletSearch("type", queryNew.toString(), opts, 1);
+        List<String> searchList2 = recordsTotal2.first;
+
+        Assert.assertEquals(recordsTotal2.first.size(), 1);
+        Assert.assertEquals((int) recordsTotal2.second, 2);
+
+
+        Pair<List<String>, Integer> recordsTotal3 = agent1.getWallet().getNonSecrets().walletSearch("type", queryNew.toString(), opts, 1000);
+
+        Assert.assertEquals(recordsTotal3.first.size(), 2);
+        Assert.assertEquals((int) recordsTotal3.second, 2);
+
+        JSONObject queryNew1 = new JSONObject();
+        JSONObject queryArg = new JSONObject();
+        JSONArray queryArr1 = new JSONArray();
+        queryArr1.put(markerA);
+        queryArr1.put(markerB);
+        queryArg.put("$in", queryArr1);
+
+        queryNew1.put("marker", queryArg);
+
+        Pair<List<String>, Integer> recordsTotal4 = agent1.getWallet().getNonSecrets().walletSearch("type", queryNew1.toString(), opts, 1000);
+
+        Assert.assertEquals((int) recordsTotal4.second, 2);
+
+        agent1.close();
+    }
+
+
 }
+

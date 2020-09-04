@@ -1,14 +1,16 @@
 package com.sirius.sdk.agent.wallet.impl;
 
 import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 
 import java.util.List;
 
-public class AnonCredsProxy extends AbstractAnonCreds {
+public class AnonCredsProxy extends AbstractAnonCreds  {
 
     AgentRPC rpc;
 
@@ -148,4 +150,6 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     public String toUnqualified(String entity) {
         return null;
     }
+
+
 }

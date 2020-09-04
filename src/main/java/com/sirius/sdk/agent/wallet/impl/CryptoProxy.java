@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CryptoProxy extends AbstractCrypto {
+public class CryptoProxy extends AbstractCrypto   {
 
     AgentRPC rpc;
 
