@@ -49,7 +49,7 @@ public class PairwiseProxy extends AbstractPairwise  {
     }
 
     @Override
-    public Pair<List<String>, Integer> search(String tags, int limit) {
+    public Pair<List<String>, Integer> search(String tags, Integer limit) {
         return null;
     }
 

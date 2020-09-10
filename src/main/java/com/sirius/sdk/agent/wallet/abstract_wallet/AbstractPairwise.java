@@ -23,6 +23,22 @@ public abstract  class AbstractPairwise {
      */
     public abstract void createPairwise(String theirDid,String myDid,String metadata,String tags);
 
+
+
+    /**
+     * Overload method {@link #createPairwise(String theirDid,String myDid,String metadata,String tags)}
+     */
+    public  void createPairwise(String theirDid,String myDid,String metadata){
+        createPairwise(theirDid,myDid,metadata,null);
+    }
+
+    /**
+     * Overload method {@link #createPairwise(String theirDid,String myDid,String metadata,String tags)}
+     */
+    public  void createPairwise(String theirDid,String myDid){
+        createPairwise(theirDid,myDid,null);
+    }
+
     /**
      *    Get list of saved pairwise.
      * @return pairwise_list: list of saved pairwise
@@ -45,12 +61,33 @@ public abstract  class AbstractPairwise {
     public abstract void setPairwiseMetadata(String theirDid,String metadata,String tags);
 
     /**
+     * Overload method {@link #setPairwiseMetadata(String theirDid,String metadata,String tags)}
+     */
+    public  void setPairwiseMetadata(String theirDid,String metadata){
+        setPairwiseMetadata(theirDid,metadata,null);
+    }
+    /**
+     * Overload method {@link #setPairwiseMetadata(String theirDid,String metadata,String tags)}
+     */
+    public  void setPairwiseMetadata(String theirDid){
+        setPairwiseMetadata(theirDid,null);
+    }
+
+
+    /**
      * Search Pairwises
      * @param tags tags based query
      * @param limit limit: max items count
      * @return Results, TotalCount
      */
-    public abstract Pair<List<String>,Integer> search(String tags, int limit);
+    public abstract Pair<List<String>,Integer> search(String tags, Integer limit);
+
+    /**
+     * Overload method {@link #search(String tags, Integer limit)}
+     */
+    public  Pair<List<String>,Integer> search(String tags){
+        return search(tags,null);
+    }
 }
 
 

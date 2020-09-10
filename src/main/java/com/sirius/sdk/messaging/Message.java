@@ -198,6 +198,10 @@ public class Message implements JsonSerializable<Message> {
         MSG_REGISTRY.put(protocol, descriptor);
     }
 
+    public static void registerMessageClass(Class<? extends Message> clas, String protocol) {
+        registerMessageClass(clas,protocol, null);
+    }
+
     public static Pair<Boolean, Message> restoreMessageInstance(String payload) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Pair<Boolean, Message> pair = new Pair<>(false, null);
         Message message = new Message(payload);

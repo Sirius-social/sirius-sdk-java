@@ -16,7 +16,7 @@ public class TestMessages {
     @Test
     public void testRegisterProtocolMessageSuccess() {
         try {
-            Message.registerMessageClass(TestMessage1.class, "test-protocol", null);
+            Message.registerMessageClass(TestMessage1.class, "test-protocol");
             JSONObject messObject = new JSONObject();
             messObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/test-protocol/1.0/name");
             Pair<Boolean, Message> result = Message.restoreMessageInstance(messObject.toString());
@@ -38,7 +38,7 @@ public class TestMessages {
 
     @Test
     public void testRegisterProtocolMessageFail() {
-        Message.registerMessageClass(TestMessage1.class, "test-protocol", null);
+        Message.registerMessageClass(TestMessage1.class, "test-protocol");
         JSONObject messObject = new JSONObject();
         messObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/fake-protocol/1.0/name");
         try {
@@ -59,7 +59,7 @@ public class TestMessages {
 
     @Test
     public void testRegisterProtocolMessageMultipleName() {
-        Message.registerMessageClass(TestMessage1.class, "test-protocol", null);
+        Message.registerMessageClass(TestMessage1.class, "test-protocol");
         Message.registerMessageClass(TestMessage2.class, "test-protocol", "test-name");
         try {
             JSONObject messObject = new JSONObject();

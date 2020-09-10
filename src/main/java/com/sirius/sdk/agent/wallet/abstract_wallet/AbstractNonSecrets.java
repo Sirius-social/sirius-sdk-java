@@ -21,6 +21,13 @@ public abstract  class AbstractNonSecrets {
      */
     public abstract void addWalletRecord(String type,String id,String value,String tags);
 
+
+    /**
+     * Overload method {@link #addWalletRecord(String type,String id,String value,String tags)}
+     */
+    public  void addWalletRecord(String type,String id,String value){
+        addWalletRecord(type,id,value,null);
+    }
     /**
      *   Update a non-secret wallet record value
      * @param type allows to separate different record types collections
@@ -122,4 +129,11 @@ public abstract  class AbstractNonSecrets {
      *          }
      */
     public abstract Pair<List<String>,Integer> walletSearch(String type,String query,RetrieveRecordOptions options, int limit);
+
+    /**
+     * Overload method {@link #walletSearch(String type,String query,RetrieveRecordOptions options, int limit)}
+     */
+    public  Pair<List<String>,Integer> walletSearch(String type,String query,RetrieveRecordOptions options){
+        return walletSearch(type,query,options,1);
+    }
 }

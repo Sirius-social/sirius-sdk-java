@@ -37,7 +37,7 @@ public class TestAgent {
             String agentName = allAgentsList.get(i);
             AgentParams params = testSuite.getAgentParams(agentName);
             Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                    params.getConnection(), 5, null, null);
+                    params.getConnection(), 5);
             agent.open();
             boolean isPinged = agent.ping();
             Assert.assertTrue(isPinged);
@@ -50,10 +50,10 @@ public class TestAgent {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams params = testSuite.getAgentParams("agent1");
         Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                params.getConnection(), 5, null, null);
+                params.getConnection(), 5);
         agent.open();
         //Check wallet calls is ok
-        Pair<String, String> didVerkey = agent.getWallet().getDid().createAndStoreMyDid(null, null, null);
+        Pair<String, String> didVerkey = agent.getWallet().getDid().createAndStoreMyDid();
         Assert.assertNotNull(didVerkey);
         Assert.assertNotNull(didVerkey.first);
         Assert.assertNotNull(didVerkey.second);
@@ -80,9 +80,9 @@ public class TestAgent {
 
         System.out.println(entity1);
         Agent agent1 = new Agent(agent1params.getServerAddress(), agent1params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                agent1params.getConnection(), 10, null, null);
+                agent1params.getConnection(), 10);
         Agent agent2 = new Agent(agent2params.getServerAddress(), agent2params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                agent2params.getConnection(), 10, null, null);
+                agent2params.getConnection(), 10);
         agent1.open();
         agent2.open();
         //Get endpoints
@@ -99,12 +99,12 @@ public class TestAgent {
         agent1.getWallet().getDid().storeTheirDid(entity2.getString("did"), entity2.getString("verkey"));
         if (!agent1.getWallet().getPairwise().isPairwiseExist(entity2.getString("did"))) {
             System.out.println("#1");
-            agent1.getWallet().getPairwise().createPairwise(entity2.getString("did"), entity1.getString("did"), null, null);
+            agent1.getWallet().getPairwise().createPairwise(entity2.getString("did"), entity1.getString("did"));
         }
         agent2.getWallet().getDid().storeTheirDid(entity1.getString("did"), entity1.getString("verkey"));
         if (!agent2.getWallet().getPairwise().isPairwiseExist(entity1.getString("did"))) {
             System.out.println("#2");
-            agent1.getWallet().getPairwise().createPairwise(entity1.getString("did"), entity2.getString("did"), null, null);
+            agent1.getWallet().getPairwise().createPairwise(entity1.getString("did"), entity2.getString("did"));
         }
         //Prepare Message
         JSONObject jsonObject = new JSONObject();

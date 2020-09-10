@@ -27,7 +27,7 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
     }
 
     @Override
-    public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuer_did, String schema, String tag, String signatureType, String config) {
+    public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, String schema, String tag, String signatureType, String config) {
         return null;
     }
 
@@ -47,12 +47,12 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
     }
 
     @Override
-    public String issuer_create_credential_offer(String credDefId) {
+    public String issuerCreateCredentialOffer(String credDefId) {
         return null;
     }
 
     @Override
-    public Triple<String, String, String> issuer_create_credential(String credOffer, String credReq, String credValues, String revRegId, Integer blobStorageReaderHandle) {
+    public Triple<String, String, String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId, Integer blobStorageReaderHandle) {
         return null;
     }
 
@@ -67,7 +67,7 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
     }
 
     @Override
-    public String proverMasterSecret(String masterSecretName) {
+    public String proverCreateMasterSecret(String masterSecretName) {
         return null;
     }
 
@@ -102,7 +102,7 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
     }
 
     @Override
-    public List<String> proverGEtCredential(String filters) {
+    public List<String> proverGetCredentials(String filters) {
         return null;
     }
 

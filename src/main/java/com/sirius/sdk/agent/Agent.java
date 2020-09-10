@@ -66,6 +66,30 @@ public class Agent extends TransportLayer {
         this.storage = storage;
     }
 
+    /**
+     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     */
+    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = storage;
+    }
+
+    /**
+     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     */
+    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = null;
+    }
+
     public void open() {
         try {
             rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);

@@ -46,7 +46,7 @@ public abstract class AbstractAnonCreds {
      *
      *         Note: Use combination of `issuer_rotate_credential_def_start` and `issuer_rotate_credential_def_apply` functions
      *         to generate new keys for an existing credential definition.
-     * @param issuer_did a DID of the issuer signing cred_def transaction to the Ledger
+     * @param issuerDid a DID of the issuer signing cred_def transaction to the Ledger
      * @param schema credential schema as a json
      *             {
      *                 id: identifier of schema
@@ -82,7 +82,15 @@ public abstract class AbstractAnonCreds {
      *                     ver: Version of the CredDef json
      *                 }
      */
-    public abstract Pair<String,String> issuerCreateAndStoreCredentialDef(String issuer_did,String schema, String tag,String signatureType, String config);
+    public abstract Pair<String,String> issuerCreateAndStoreCredentialDef(String issuerDid,String schema, String tag,String signatureType, String config);
+
+    /**
+     * Overload method {@link #issuerCreateAndStoreCredentialDef(String issuerDid,String schema, String tag,String signatureType, String config)}
+     */
+
+    public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, String schema, String tag) {
+        return issuerCreateAndStoreCredentialDef(issuerDid,schema,tag,null, null);
+    }
 
     /**
      *    Generate temporary credential definitional keys for an existing one (owned by the caller of the library).
@@ -99,6 +107,13 @@ public abstract class AbstractAnonCreds {
      * @return   cred_def_json: public part of temporary created credential definition
      */
     public abstract String issuerRotateCredentialDefStart(String credDefId, String  config );
+
+    /**
+     * Overload method {@link #issuerRotateCredentialDefStart(String credDefId, String  config )}
+     */
+    public  String issuerRotateCredentialDefStart(String credDefId ){
+        return issuerRotateCredentialDefStart(credDefId, null);
+    }
 
     /**
      *   Apply temporary keys as main for an existing Credential Definition (owned by the caller of the library).
@@ -192,7 +207,7 @@ public abstract class AbstractAnonCreds {
      *                                        It should not be parsed and are likely to change in future versions).
      *          }
      */
-    public abstract String issuer_create_credential_offer(String credDefId);
+    public abstract String issuerCreateCredentialOffer(String credDefId);
 
     /**
      *    Check Cred Request for the given Cred Offer and issue Credential for the given Cred Request.
@@ -240,9 +255,23 @@ public abstract class AbstractAnonCreds {
      *          cred_revoc_id: local id for revocation info (Can be used for revocation of this cred)
      *          revoc_reg_delta_json: Revocation registry delta json with a newly issued credential
      */
-    public abstract Triple<String,String,String> issuer_create_credential(String credOffer, String credReq, String credValues,String revRegId,
-                                                                          Integer blobStorageReaderHandle);
+    public abstract Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+                                                                        Integer blobStorageReaderHandle);
 
+    /**
+     * Overload method {@link #issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+     *                                                                         Integer blobStorageReaderHandle)}
+     */
+    public  Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues){
+        return issuerCreateCredential(credOffer,credReq,credValues,null,null);
+    }
+    /**
+     * Overload method {@link #issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+     *                                                                         Integer blobStorageReaderHandle)}
+     */
+    public  Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId){
+        return issuerCreateCredential(credOffer,credReq,credValues,revRegId,null);
+    }
 
     /**
      *     Revoke a credential identified by a cred_revoc_id (returned by issuer_create_credential).
@@ -275,8 +304,15 @@ public abstract class AbstractAnonCreds {
      * @param masterSecretName  (optional, if not present random one will be generated) new master id
      * @return id of generated master secret.
      */
-    public abstract String proverMasterSecret(String masterSecretName);
+    public abstract String proverCreateMasterSecret(String masterSecretName);
 
+    /**
+     * Overload method {@link #proverCreateMasterSecret(String masterSecretName)}
+     */
+
+    public  String proverCreateMasterSecret(){
+        return proverCreateMasterSecret(null);
+    }
     /**
      *  Creates a credential request for the given credential offer.
      *       The method creates a blinded master secret for a master secret identified by a provided name.
@@ -358,6 +394,12 @@ public abstract class AbstractAnonCreds {
     public abstract String proverStoreCredential(String credId,String credReqMetadata, String cred,String credDef,String revReqDef);
 
     /**
+     * Overload method {@link #proverCreateMasterSecret(String masterSecretName)}
+     */
+    public  String proverStoreCredential(String credId,String credReqMetadata, String cred,String credDef){
+        return proverStoreCredential(credId,credReqMetadata,cred,credDef,null);
+    }
+    /**
      * Gets human readable credential by the given id.
      * @param credDefId Identifier by which requested credential is stored in the wallet
      * @return credential json
@@ -404,7 +446,7 @@ public abstract class AbstractAnonCreds {
      *              "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
      *          }]
      */
-    public abstract List<String> proverGEtCredential(String filters);
+    public abstract List<String> proverGetCredentials(String filters);
 
     /**
      * Search for credentials stored in wallet.
@@ -609,6 +651,19 @@ public abstract class AbstractAnonCreds {
      * NOTE: The list of length less than the requested count means that search iterator correspondent to the requested <item_referent> is completed.
      */
     public abstract  String proverSearchCredentialsForProofReq(String proofRequest,String extraQuery,int limitReferents);
+
+    /**
+     * Overload method {@link #proverSearchCredentialsForProofReq(String proofRequest,String extraQuery,int limitReferents)}
+     */
+    public   String proverSearchCredentialsForProofReq(String proofRequest,String extraQuery){
+        return proverSearchCredentialsForProofReq(proofRequest,extraQuery,1);
+    }
+    /**
+     * Overload method {@link #proverSearchCredentialsForProofReq(String proofRequest,String extraQuery,int limitReferents)}
+     */
+    public   String proverSearchCredentialsForProofReq(String proofRequest){
+        return proverSearchCredentialsForProofReq(proofRequest,null);
+    }
 
     /**
      *   Creates a proof according to the given proof request

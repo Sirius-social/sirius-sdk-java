@@ -107,7 +107,7 @@ public class AgentRPC extends BaseAgentConnection {
 
     public Object remoteCall(String msgType)
             throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
-        return remoteCall(msgType, null, true);
+        return remoteCall(msgType, null);
     }
 
 

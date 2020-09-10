@@ -33,8 +33,8 @@ public class TestWallet {
         DynamicWallet walletSender = agent1.getWallet();
         DynamicWallet walletRecipient = agent2.getWallet();
 
-        String verkeySender = walletSender.getCrypto().createKey(null, null);
-        String verkeyRecipient = walletRecipient.getCrypto().createKey(null, null);
+        String verkeySender = walletSender.getCrypto().createKey();
+        String verkeyRecipient = walletRecipient.getCrypto().createKey();
         Assert.assertNotNull(verkeySender);
         Assert.assertNotNull(verkeyRecipient);
         List<String> verKeyList = new ArrayList<>();
@@ -42,7 +42,7 @@ public class TestWallet {
         JSONObject message = new JSONObject();
         message.put("content", "Hello!");
         //1: anon crypt mode
-        byte[] messageWired = walletSender.getCrypto().packMessage(message, verKeyList, null);
+        byte[] messageWired = walletSender.getCrypto().packMessage(message, verKeyList);
         String unpackedMessage = walletRecipient.getCrypto().unpackMessage(messageWired);
         JSONObject jsonObject = new JSONObject(unpackedMessage);
         JSONObject messObjUnpacked = jsonObject.getJSONObject("message");
@@ -71,7 +71,7 @@ public class TestWallet {
         DynamicWallet walletSigner = agent1.getWallet();
         DynamicWallet walletVerifier = agent2.getWallet();
 
-        String keySigner = walletSigner.getCrypto().createKey(null, null);
+        String keySigner = walletSigner.getCrypto().createKey();
         JSONObject message = new JSONObject();
         message.put("content", "Hello!");
 
@@ -83,7 +83,7 @@ public class TestWallet {
         Assert.assertTrue(isOk);
 
 
-        String keySigner2 = walletSigner.getCrypto().createKey(null, null);
+        String keySigner2 = walletSigner.getCrypto().createKey();
         byte[] brokenSignature = walletSigner.getCrypto().cryptoSign(keySigner, messageBytes);
         boolean isOk2 = walletVerifier.getCrypto().cryptoVerify(keySigner2, messageBytes, brokenSignature);
         Assert.assertFalse(isOk2);
@@ -100,7 +100,7 @@ public class TestWallet {
         agent1.open();
 
         //1: Create Key
-        String randomKey = agent1.getWallet().getDid().createKey(null);
+        String randomKey = agent1.getWallet().getDid().createKey();
         Assert.assertNotNull(randomKey);
 
         // 2: Set metadata
@@ -115,14 +115,14 @@ public class TestWallet {
 
         // 3:  Create DID + Verkey
 
-        Pair<String, String> didVerkey = agent1.getWallet().getDid().createAndStoreMyDid(null, null, null);
+        Pair<String, String> didVerkey = agent1.getWallet().getDid().createAndStoreMyDid();
         String fully = agent1.getWallet().getDid().qualifyDid(didVerkey.first, "peer");
 
         Assert.assertTrue(fully.contains(didVerkey.first));
 
 
         // 4:  Replace verkey
-        String verkeyNew = agent1.getWallet().getDid().replaceKeysStart(fully, null);
+        String verkeyNew = agent1.getWallet().getDid().replaceKeysStart(fully);
 
         Assert.assertNotNull(verkeyNew);
 
@@ -179,8 +179,8 @@ public class TestWallet {
         DynamicWallet walletMe = agent1.getWallet();
         DynamicWallet walletTheir = agent2.getWallet();
 
-        Pair<String, String> myDidVerkey = walletMe.getDid().createAndStoreMyDid(null, null, null);
-        Pair<String, String> theirDidVerkey = walletTheir.getDid().createAndStoreMyDid(null, null, null);
+        Pair<String, String> myDidVerkey = walletMe.getDid().createAndStoreMyDid();
+        Pair<String, String> theirDidVerkey = walletTheir.getDid().createAndStoreMyDid();
 
         walletMe.getDid().storeTheirDid(theirDidVerkey.first, theirDidVerkey.second);
 
@@ -199,7 +199,7 @@ public class TestWallet {
 
         Assert.assertEquals(theirDidVerkey.second, verkey);
 
-        String verkeyTheirNew = walletTheir.getDid().replaceKeysStart(theirDidVerkey.first, null);
+        String verkeyTheirNew = walletTheir.getDid().replaceKeysStart(theirDidVerkey.first);
 
         walletTheir.getDid().replaceKeysApply(theirDidVerkey.first);
         walletMe.getDid().storeTheirDid(theirDidVerkey.first, verkeyTheirNew);
@@ -220,7 +220,7 @@ public class TestWallet {
 
         String value = "my-value-" + UUID.randomUUID().toString();
         String myId = "my-id-" + UUID.randomUUID().toString();
-        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value, null);
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value);
         RetrieveRecordOptions opts = new RetrieveRecordOptions();
         opts.checkAll();
 
@@ -310,7 +310,7 @@ public class TestWallet {
         String value = "my-value-" + UUID.randomUUID().toString();
         String myId = "my-id-" + UUID.randomUUID().toString();
 
-        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value, null);
+        agent1.getWallet().getNonSecrets().addWalletRecord("type", myId, value);
         RetrieveRecordOptions opts = new RetrieveRecordOptions();
         opts.checkAll();
 
@@ -381,7 +381,7 @@ public class TestWallet {
         JSONObject query = new JSONObject();
         query.put("tag1", value1);
 
-        Pair<List<String>, Integer> recordsTotal = agent1.getWallet().getNonSecrets().walletSearch("type", query.toString(), opts, 1);
+        Pair<List<String>, Integer> recordsTotal = agent1.getWallet().getNonSecrets().walletSearch("type", query.toString(), opts);
 
         List<String> searchList = recordsTotal.first;
         System.out.println("searchList=" + searchList);
@@ -403,7 +403,7 @@ public class TestWallet {
         queryArr.put(querytag2);
         queryNew.put("$or", queryArr);
 
-        Pair<List<String>, Integer> recordsTotal2 = agent1.getWallet().getNonSecrets().walletSearch("type", queryNew.toString(), opts, 1);
+        Pair<List<String>, Integer> recordsTotal2 = agent1.getWallet().getNonSecrets().walletSearch("type", queryNew.toString(), opts);
         List<String> searchList2 = recordsTotal2.first;
 
         Assert.assertEquals(recordsTotal2.first.size(), 1);
