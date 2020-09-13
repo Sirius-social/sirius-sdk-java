@@ -14,8 +14,8 @@ public class AnoncredsInvalidUserRevocId extends IndyException
 	/**
 	 * Initializes a new AnoncredsInvalidUserRevocId.
 	 */
-	public AnoncredsInvalidUserRevocId()
+	public AnoncredsInvalidUserRevocId(IndyError error)
 	{
-		super(message, ErrorCode.AnoncredsInvalidUserRevocId.value());
+		super(message + error.buildMessage(), ErrorCode.AnoncredsInvalidUserRevocId.value());
 	}
 }

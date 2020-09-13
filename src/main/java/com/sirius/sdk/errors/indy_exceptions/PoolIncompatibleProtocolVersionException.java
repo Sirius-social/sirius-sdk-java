@@ -14,8 +14,8 @@ public class PoolIncompatibleProtocolVersionException extends IndyException
 	/**
 	 * Initializes a new PoolIncompatibleProtocolVersionException.
 	 */
-	public PoolIncompatibleProtocolVersionException()
+	public PoolIncompatibleProtocolVersionException(IndyError error)
 	{
-		super(message, ErrorCode.PoolLedgerNotCreatedError.value());
+		super(message  +error.buildMessage(), ErrorCode.PoolLedgerNotCreatedError.value());
 	}
 }

@@ -15,8 +15,8 @@ public class WalletAlreadyOpenedException extends IndyException
 	/**
 	 * Initializes a new WalletAlreadyOpenedException.
 	 */
-	public WalletAlreadyOpenedException()
+	public WalletAlreadyOpenedException(IndyError error)
 	{
-		super(message, ErrorCode.WalletAlreadyOpenedError.value());
+		super(message +error.buildMessage(), ErrorCode.WalletAlreadyOpenedError.value());
 	}
 }

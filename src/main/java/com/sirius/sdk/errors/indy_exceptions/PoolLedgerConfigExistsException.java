@@ -14,8 +14,8 @@ public class PoolLedgerConfigExistsException extends IndyException
 	/**
 	 * Initializes a new PoolLedgerConfigExistsException.
 	 */
-	public PoolLedgerConfigExistsException()
+	public PoolLedgerConfigExistsException(IndyError error)
 	{
-		super(message, ErrorCode.PoolLedgerConfigAlreadyExistsError.value());
+		super(message + error.buildMessage(), ErrorCode.PoolLedgerConfigAlreadyExistsError.value());
 	}
 }

@@ -14,8 +14,9 @@ public class InvalidStateException extends IndyException
 	/**
 	 * Initializes a new InvalidStateException.
 	 */
-	public InvalidStateException()
+	public InvalidStateException(IndyError errorDetails)
 	{
-		super(message, ErrorCode.CommonInvalidState.value());
+		super(message +errorDetails.buildMessage(), ErrorCode.CommonInvalidState.value());
 	}
+
 }

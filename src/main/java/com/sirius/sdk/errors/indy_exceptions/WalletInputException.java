@@ -15,8 +15,8 @@ public class WalletInputException extends IndyException
 	/**
 	 * Initializes a new WalletInputException.
 	 */
-	public WalletInputException()
+	public WalletInputException(IndyError error)
 	{
-		super(message, ErrorCode.WalletInputError.value());
+		super(message + error.buildMessage(), ErrorCode.WalletInputError.value());
 	}
 }

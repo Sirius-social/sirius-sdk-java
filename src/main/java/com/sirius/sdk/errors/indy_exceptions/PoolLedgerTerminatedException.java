@@ -14,8 +14,8 @@ public class PoolLedgerTerminatedException extends IndyException
 	/**
 	 * Initializes a new PoolLedgerTerminatedException.
 	 */
-	public PoolLedgerTerminatedException()
+	public PoolLedgerTerminatedException(IndyError error)
 	{
-		super(message, ErrorCode.PoolLedgerTerminated.value());
+		super(message+error.buildMessage(), ErrorCode.PoolLedgerTerminated.value());
 	}
 }

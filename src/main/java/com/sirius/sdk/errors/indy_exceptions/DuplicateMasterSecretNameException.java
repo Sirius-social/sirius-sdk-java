@@ -15,8 +15,8 @@ public class DuplicateMasterSecretNameException extends IndyException
 	/**
 	 * Initializes a new DuplicateMasterSecretNameException.
 	 */
-	public DuplicateMasterSecretNameException()
+	public DuplicateMasterSecretNameException(IndyError error)
 	{
-		super(message, ErrorCode.AnoncredsMasterSecretDuplicateNameError.value());
+		super(message + error.buildMessage(), ErrorCode.AnoncredsMasterSecretDuplicateNameError.value());
 	}
 }

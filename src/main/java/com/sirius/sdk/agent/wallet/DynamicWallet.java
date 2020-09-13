@@ -67,7 +67,7 @@ public class DynamicWallet {
                   .build();
         try {
             return rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/generate_wallet_key",params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;

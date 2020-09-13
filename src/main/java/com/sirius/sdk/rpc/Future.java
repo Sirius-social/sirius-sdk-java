@@ -6,9 +6,8 @@ import com.goterl.lazycode.lazysodium.LazySodium;
 import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.encryption.Custom;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusValueEmpty;
+import com.sirius.sdk.errors.IndyException;
+import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.StringUtils;
@@ -41,7 +40,7 @@ public class Future {
     String id;
     Object value;
     boolean readOk = false;
-    Exception exception;
+    JSONObject exception;
 
     /**
      * @param addressedTunnel communication tunnel for server-side cloud agent
@@ -112,7 +111,7 @@ public class Future {
      * @param timeout waiting timeout in seconds
      * @return True/False
      */
-    public boolean waitPromise(int timeout) {
+    public boolean waitPromise(int timeout)  {
         if (readOk) {
             return true;
         }
@@ -132,7 +131,7 @@ public class Future {
             boolean isType = MSG_TYPE.equals(message.getType());
             boolean isTypeId = id.equals(threadId);
             if (MSG_TYPE.equals(message.getType()) && id.equals(threadId)) {
-                Object exception = message.getObjectFromJSON("exception");
+                JSONObject exception = message.getJSONOBJECTFromJSON("exception");
                 if (exception == null) {
                     Object value =   message.getObjectFromJSON("value");
                     boolean is_tuple =   message.getBooleanFromJSON("is_tuple");
@@ -149,18 +148,17 @@ public class Future {
                     }else{
                         this.value = value;
                     }
-                    readOk  =true;
-                    return true;
-
                 } else {
-                    //   exception()
+                    this.exception = exception;
                 }
+                readOk  =true;
+                return true;
             } else {
                System.out.println("Unexpected payload" + message.serialize() + "Expected id: " + id);
            }
 
 
-        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+        } catch (SiriusInvalidPayloadStructure  siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
         }
 
@@ -191,7 +189,7 @@ public class Future {
         if (!readOk) {
             throw new SiriusPendingOperation();
         }
-        return false;
+        return exception != null;
     }
 
     /**
@@ -199,43 +197,35 @@ public class Future {
      *
      * @return Exception instance or None if it does not exists
      */
-    public Exception exception() {
+    public Exception getFutureException() {
         try {
-            if (hasException()) {
+           if(hasException()){
+               if(exception.optJSONObject("indy") !=null){
+                   JSONObject indy_exc = exception.getJSONObject("indy");
 
-            }
+                   IndyException exc_class =  IndyException.fromSdkError(indy_exc.getInt("error_code"),indy_exc);
+                   return exc_class;
+               }else{
+                   return new SiriusPromiseContextException(exception.optString("class_name"), exception.optString("printable"));
+               }
+
+           }
         } catch (SiriusPendingOperation siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
         }
         return null;
 
     }
-      /*      if self.has_exception():
-            if self.__exception['indy']:
-    indy_exc = self.__exception['indy']
-    exc_class = errorcode_to_exception(errorcode=indy_exc['error_code'])
-    exc = exc_class(
-            error_code=indy_exc['error_code'],
-            error_details=dict(message=indy_exc['message'], indy_backtrace=None)
-                )
-                        return exc
-            else:
-                    return SiriusPromiseContextException(
-            class_name=self.__exception['class_name'], printable=self.__exception['printable']
-    )
-        else:
-                return None*/
-
 
     /**
      * Raise exception if exists
      *
      * @throws SiriusValueEmpty: raises if exception is empty
      */
-    public void raiseException() throws SiriusValueEmpty {
+    public void raiseException() throws Exception {
         try {
             if (hasException()) {
-
+                throw  getFutureException();
             }
         } catch (SiriusPendingOperation siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();

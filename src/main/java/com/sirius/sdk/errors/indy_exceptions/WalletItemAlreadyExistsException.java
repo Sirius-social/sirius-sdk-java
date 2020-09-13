@@ -15,7 +15,7 @@ public class WalletItemAlreadyExistsException extends IndyException
 	/**
 	 * Initializes a new WalletItemNotFoundException.
 	 */
-	public WalletItemAlreadyExistsException() {
-		super(message, ErrorCode.WalletItemAlreadyExists.value());
+	public WalletItemAlreadyExistsException(IndyError error) {
+		super(message + error.buildMessage(), ErrorCode.WalletItemAlreadyExists.value());
 	}
 }

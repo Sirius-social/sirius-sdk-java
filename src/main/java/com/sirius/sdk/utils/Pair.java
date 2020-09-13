@@ -17,6 +17,15 @@ public final class Pair<T, U> {
         return new Pair<>(first, second);
     }
 
+
+    public Class getFirstClass() {
+        return first.getClass();
+    }
+
+    public Class getSecondClass() {
+        return second.getClass();
+    }
+
     @Override
     public String toString() {
         return "(" + first + ", " + second + ")";

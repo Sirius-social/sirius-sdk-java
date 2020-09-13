@@ -14,8 +14,8 @@ public class RevocationRegistryFullException extends IndyException
 	/**
 	 * Initializes a new RevocationRegistryFullException.
 	 */
-	public RevocationRegistryFullException()
+	public RevocationRegistryFullException(IndyError error)
 	{
-		super(message, ErrorCode.AnoncredsRevocationRegistryFullError.value());
+		super(message + error.buildMessage(), ErrorCode.AnoncredsRevocationRegistryFullError.value());
 	}
 }

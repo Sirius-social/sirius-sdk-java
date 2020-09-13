@@ -15,8 +15,8 @@ public class WalletNotFoundException extends IndyException
 	/**
 	 * Initializes a new WalletNotFoundException.
 	 */
-	public WalletNotFoundException()
+	public WalletNotFoundException(IndyError error)
 	{
-		super(message, ErrorCode.WalletNotFoundError.value());
+		super(message+error.buildMessage(), ErrorCode.WalletNotFoundError.value());
 	}
 }

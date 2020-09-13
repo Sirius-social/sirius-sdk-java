@@ -11,7 +11,7 @@ public class InsufficientFundsException extends IndyException {
     /**
      * Initializes a new {@link InsufficientFundsException} with the specified message.
      */
-    public InsufficientFundsException() {
-        super(message, ErrorCode.InsufficientFundsError.value());
+    public InsufficientFundsException(IndyError error) {
+        super(message + error.buildMessage(), ErrorCode.InsufficientFundsError.value());
     }
 }

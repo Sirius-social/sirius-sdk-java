@@ -15,7 +15,7 @@ public class IncompatiblePaymentException extends IndyException {
     /**
      * Initializes a new {@link IncompatiblePaymentException} with the specified message.
      */
-    public IncompatiblePaymentException() {
-        super(message, ErrorCode.IncompatiblePaymentError.value());
+    public IncompatiblePaymentException(IndyError error) {
+        super(message + error.buildMessage(), ErrorCode.IncompatiblePaymentError.value());
     }
 }

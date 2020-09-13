@@ -115,9 +115,25 @@ public class Parsing {
             varParam = param;
         } else if(param instanceof  Integer){
             varParam = param;
-        } else {
+        } else if (param instanceof  String){
+           /* if(((String) param).startsWith("{") && ((String) param).endsWith("}")){
+                varParam = new JSONObject(param);
+             //   System.out.println("param="+param);
+               // System.out.println("addWalletRecor2="+varParam);
+            }else if(((String) param).startsWith("[") && ((String) param).endsWith("]")){
+                varParam = new JSONArray(param);
+                System.out.println("addWalletRecor3="+varParam);
+            }else{
+                varParam = param.toString();
+                System.out.println("addWalletRecor4="+varParam);
+            }*/
             varParam = param.toString();
+        }else{
+            varParam = param.toString();
+            System.out.println("addWalletRecor5="+varParam);
         }
+
+
         return varParam;
     }
 

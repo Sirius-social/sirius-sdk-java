@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
-import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.NYMRole;
@@ -98,7 +98,7 @@ public abstract class AbstractLedger {
      *                     }
      * @return success, Request result as json.
      */
-    public abstract Pair<Boolean, String> registerSchema(String poolName, String submitterDid, String data);
+    public abstract Pair<Boolean, String> registerSchema(String poolName, String submitterDid, AnonCredSchema data);
 
     /**
      * Builds an CRED_DEF request. Request to add a credential definition (in particular, public key),
@@ -121,7 +121,7 @@ public abstract class AbstractLedger {
      *                     }
      * @return success, Request result as json.
      */
-    public abstract Pair<Boolean, String> registerCredDef(String poolName, String submitterDid, String data);
+    public abstract Pair<Boolean, String> registerCredDef(String poolName, String submitterDid, Object data);
 
     /**
      * Builds an ATTRIB request. Request to add attribute to a NYM record.
@@ -147,7 +147,7 @@ public abstract class AbstractLedger {
      * @param request      Request data json.
      * @return Request result as json.
      */
-    public abstract String signAndSubmit(String poolName, String submitterDid, String request);
+    public abstract String signAndSubmit(String poolName, String submitterDid, Object request);
 
     /**
      * Publishes request message to validator pool (no signing, unlike sign_and_submit_request).

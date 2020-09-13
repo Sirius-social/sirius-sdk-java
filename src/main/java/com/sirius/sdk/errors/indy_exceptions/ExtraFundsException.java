@@ -11,7 +11,7 @@ public class ExtraFundsException extends IndyException {
     /**
      * Initializes a new {@link ExtraFundsException} with the specified message.
      */
-    public ExtraFundsException() {
-        super(message, ErrorCode.ExtraFundsError.value());
+    public ExtraFundsException(IndyError error) {
+        super(message +error.buildMessage(), ErrorCode.ExtraFundsError.value());
     }
 }

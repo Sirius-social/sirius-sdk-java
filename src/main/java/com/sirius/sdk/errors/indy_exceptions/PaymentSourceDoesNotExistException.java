@@ -10,7 +10,7 @@ public class PaymentSourceDoesNotExistException extends IndyException {
     /**
      * Initializes a new {@link PaymentSourceDoesNotExistException} with the specified message.
      */
-    public PaymentSourceDoesNotExistException() {
-        super(message, ErrorCode.PaymentSourceDoesNotExistError.value());
+    public PaymentSourceDoesNotExistException(IndyError error) {
+        super(message + error.buildMessage(), ErrorCode.PaymentSourceDoesNotExistError.value());
     }
 }

@@ -1,27 +1,34 @@
 package com.sirius.sdk.agent.wallet;
 
+
+import java.util.HashMap;
+import java.util.Map;
+
 public enum KeyDerivationMethod {
-/*    class KeyDerivationMethod(Enum):
+    DEFAULT("ARGON2I_MOD"),
+    FAST("ARGON2I_INT"),
+    RAW("RAW");
 
-    DEFAULT = 'ARGON2I_MOD'
-    FAST = 'ARGON2I_INT'
-    RAW = 'RAW'
+    private static Map<String, KeyDerivationMethod> map = new HashMap<String, KeyDerivationMethod>();
 
-    def serialize(self):
-            return self.value
+    private String value;
 
-    @staticmethod
-    def deserialize(buffer: str):
-    value = buffer
-        if value == 'ARGON2I_MOD':
-            return KeyDerivationMethod.DEFAULT
-    elif value == 'ARGON2I_INT':
-            return KeyDerivationMethod.FAST
-    elif value == 'RAW':
-            return KeyDerivationMethod.RAW
-        else:
-    raise RuntimeError('Unexpected value "%s"' % buffer)
+    static {
+        for (KeyDerivationMethod errorCode : KeyDerivationMethod.values()) {
+            map.put(String.valueOf(errorCode.value), errorCode);
+        }
+    }
 
+    KeyDerivationMethod(String value) {
+        this.value = value;
+    }
 
-    __all__ = ["KeyDerivationMethod"]*/
+    public static KeyDerivationMethod valueOfVal(String value) {
+        return map.get(value);
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

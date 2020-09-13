@@ -82,10 +82,10 @@ public abstract class AbstractAnonCreds {
      *                     ver: Version of the CredDef json
      *                 }
      */
-    public abstract Pair<String,String> issuerCreateAndStoreCredentialDef(String issuerDid,String schema, String tag,String signatureType, String config);
+    public abstract Pair<String,String> issuerCreateAndStoreCredentialDef(String issuerDid,Object schema, String tag,String signatureType, Object config);
 
     /**
-     * Overload method {@link #issuerCreateAndStoreCredentialDef(String issuerDid,String schema, String tag,String signatureType, String config)}
+     * Overload method {@link #issuerCreateAndStoreCredentialDef(String issuerDid,Object schema, String tag,String signatureType, Object config)}
      */
 
     public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, String schema, String tag) {

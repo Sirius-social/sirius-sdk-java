@@ -14,7 +14,7 @@ public class UnknownPaymentMethodException extends IndyException {
     /**
      * Initializes a new {@link UnknownPaymentMethodException}
      */
-    public UnknownPaymentMethodException() {
-        super(MESSAGE, ErrorCode.UnknownPaymentMethod.value());
+    public UnknownPaymentMethodException(IndyError error) {
+        super(MESSAGE + error.buildMessage(), ErrorCode.UnknownPaymentMethod.value());
     }
 }

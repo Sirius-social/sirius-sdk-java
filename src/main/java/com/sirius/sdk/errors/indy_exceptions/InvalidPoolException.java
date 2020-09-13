@@ -15,8 +15,8 @@ public class InvalidPoolException extends IndyException
 	/**
 	 * Initializes a new PoolClosedException.
 	 */
-	public InvalidPoolException()
+	public InvalidPoolException(IndyError error)
 	{
-		super(message, ErrorCode.PoolLedgerInvalidPoolHandle.value());
+		super(message  +error.buildMessage(), ErrorCode.PoolLedgerInvalidPoolHandle.value());
 	}
 }

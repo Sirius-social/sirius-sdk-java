@@ -15,8 +15,8 @@ public class LedgerInvalidTransactionException extends IndyException
 	/**
 	 * Initializes a new LedgerInvalidTransactionException.
 	 */
-	public LedgerInvalidTransactionException()
+	public LedgerInvalidTransactionException(IndyError error)
 	{
-		super(message, ErrorCode.LedgerInvalidTransaction.value());
+		super(message  +error.buildMessage(), ErrorCode.LedgerInvalidTransaction.value());
 	}
 }

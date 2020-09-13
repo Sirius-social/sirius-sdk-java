@@ -143,7 +143,7 @@ public class Message implements JsonSerializable<Message> {
 
     public JSONObject getJSONOBJECTFromJSON(String key) {
         if (messageObjectHasKey(key)) {
-            return messageObj.getJSONObject(key);
+            return messageObj.optJSONObject(key);
         }
         return null;
     }

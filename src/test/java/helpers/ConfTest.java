@@ -145,10 +145,12 @@ public class ConfTest {
     }
 
     public String ledgerName() {
-
         return "Ledger-" + LazySodium.toHex(UUID.randomUUID().toString().getBytes(StandardCharsets.US_ASCII));
     }
 
+    public String defaultNetwork() {
+        return "default";
+    }
 }
 
 /*

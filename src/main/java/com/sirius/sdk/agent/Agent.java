@@ -118,7 +118,7 @@ public class Agent extends TransportLayer {
                 return true;
             }
             return false;
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return false;
@@ -227,7 +227,7 @@ public class Agent extends TransportLayer {
                 JSONObject responseObject = new JSONObject((String)response);
                 return  responseObject.getString("url");
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;

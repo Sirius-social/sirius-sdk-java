@@ -32,7 +32,7 @@ public class InMemoryImmutableCollection extends AbstractImmutableCollection {
     }
 
     @Override
-    public Pair<List<Object>, Integer> fetch(String tags, int limit) {
+    public Pair<List<Object>, Integer> fetch(String tags, Integer limit) {
         List<Object> result = new ArrayList<>();
         for(int i=0;i<selectedDb.size();i++){
             Pair<String,Object> item = selectedDb.get(i);

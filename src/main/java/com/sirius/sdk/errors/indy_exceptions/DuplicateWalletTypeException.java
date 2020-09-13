@@ -15,8 +15,8 @@ public class DuplicateWalletTypeException extends IndyException
 	/**
 	 * Initializes a new DuplicateWalletTypeException.
 	 */
-	public DuplicateWalletTypeException()
+	public DuplicateWalletTypeException(IndyError error)
 	{
-		super(message, ErrorCode.WalletTypeAlreadyRegisteredError.value());
+		super(message + error.buildMessage(), ErrorCode.WalletTypeAlreadyRegisteredError.value());
 	}
 }

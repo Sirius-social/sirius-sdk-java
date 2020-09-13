@@ -1,9 +1,12 @@
+import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.InWalletImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryKeyValueStorage;
 import com.sirius.sdk.utils.Pair;
+import helpers.ConfTest;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -56,21 +59,63 @@ public class TestStorages {
     @Test
     public void testInWalletImmutableCollection(){
         //TODO test
+        ConfTest confTest = ConfTest.newInstance();
+
+        Agent agent1 = confTest.agent1();
+        agent1.open();
+
       //  agent1: Agent
 
-  /*      InWalletImmutableCollection collection =   new  InWalletImmutableCollection();
+        InWalletImmutableCollection collection =   new  InWalletImmutableCollection(agent1.getWallet().getNonSecrets());
+
+
         JSONObject value1 = new JSONObject();
         value1.put("key1","value1");
-        value1.put("'key2'",10000);
+        value1.put("key2",10000);
 
         JSONObject value2 = new JSONObject();
-        value2.put("key1","'value2'");
-        value2.put("'key2'",50000);
+        value2.put("key1","value2");
+        value2.put("key2",50000);
 
         collection.selectDb(UUID.randomUUID().toString());
-        collection.add(value1,"{\"tag\": \"value1\"}");
-        collection.add(value2,"{\"tag\": \"value2\"}");*/
 
+        System.out.println("valu1="+value1.toString());
+        System.out.println("valu2="+value2.toString());
+        System.out.println("valu3="+"{\"tag\": \"value1\"}");
+        System.out.println("valu4="+"{\"tag\": \"value2\"}");
+        collection.add(value1.toString(),"{\"tag\": \"value1\"}");
+        collection.add(value2.toString(),"{\"tag\": \"value2\"}");
+
+        JSONObject query1 = new JSONObject();
+        query1.put("tag","value1");
+
+
+        Pair<List<Object>,Integer> result = collection.fetch(query1.toString());
+        Assert.assertEquals(1, (int)result.second);
+        Assert.assertEquals(1, result.first.size());
+        Assert.assertEquals(value1.toString(), result.first.get(0));
+
+        JSONObject query2 = new JSONObject();
+        query2.put("tag","value2");
+        Pair<List<Object>,Integer> result2 = collection.fetch(query2.toString());
+        Assert.assertEquals(1, (int)result2.second);
+        Assert.assertEquals(1, result2.first.size());
+        Assert.assertEquals(value2.toString(), result2.first.get(0));
+
+
+        JSONObject query3 = new JSONObject();
+
+        Pair<List<Object>,Integer> result3 = collection.fetch(query3.toString());
+        Assert.assertEquals(2, (int)result3.second);
+
+        collection.selectDb(UUID.randomUUID().toString());
+
+
+        JSONObject query4 = new JSONObject();
+        Pair<List<Object>,Integer> result4 = collection.fetch(query4.toString());
+        Assert.assertEquals(0, (int)result4.second);
+
+        agent1.close();
     }
 }
 /*

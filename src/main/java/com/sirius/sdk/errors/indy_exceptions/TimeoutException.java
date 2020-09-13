@@ -15,7 +15,7 @@ public class TimeoutException extends IndyException implements Serializable {
     /**
      * Initializes a new TimeoutException.
      */
-    public TimeoutException() {
-        super(message, ErrorCode.PoolLedgerTimeout.value());
+    public TimeoutException(IndyError error) {
+        super(message + error.buildMessage(), ErrorCode.PoolLedgerTimeout.value());
     }
 }

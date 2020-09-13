@@ -10,7 +10,7 @@ public class PaymentOperationNotSupportedException extends IndyException {
 	/**
 	 * Initializes a new {@link PaymentOperationNotSupportedException} with the specified message.
 	 */
-	public PaymentOperationNotSupportedException() {
-		super(message, ErrorCode.PaymentOperationNotSupportedError.value());
+	public PaymentOperationNotSupportedException(IndyError error) {
+		super(message + error.buildMessage(), ErrorCode.PaymentOperationNotSupportedError.value());
 	}
 }

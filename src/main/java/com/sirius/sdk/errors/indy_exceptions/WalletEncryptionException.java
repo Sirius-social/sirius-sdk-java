@@ -14,8 +14,8 @@ public class WalletEncryptionException extends IndyException
 	/**
 	 * Initializes a new WalletEncryptionException.
 	 */
-	public WalletEncryptionException()
+	public WalletEncryptionException(IndyError error)
 	{
-		super(message, ErrorCode.WalletEncryptionError.value());
+		super(message + error.buildMessage(), ErrorCode.WalletEncryptionError.value());
 	}
 }

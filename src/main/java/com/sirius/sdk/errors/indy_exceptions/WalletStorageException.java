@@ -15,8 +15,8 @@ public class WalletStorageException extends IndyException
 	/**
 	 * Initializes a new WalletStorageException.
 	 */
-	public WalletStorageException()
+	public WalletStorageException(IndyError error)
 	{
-		super(message, ErrorCode.WalletStorageError.value());
+		super(message +error.buildMessage(), ErrorCode.WalletStorageError.value());
 	}
 }

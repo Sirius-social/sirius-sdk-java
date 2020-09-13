@@ -11,7 +11,7 @@ public class TransactionNotAllowedException extends IndyException {
     /**
      * Initializes a new {@link TransactionNotAllowedException} with the specified message.
      */
-    public TransactionNotAllowedException() {
-        super(message, ErrorCode.TransactionNotAllowedError.value());
+    public TransactionNotAllowedException(IndyError error) {
+        super(message + error.buildMessage(), ErrorCode.TransactionNotAllowedError.value());
     }
 }

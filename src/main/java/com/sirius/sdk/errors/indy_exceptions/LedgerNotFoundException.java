@@ -14,8 +14,8 @@ public class LedgerNotFoundException extends IndyException
 	/**
 	 * Initializes a new PoolIncompatibleProtocolVersionException.
 	 */
-	public LedgerNotFoundException()
+	public LedgerNotFoundException(IndyError error)
 	{
-		super(message, ErrorCode.LedgerNotFound.value());
+		super(message + error.buildMessage(), ErrorCode.LedgerNotFound.value());
 	}
 }

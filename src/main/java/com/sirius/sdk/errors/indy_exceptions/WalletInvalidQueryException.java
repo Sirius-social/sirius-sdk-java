@@ -15,8 +15,8 @@ public class WalletInvalidQueryException extends IndyException
 	/**
 	 * Initializes a new WalletInvalidQueryException.
 	 */
-	public WalletInvalidQueryException()
+	public WalletInvalidQueryException(IndyError error)
 	{
-		super(message, ErrorCode.WalletQueryError.value());
+		super(message + error.buildMessage(), ErrorCode.WalletQueryError.value());
 	}
 }

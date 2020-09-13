@@ -27,9 +27,9 @@ public class InvalidParameterException extends IndyException {
 	 * @param sdkErrorCode The SDK error code.
 	 * @return A message indicating which parameter was incorrect.
 	 */
-	private static String buildMessage(int sdkErrorCode)
+	private static String buildMessage(IndyException.IndyError errorDetails, int sdkErrorCode)
 	{
-		return String.format("The value passed to parameter %s is not valid.", getParamIndex(sdkErrorCode));
+		return String.format("The value passed to parameter %s is not valid.", getParamIndex(sdkErrorCode)) + errorDetails.buildMessage();
 	}
 
 	/**
@@ -37,9 +37,9 @@ public class InvalidParameterException extends IndyException {
 	 *
 	 * @param sdkErrorCode The SDK error code.
 	 */
-    public InvalidParameterException(int sdkErrorCode)
+    public InvalidParameterException(IndyException.IndyError errorDetails,int sdkErrorCode)
     {
-		super(buildMessage(sdkErrorCode), sdkErrorCode);
+		super(buildMessage(errorDetails,sdkErrorCode), sdkErrorCode);
 		parameterIndex = getParamIndex(sdkErrorCode);
 	}
 

@@ -23,38 +23,21 @@ public class DIDProxy extends AbstractDID  {
 
     @Override
     public Pair<String, String> createAndStoreMyDid(String did, String seed, Boolean cid) {
-        try {
-            RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
-                    .add("seed", seed)
-                    .add("did", did)
-                    .add("cid", cid)
-                    .build();
-            Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/create_and_store_my_did", params);
-            System.out.println("response=" + response);
-            if (response instanceof Pair) {
-                Pair<String, String> response1 = (Pair<String, String>) response;
-                return response1;
-            }
-        } catch (SiriusConnectionClosed | SiriusRPCError
-                | SiriusTimeoutRPC | SiriusInvalidType |
-                SiriusPendingOperation siriusConnectionClosed) {
-            siriusConnectionClosed.printStackTrace();
-        }
-        return null;
+        return new RemoteCallWrapper< Pair<String, String>>(rpc){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/create_and_store_my_did",
+                        RemoteParams.RemoteParamsBuilder.create()
+                                .add("seed", seed)
+                                .add("did", did)
+                                .add("cid", cid));
     }
 
     @Override
     public void storeTheirDid(String did, String verkey) {
-        try {
-            RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
-                    .add("did", did)
-                    .add("verkey", verkey)
-                    .build();
-            Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/store_their_did", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
-            siriusConnectionClosed.printStackTrace();
-        }
-
+        new RemoteCallWrapper< Pair<String, String>>(rpc){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/store_their_did",
+                        RemoteParams.RemoteParamsBuilder.create()
+                                .add("did", did)
+                                .add("verkey", verkey));
     }
 
     @Override
@@ -65,7 +48,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("metadata", metadata)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/set_did_metadata", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
     }
@@ -83,7 +66,7 @@ public class DIDProxy extends AbstractDID  {
                 }
                 return objectList;
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -99,7 +82,7 @@ public class DIDProxy extends AbstractDID  {
             if(response!=null){
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
 
@@ -116,7 +99,7 @@ public class DIDProxy extends AbstractDID  {
             if (response != null) {
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -133,7 +116,7 @@ public class DIDProxy extends AbstractDID  {
             if(response!=null){
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -149,7 +132,7 @@ public class DIDProxy extends AbstractDID  {
             if (response != null) {
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -166,7 +149,7 @@ public class DIDProxy extends AbstractDID  {
             if (response != null) {
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -179,7 +162,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("did", did)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/replace_keys_apply", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
     }
@@ -192,7 +175,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("metadata", metadata)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/set_key_metadata__did", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
     }
@@ -207,7 +190,7 @@ public class DIDProxy extends AbstractDID  {
             if (response != null) {
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -222,7 +205,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("transport_key", transportKey)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/set_endpoint_for_did", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
     }
@@ -235,7 +218,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("pool_name", poolName)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/get_endpoint_for_did", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -248,7 +231,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("did", did)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/get_my_did_with_meta", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -261,7 +244,7 @@ public class DIDProxy extends AbstractDID  {
                     .add("did", did)
                     .build();
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/abbreviate_verkey", params);
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
@@ -278,7 +261,7 @@ public class DIDProxy extends AbstractDID  {
             if (response != null) {
                 return response.toString();
             }
-        } catch (SiriusConnectionClosed | SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusConnectionClosed) {
+        } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;

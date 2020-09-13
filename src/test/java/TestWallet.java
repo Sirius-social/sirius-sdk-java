@@ -1,5 +1,7 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.NYMRole;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
@@ -431,6 +433,134 @@ public class TestWallet {
         agent1.close();
     }
 
+
+    @Test
+    public void testRegisterSchemaInNetwork() {
+        Agent agent2 = confTest.agent2();
+        agent2.open();
+        String seed = "000000000000000000000000Trustee1";
+
+        Pair<String, String> didVerkey = agent2.getWallet().getDid().createAndStoreMyDid(null, seed);
+        String schema_name = "schema_" + UUID.randomUUID().toString();
+
+        List<String> attibutes = new ArrayList<>();
+        attibutes.add("attr1");
+        attibutes.add("attr2");
+        attibutes.add("attr3");
+        Pair<String, AnonCredSchema> schemaIdSchema = agent2.getWallet().getAnoncreds().issuerCreateSchema(didVerkey.first, schema_name, "1.0", attibutes);
+
+        System.out.println("schemaIdSchema=" + schemaIdSchema);
+
+
+        Pair<Boolean, String> response = agent2.getWallet().getLedger().registerSchema(confTest.defaultNetwork(), didVerkey.first, schemaIdSchema.second);
+
+        System.out.println("response=" + response);
+
+        Assert.assertTrue(response.first);
+
+        agent2.close();
+    }
+
+
+    @Test
+    public void testNymOperationsInNetwork() {
+        Agent agent1 = confTest.agent1();
+        Agent agent2 = confTest.agent2();
+
+        agent1.open();
+        agent2.open();
+        try {
+            DynamicWallet steward = agent1.getWallet();
+            DynamicWallet actor = agent2.getWallet();
+
+            String seed = "000000000000000000000000Steward1";
+
+            Pair<String, String> didVerkeySteward = steward.getDid().createAndStoreMyDid(null, seed);
+
+            Pair<String, String> didTrusteeVerkeTrustee = actor.getDid().createAndStoreMyDid();
+            Pair<String, String> didCommonVerkeyCommon = actor.getDid().createAndStoreMyDid();
+
+            //   # Trust Anchor
+            Pair<Boolean, String> okResponse = steward.getLedger().writeNum(confTest.defaultNetwork(), didVerkeySteward.first,
+                    didTrusteeVerkeTrustee.first, didTrusteeVerkeTrustee.second, "Test-Trustee", NYMRole.TRUST_ANCHOR);
+            Assert.assertTrue(okResponse.first);
+
+            Pair<Boolean, String> okNym1 = steward.getLedger().readNym(confTest.defaultNetwork(), didVerkeySteward.first, didTrusteeVerkeTrustee.first);
+            Assert.assertTrue(okNym1.first);
+
+            Pair<Boolean, String> okNym2 = steward.getLedger().readNym(confTest.defaultNetwork(), null, didTrusteeVerkeTrustee.first);
+            Assert.assertTrue(okNym2.first);
+
+            Assert.assertEquals(okNym1.second, okNym2.second);
+            JSONObject okNymJson = new JSONObject(okNym1.second);
+
+            Integer role = okNymJson.getInt("role");
+            Assert.assertEquals(role, NYMRole.TRUST_ANCHOR.getValue());
+
+            //Common User
+            Pair<Boolean, String> okResponseCommon = steward.getLedger().writeNum(confTest.defaultNetwork(), didVerkeySteward.first, didCommonVerkeyCommon.first,
+                    didCommonVerkeyCommon.second, "CommonUser", NYMRole.COMMON_USER);
+
+            Assert.assertTrue(okResponseCommon.first);
+
+            Pair<Boolean, String> okNym3 = steward.getLedger().readNym(confTest.defaultNetwork(), null, didCommonVerkeyCommon.first);
+            Assert.assertTrue(okNym3.first);
+
+            JSONObject okNym3Json = new JSONObject(okNym3.second);
+
+            Object role3 = okNym3Json.get("role");
+            Assert.assertEquals(role3, JSONObject.NULL);
+            Pair<Boolean, String> okResponse3 = actor.getLedger().writeNum(confTest.defaultNetwork(), didCommonVerkeyCommon.first,
+                    didCommonVerkeyCommon.first, didCommonVerkeyCommon.second, "ResetUser", NYMRole.RESET);
+
+            Assert.assertTrue(okResponse3.first);
+
+            Pair<Boolean, String> okNym4 = steward.getLedger().readNym(confTest.defaultNetwork(), null, didCommonVerkeyCommon.first);
+
+            Assert.assertTrue(okNym4.first);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            agent1.close();
+            agent2.close();
+        }
+    }
+
+
+    @Test
+    public void testAttributeOperationsInNetwork() {
+        Agent agent1 = confTest.agent1();
+        Agent agent2 = confTest.agent2();
+
+        agent1.open();
+        agent2.open();
+
+        DynamicWallet steward = agent1.getWallet();
+        DynamicWallet actor = agent2.getWallet();
+
+        String seed = "000000000000000000000000Steward1";
+        Pair<String, String> didVerkeySteward = steward.getDid().createAndStoreMyDid(null, seed);
+        Pair<String, String> didCommonVerkeyCommo = actor.getDid().createAndStoreMyDid();
+
+        Pair<Boolean, String> okResponse = steward.getLedger().writeNum(confTest.defaultNetwork(), didVerkeySteward.first,
+                didCommonVerkeyCommo.first, didCommonVerkeyCommo.second, "CommonUser", NYMRole.COMMON_USER);
+        Assert.assertTrue(okResponse.first);
+
+        Pair<Boolean, String> okResponse2 = actor.getLedger().writeAttribute(confTest.defaultNetwork(), didCommonVerkeyCommo.first,
+                didCommonVerkeyCommo.first, "attribute", "value");
+        Assert.assertTrue(okResponse2.first);
+        System.out.println(okResponse2);
+
+        Pair<Boolean, String> okResponse4 = steward.getLedger().readAttribute(confTest.defaultNetwork(), didVerkeySteward.first,
+                didCommonVerkeyCommo.first, "attribute");
+        System.out.println(okResponse4);
+
+        Assert.assertTrue(okResponse4.first);
+        Assert.assertEquals(okResponse4.second, "value");
+        agent1.close();
+        agent2.close();
+    }
 
 }
 

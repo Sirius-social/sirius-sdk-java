@@ -67,7 +67,7 @@ public class AgentRPC extends BaseAgentConnection {
      * @return
      */
     public Object remoteCall(String msgType,  RemoteParams params, boolean waitResponse)
-            throws SiriusConnectionClosed, SiriusInvalidType, SiriusRPCError, SiriusTimeoutRPC, SiriusPendingOperation {
+            throws Exception {
         if (!connector.isOpen()) {
             throw new SiriusConnectionClosed("Open agent connection at first");
         }
@@ -90,6 +90,7 @@ public class AgentRPC extends BaseAgentConnection {
             boolean success = future.waitPromise(timeout);
             if (success) {
                 if (future.hasException()) {
+                    future.raiseException();
                 } else {
                     return future.getValue();
                 }
@@ -101,12 +102,12 @@ public class AgentRPC extends BaseAgentConnection {
     }
 
     public Object remoteCall(String msgType,  RemoteParams params)
-            throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
+            throws Exception {
         return remoteCall(msgType, params, true);
     }
 
     public Object remoteCall(String msgType)
-            throws SiriusConnectionClosed, SiriusRPCError, SiriusTimeoutRPC, SiriusInvalidType, SiriusPendingOperation {
+            throws Exception {
         return remoteCall(msgType, null);
     }
 
@@ -218,7 +219,7 @@ public class AgentRPC extends BaseAgentConnection {
             try {
                Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message",paramsBuilder.build());
 
-            } catch (SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusRPCError) {
+            } catch (Exception siriusRPCError) {
                 siriusRPCError.printStackTrace();
             }
         }else{
@@ -236,7 +237,7 @@ public class AgentRPC extends BaseAgentConnection {
                      ok, body = await http_send(wired, endpoint, timeout=self.timeout, connector=self.__connector)
                body = body.decode()*/
 
-            } catch (SiriusRPCError | SiriusTimeoutRPC | SiriusInvalidType | SiriusPendingOperation siriusRPCError) {
+            } catch (Exception siriusRPCError) {
                 siriusRPCError.printStackTrace();
             }
         }

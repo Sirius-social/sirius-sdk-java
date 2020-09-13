@@ -25,14 +25,15 @@ public class NonSecretsProxy extends AbstractNonSecrets  {
         if(tags!=null){
             tagObject = new JSONObject(tags);
         }
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/add_wallet_record",
+        System.out.println("addWalletRecor="+value);
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/add_wallet_record",
                 RemoteParams.RemoteParamsBuilder.create()
                 .add("type_", type).add("id_", id).add("value",value).add("tags", tagObject));
     }
 
     @Override
     public void updateWalletRecordValue(String type, String id, String value) {
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/update_wallet_record_value",
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/update_wallet_record_value",
                 RemoteParams.RemoteParamsBuilder.create()
                 .add("type_", type).add("id_", id).add("value", value));
     }
@@ -43,7 +44,7 @@ public class NonSecretsProxy extends AbstractNonSecrets  {
         if(tags!=null){
             tagObject = new JSONObject(tags);
         }
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/update_wallet_record_tags",
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/update_wallet_record_tags",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("id_", id).add("tags", tagObject));
     }
@@ -54,28 +55,28 @@ public class NonSecretsProxy extends AbstractNonSecrets  {
         if(tags!=null){
             tagObject = new JSONObject(tags);
         }
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/add_wallet_record_tags",
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/add_wallet_record_tags",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("id_", id).add("tags", tagObject));
     }
 
     @Override
     public void deleteWalletRecord(String type, String id, List<String> tagNames) {
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/delete_wallet_record_tags",
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/delete_wallet_record_tags",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("id_", id).add("tag_names", tagNames));
     }
 
     @Override
     public void deleteWalletRecord(String type, String id) {
-        new RemoteCallWrapper<Void>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/delete_wallet_record",
+        new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/delete_wallet_record",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("id_", id));
     }
 
     @Override
     public String getWalletRecord(String type, String id, RetrieveRecordOptions options) {
-       return new RemoteCallWrapper<String>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/get_wallet_record",
+       return new RemoteCallWrapper<String>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/get_wallet_record",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("id_", id).add("options", options));
     }
@@ -86,7 +87,7 @@ public class NonSecretsProxy extends AbstractNonSecrets  {
         if(query!=null){
             queryObject = new JSONObject(query);
         }
-        return new RemoteCallWrapper<Pair<List<String>, Integer>>(rpc).remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/wallet_search",
+        return new RemoteCallWrapper<Pair<List<String>, Integer>>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/wallet_search",
                 RemoteParams.RemoteParamsBuilder.create()
                         .add("type_", type).add("query", queryObject).add("options", options).add("limit",limit));
     }
