@@ -1,5 +1,7 @@
 package helpers;
 
+import com.sirius.sdk.agent.model.Entity;
+import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.utils.Pair;
@@ -22,6 +24,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class ServerTestSuite {
 
@@ -65,13 +70,24 @@ public class ServerTestSuite {
         JSONObject p2pObject = agent.getJSONObject("p2p");
         String credentials = agent.getString("credentials");
         JSONObject entitiesObject = agent.getJSONObject("entities");
+        List<Entity> entityList = new ArrayList<>();
+        if(entitiesObject!=null){
+            Set<String> keys = entitiesObject.keySet();
+            for(String key : keys){
+                JSONObject entityObject = entitiesObject.getJSONObject(key);
+                String seed = entityObject.getString("seed");
+                String verkey = entityObject.getString("verkey");
+                String did = entityObject.getString("did");
+                entityList.add(new Entity(seed,verkey,did));
+            }
+        }
         JSONObject smartContractObject = p2pObject.getJSONObject("smart_contract");
         JSONObject agentP2pObject = p2pObject.getJSONObject("agent");
         String myVerKey = smartContractObject.getString("verkey");
         String mySecretKey = smartContractObject.getString("secret_key");
         String theirVerkey = agentP2pObject.getString("verkey");
         P2PConnection connection = new P2PConnection(myVerKey, mySecretKey, theirVerkey);
-        return new AgentParams(serverAddress, credentials, connection, entitiesObject);
+        return new AgentParams(serverAddress, credentials, connection, entityList);
     }
 
     public String getMetadata() {

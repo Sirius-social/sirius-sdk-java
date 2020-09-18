@@ -1,21 +1,24 @@
 package models;
 
+import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.encryption.P2PConnection;
 import org.json.JSONObject;
+
+import java.util.List;
 
 public class AgentParams {
     String serverAddress;
 
-    public AgentParams(String serverAddress, String credentials, P2PConnection connection, JSONObject entitiesObject) {
+    public AgentParams(String serverAddress, String credentials, P2PConnection connection, List<Entity> entitiesList) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.connection = connection;
-        this.entitiesObject = entitiesObject;
+        this.entitiesList = entitiesList;
     }
 
     String credentials;
     P2PConnection connection;
-    JSONObject entitiesObject;
+    List<Entity> entitiesList;
 
     public String getServerAddress() {
         return serverAddress;
@@ -29,7 +32,10 @@ public class AgentParams {
         return connection;
     }
 
-    public JSONObject getEntitiesObject() {
-        return entitiesObject;
+
+    public List<Entity> getEntitiesList() {
+        return entitiesList;
     }
+
+
 }

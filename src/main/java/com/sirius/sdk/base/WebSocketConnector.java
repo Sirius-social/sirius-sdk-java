@@ -98,17 +98,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onTextMessage(WebSocket webSocket, String s) throws Exception {
-           // System.out.println("onTextMessage1="+s);
+            System.out.println("uri ="+webSocket.getURI() +"onTextMessage1="+s);
         }
 
         @Override
         public void onTextMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-           // System.out.println("onTextMessage2="+new String(bytes, StandardCharsets.US_ASCII));
+            System.out.println("uri ="+webSocket.getURI() +"onTextMessage2="+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override
         public void onBinaryMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-          //  System.out.println("onBinaryMessage="+new String(bytes, StandardCharsets.US_ASCII));
+           System.out.println("uri ="+webSocket.getURI() +"onBinaryMessage="+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override

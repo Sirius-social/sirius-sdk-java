@@ -74,6 +74,18 @@ public class Future {
 
 
     public static class FuturePromise implements JsonSerializable<FuturePromise> {
+        public String getId() {
+            return id;
+        }
+
+        public String getChannel_address() {
+            return channel_address;
+        }
+
+        public long getExpiration_stamp() {
+            return expiration_stamp;
+        }
+
         String id;
         String channel_address;
         long expiration_stamp;

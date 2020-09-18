@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -21,19 +22,19 @@ public abstract  class AbstractPairwise {
      * @return  Error code
      *
      */
-    public abstract void createPairwise(String theirDid,String myDid,String metadata,String tags);
+    public abstract void createPairwise(String theirDid, String myDid, JSONObject metadata, JSONObject tags);
 
 
 
     /**
-     * Overload method {@link #createPairwise(String theirDid,String myDid,String metadata,String tags)}
+     * Overload method {@link #createPairwise(String theirDid,String myDid,JSONObject metadata,JSONObject tags)}
      */
-    public  void createPairwise(String theirDid,String myDid,String metadata){
+    public  void createPairwise(String theirDid,String myDid,JSONObject metadata){
         createPairwise(theirDid,myDid,metadata,null);
     }
 
     /**
-     * Overload method {@link #createPairwise(String theirDid,String myDid,String metadata,String tags)}
+     * Overload method {@link #createPairwise(String theirDid,String myDid,JSONObject metadata,JSONObject tags)}
      */
     public  void createPairwise(String theirDid,String myDid){
         createPairwise(theirDid,myDid,null);
@@ -58,16 +59,16 @@ public abstract  class AbstractPairwise {
      * @param metadata some extra information for pairwise
      * @param tags tags for searching operation
      */
-    public abstract void setPairwiseMetadata(String theirDid,String metadata,String tags);
+    public abstract void setPairwiseMetadata(String theirDid,JSONObject metadata,JSONObject tags);
 
     /**
-     * Overload method {@link #setPairwiseMetadata(String theirDid,String metadata,String tags)}
+     * Overload method {@link #setPairwiseMetadata(String theirDid,JSONObject metadata,JSONObject tags)}
      */
-    public  void setPairwiseMetadata(String theirDid,String metadata){
+    public  void setPairwiseMetadata(String theirDid,JSONObject metadata){
         setPairwiseMetadata(theirDid,metadata,null);
     }
     /**
-     * Overload method {@link #setPairwiseMetadata(String theirDid,String metadata,String tags)}
+     * Overload method {@link #setPairwiseMetadata(String theirDid,JSONObject metadata,JSONObject tags)}
      */
     public  void setPairwiseMetadata(String theirDid){
         setPairwiseMetadata(theirDid,null);
@@ -80,12 +81,12 @@ public abstract  class AbstractPairwise {
      * @param limit limit: max items count
      * @return Results, TotalCount
      */
-    public abstract Pair<List<String>,Integer> search(String tags, Integer limit);
+    public abstract Pair<List<String>,Integer> search(JSONObject tags, Integer limit);
 
     /**
-     * Overload method {@link #search(String tags, Integer limit)}
+     * Overload method {@link #search(JSONObject tags, Integer limit)}
      */
-    public  Pair<List<String>,Integer> search(String tags){
+    public  Pair<List<String>,Integer> search(JSONObject tags){
         return search(tags,null);
     }
 }

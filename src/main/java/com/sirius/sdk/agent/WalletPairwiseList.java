@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractDID;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractPairwise;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
@@ -9,23 +10,25 @@ import org.json.JSONObject;
 import java.util.List;
 
 public class WalletPairwiseList extends AbstractPairwiseList {
-    AbstractPairwise api;
+    AbstractPairwise apiPairwise;
+    AbstractDID apiDid;
 
-    public WalletPairwiseList(AbstractPairwise api) {
-        this.api = api;
+    public WalletPairwiseList(AbstractPairwise apiPairwise, AbstractDID apiDid) {
+        this.apiPairwise = apiPairwise;
+        this.apiDid = apiDid;
     }
 
-    public static String buildTags(Pairwise pairwise) {
+    public static JSONObject buildTags(Pairwise pairwise) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("my_did", pairwise.getMe().getDid());
         jsonObject.put("my_verkey", pairwise.getMe().getVerkey());
         jsonObject.put("their_verkey", pairwise.getTheir().getVerkey());
-        return jsonObject.toString();
+        return jsonObject;
     }
 
-    public static Pairwise restorePairwise(String metadata) {
-        JSONObject metaObject = new JSONObject(metadata);
-        JSONObject meObj = metaObject.optJSONObject("me");
+    public static Pairwise restorePairwise(JSONObject metadata) {
+       // JSONObject metaObject = new JSONObject(metadata);
+        JSONObject meObj = metadata.optJSONObject("me");
         String meDid = null;
         String meVerKey = null;
         if (meObj != null) {
@@ -33,7 +36,7 @@ public class WalletPairwiseList extends AbstractPairwiseList {
             meVerKey = meObj.getString("verkey");
         }
         Pairwise.Me me = new Pairwise.Me(meDid, meVerKey);
-        JSONObject theirObj = metaObject.optJSONObject("their");
+        JSONObject theirObj = metadata.optJSONObject("their");
         String theirDid = null;
         String theirVerKey = null;
         String theirLabel = null;
@@ -62,17 +65,18 @@ public class WalletPairwiseList extends AbstractPairwiseList {
 
     @Override
     public void create(Pairwise pairwise) {
-        api.createPairwise(pairwise.getTheir().getDid(), pairwise.getMe().getDid(), pairwise.getMetadata(), buildTags(pairwise));
+        apiDid.storeTheirDid(pairwise.getTheir().getDid(),pairwise.getTheir().getVerkey());
+        apiPairwise.createPairwise(pairwise.getTheir().getDid(), pairwise.getMe().getDid(), pairwise.getMetadata(), buildTags(pairwise));
     }
 
     @Override
     public void update(Pairwise pairwise) {
-        api.setPairwiseMetadata(pairwise.getTheir().getDid(), pairwise.getMetadata(), buildTags(pairwise));
+        apiPairwise.setPairwiseMetadata(pairwise.getTheir().getDid(), pairwise.getMetadata(), buildTags(pairwise));
     }
 
     @Override
     public boolean isExists(String theirDid) {
-        return api.isPairwiseExist(theirDid);
+        return apiPairwise.isPairwiseExist(theirDid);
     }
 
     @Override
@@ -87,10 +91,10 @@ public class WalletPairwiseList extends AbstractPairwiseList {
     @Override
     public Pairwise loadForDid(String theirDid) {
         if (isExists(theirDid)) {
-            String raw = api.getPairwise(theirDid);
+            String raw = apiPairwise.getPairwise(theirDid);
             JSONObject metadataObj = new JSONObject(raw);
             JSONObject metadata = metadataObj.getJSONObject("metadata");
-            return restorePairwise(metadata.toString());
+            return restorePairwise(metadata);
         } else {
             return null;
         }
@@ -100,13 +104,13 @@ public class WalletPairwiseList extends AbstractPairwiseList {
     public Pairwise loadForVerkey(String theirVerkey) {
         JSONObject tagsObj = new JSONObject();
         tagsObj.put("their_verkey", theirVerkey);
-        Pair<List<String>, Integer> results = api.search(tagsObj.toString(), 1);
+        Pair<List<String>, Integer> results = apiPairwise.search(tagsObj, 1);
         if (results.first != null) {
             if (results.first.size() > 0) {
                 String raw = results.first.get(0);
                 JSONObject metadataObj = new JSONObject(raw);
                 JSONObject metadata = metadataObj.getJSONObject("metadata");
-                return restorePairwise(metadata.toString());
+                return restorePairwise(metadata);
             }
         }
         return null;

@@ -5,6 +5,7 @@ import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractPairwise;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ public class PairwiseProxy extends AbstractPairwise  {
     }
 
     @Override
-    public void createPairwise(String theirDid, String myDid, String metadata, String tags) {
+    public void createPairwise(String theirDid, String myDid, JSONObject metadata, JSONObject tags) {
          new RemoteCallWrapper(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/create_pairwise",
                         RemoteParams.RemoteParamsBuilder.create()
@@ -54,7 +55,7 @@ public class PairwiseProxy extends AbstractPairwise  {
     }
 
     @Override
-    public void setPairwiseMetadata(String theirDid, String metadata, String tags) {
+    public void setPairwiseMetadata(String theirDid, JSONObject metadata, JSONObject tags) {
         new RemoteCallWrapper(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/set_pairwise_metadata",
                         RemoteParams.RemoteParamsBuilder.create()
@@ -64,7 +65,7 @@ public class PairwiseProxy extends AbstractPairwise  {
     }
 
     @Override
-    public Pair<List<String>, Integer> search(String tags, Integer limit) {
+    public Pair<List<String>, Integer> search(JSONObject tags, Integer limit) {
        return  new RemoteCallWrapper<Pair<List<String>, Integer>>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/search_pairwise",
                         RemoteParams.RemoteParamsBuilder.create()

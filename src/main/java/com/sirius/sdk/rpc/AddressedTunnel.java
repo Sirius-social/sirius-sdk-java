@@ -58,7 +58,9 @@ public class AddressedTunnel {
     public Message receive(int timeout) throws SiriusInvalidPayloadStructure {
         byte[] payload = input.read(timeout);
         try {
-            JSONObject jsonObject = new JSONObject(new String(payload,StandardCharsets.US_ASCII));
+         String payloadString =    new String(payload,StandardCharsets.US_ASCII);
+         System.out.println("payloadString="+payloadString);
+            JSONObject jsonObject = new JSONObject();
             if (jsonObject.has("protected")) {
                 String unpacked = p2p.unpack(new String(payload, StandardCharsets.US_ASCII));
                 context.setEncrypted(true);
@@ -73,6 +75,9 @@ public class AddressedTunnel {
         }
     }
 
+    public boolean post(Message message) {
+        return post(message,true);
+    }
     /**
      * Write message
      *

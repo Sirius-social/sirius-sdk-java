@@ -1,11 +1,13 @@
 package com.sirius.sdk.agent.model.pairwise;
 
+import org.json.JSONObject;
+
 import java.util.List;
 
 public class Pairwise {
     Me me;
     Their their;
-    String metadata;
+    JSONObject metadata;
 
 
     public Me getMe() {
@@ -16,22 +18,30 @@ public class Pairwise {
         return their;
     }
 
-    public String getMetadata() {
+    public JSONObject getMetadata() {
         return metadata;
     }
 
 
-    public Pairwise(Me me, Their their, String metadata) {
+    public Pairwise(Me me, Their their, JSONObject metadata) {
         this.me = me;
         this.their = their;
         this.metadata = metadata;
+    }
+
+    public Pairwise(Me me, Their their) {
+        this.me = me;
+        this.their = their;
+        this.metadata = null;
     }
 
 
    public static class Their extends  TheirEndpoint{
         String did;
 
-        public String getDid() {
+
+
+       public String getDid() {
             return did;
         }
 
@@ -45,6 +55,11 @@ public class Pairwise {
             this.did = did;
             this.label = label;
         }
+       public Their(String did, String label,String endpoint, String verkey) {
+           super(endpoint, verkey);
+           this.did = did;
+           this.label = label;
+       }
     }
 
 

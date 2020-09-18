@@ -2,11 +2,13 @@ import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
 import com.sirius.sdk.agent.model.Endpoint;
+import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
+import models.TrustPingMessageUnderTest;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,6 +16,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class TestAgent {
 
@@ -65,20 +68,10 @@ public class TestAgent {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");
-        Set<String> keySet1 = agent1params.getEntitiesObject().keySet();
-        Set<String> keySet2 = agent2params.getEntitiesObject().keySet();
-        JSONObject entity1 = new JSONObject();
-        for (String key : keySet1) {
-            entity1 = agent1params.getEntitiesObject().getJSONObject(key);
-            break;
-        }
-        JSONObject entity2 = new JSONObject();
-        for (String key : keySet2) {
-            entity2 = agent2params.getEntitiesObject().getJSONObject(key);
-            break;
-        }
-
-        System.out.println(entity1);
+        List<Entity> entityList1 = agent1params.getEntitiesList();
+        List<Entity> entityList2 = agent2params.getEntitiesList();
+        Entity entity1 = entityList1.get(0);
+        Entity entity2 = entityList2.get(0);
         Agent agent1 = new Agent(agent1params.getServerAddress(), agent1params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                 agent1params.getConnection(), 10);
         Agent agent2 = new Agent(agent2params.getServerAddress(), agent2params.getCredentials().getBytes(StandardCharsets.US_ASCII),
@@ -96,15 +89,15 @@ public class TestAgent {
         }
         Listener agent2Listener = agent2.subscribe();
 
-        agent1.getWallet().getDid().storeTheirDid(entity2.getString("did"), entity2.getString("verkey"));
-        if (!agent1.getWallet().getPairwise().isPairwiseExist(entity2.getString("did"))) {
+        agent1.getWallet().getDid().storeTheirDid(entity2.getDid(), entity2.getVerkey());
+        if (!agent1.getWallet().getPairwise().isPairwiseExist(entity2.getDid())) {
             System.out.println("#1");
-            agent1.getWallet().getPairwise().createPairwise(entity2.getString("did"), entity1.getString("did"));
+            agent1.getWallet().getPairwise().createPairwise(entity2.getDid(), entity1.getDid());
         }
-        agent2.getWallet().getDid().storeTheirDid(entity1.getString("did"), entity1.getString("verkey"));
-        if (!agent2.getWallet().getPairwise().isPairwiseExist(entity1.getString("did"))) {
+        agent2.getWallet().getDid().storeTheirDid(entity1.getDid(), entity1.getVerkey());
+        if (!agent2.getWallet().getPairwise().isPairwiseExist(entity1.getDid())) {
             System.out.println("#2");
-            agent1.getWallet().getPairwise().createPairwise(entity1.getString("did"), entity2.getString("did"));
+            agent1.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
         }
         //Prepare Message
         JSONObject jsonObject = new JSONObject();
@@ -114,15 +107,80 @@ public class TestAgent {
         jsonObject.put("response_requested", true);
         Message trustPing = new Message(jsonObject.toString());
         List<String> thierVerkeys = new ArrayList<>();
-        thierVerkeys.add(entity2.getString("verkey"));
-        agent1.sendMessage(trustPing, thierVerkeys, agent2Endpoint, entity1.getString("verkey"), new ArrayList<>());
-        Event event = agent2Listener.getOne(5);
+        thierVerkeys.add(entity2.getVerkey());
+
+        agent1.sendMessage(trustPing, thierVerkeys, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+        Event event = agent2Listener.getOne(10);
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         Assert.assertNotNull(message);
         String type = message.getString("@type");
         Assert.assertEquals("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping", type);
         String id = message.getString("@id");
         Assert.assertEquals(trustPing.getId(), id);
+
+        agent1.close();
+        agent2.close();
+    }
+
+    @Test
+    public void testListenerRestoreMessage() {
+        AgentParams agent1Params = confTest.getSuiteSingleton().getAgentParams("agent1");
+        AgentParams agent2Params = confTest.getSuiteSingleton().getAgentParams("agent2");
+        List<Entity> agent1ParamsEntitiesList = agent1Params.getEntitiesList();
+        List<Entity> agent2ParamsEntitiesList = agent2Params.getEntitiesList();
+        Entity entity1 = agent1ParamsEntitiesList.get(0);
+        Entity entity2 = agent2ParamsEntitiesList.get(0);
+        Agent agent1 = new Agent(agent1Params.getServerAddress(), agent1Params.getCredentials().
+                getBytes(StandardCharsets.US_ASCII), agent1Params.getConnection(), 5);
+        Agent agent2 = new Agent(agent2Params.getServerAddress(), agent2Params.getCredentials().
+                getBytes(StandardCharsets.US_ASCII), agent2Params.getConnection(), 5);
+
+        agent1.open();
+        agent2.open();
+
+        //GET endpoints
+        String agent2Endpoint = null;
+        for (int i = 0; i < agent2.getEndpoints().size(); i++) {
+            if (agent2.getEndpoints().get(i).getRoutingKeys().isEmpty()) {
+                agent2Endpoint = agent2.getEndpoints().get(i).getAddress();
+            }
+        }
+        Listener agent2Listener = agent2.subscribe();
+
+        //# Exchange Pairwise
+        agent1.getWallet().getDid().storeTheirDid(entity2.getDid(), entity2.getVerkey());
+        boolean isExist1 = agent1.getWallet().getPairwise().isPairwiseExist(entity2.getDid());
+        if (!isExist1) {
+            System.out.println("#1");
+            agent1.getWallet().getPairwise().createPairwise(entity2.getDid(), entity1.getDid());
+        }
+
+        agent2.getWallet().getDid().storeTheirDid(entity1.getDid(), entity1.getVerkey());
+        boolean isExist2 = agent2.getWallet().getPairwise().isPairwiseExist(entity1.getDid());
+        if (!isExist2) {
+            System.out.println("#2");
+            agent2.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
+        }
+
+        //Bind Message class to protocol
+        Message.registerMessageClass(TrustPingMessageUnderTest.class, "trust_ping_test");
+        //Prepare message
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("@id", "trust-ping-message-" + UUID.randomUUID().toString());
+        jsonObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping_test/1.0/ping");
+        jsonObject.put("comment", "Hi. Are you listening?");
+        jsonObject.put("response_requested", true);
+        Message trust_ping = new Message(jsonObject.toString());
+        List<String> verkeyList = new ArrayList<>();
+        verkeyList.add(entity2.getVerkey());
+
+        agent1.sendMessage(trust_ping, verkeyList, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+
+
+       Event event = agent2Listener.getOne(5);
+       JSONObject message = event.getJSONOBJECTFromJSON("message");
+        System.out.println("message="+message);
+    //    assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
         agent1.close();
         agent2.close();
     }

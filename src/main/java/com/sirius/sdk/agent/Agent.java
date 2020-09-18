@@ -103,7 +103,7 @@ public class Agent extends TransportLayer {
                 //TODO ledger
                 ledgers.put(network, new Ledger(network, wallet.getLedger(), wallet.getAnoncreds(), wallet.getCache(), storage));
             }
-            pairwiseList = new WalletPairwiseList(wallet.getPairwise());
+            pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
             microledgers = new MicroledgerList(rpc);
         } catch (SiriusFieldValueError siriusFieldValueError) {
             siriusFieldValueError.printStackTrace();
