@@ -100,17 +100,21 @@ public class TestAgent {
             agent1.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
         }
         //Prepare Message
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("@id", "trust-ping-message" + UUID.randomUUID().hashCode());
-        jsonObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping");
-        jsonObject.put("comment", "Hi. Are you listening?");
-        jsonObject.put("response_requested", true);
-        Message trustPing = new Message(jsonObject.toString());
+        Message.MessageBuilder messageBuilder = new Message.MessageBuilder("trust-ping-message" + UUID.randomUUID().hashCode(),
+                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping")
+                .add("comment", "Hi. Are you listening?")
+                .add("response_requested", true);
+
+        Message trustPing = messageBuilder.build();
         List<String> thierVerkeys = new ArrayList<>();
         thierVerkeys.add(entity2.getVerkey());
+        String finalAgent2Endpoint = agent2Endpoint;
 
-        agent1.sendMessage(trustPing, thierVerkeys, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+        System.out.println("sendMess1=");
+        agent1.sendMessage(trustPing, thierVerkeys, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+
         Event event = agent2Listener.getOne(10);
+        System.out.println("event=" + event.getMessageObj());
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         Assert.assertNotNull(message);
         String type = message.getString("@type");
@@ -118,8 +122,11 @@ public class TestAgent {
         String id = message.getString("@id");
         Assert.assertEquals(trustPing.getId(), id);
 
+
         agent1.close();
         agent2.close();
+
+
     }
 
     @Test
@@ -165,22 +172,22 @@ public class TestAgent {
         //Bind Message class to protocol
         Message.registerMessageClass(TrustPingMessageUnderTest.class, "trust_ping_test");
         //Prepare message
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("@id", "trust-ping-message-" + UUID.randomUUID().toString());
-        jsonObject.put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping_test/1.0/ping");
-        jsonObject.put("comment", "Hi. Are you listening?");
-        jsonObject.put("response_requested", true);
-        Message trust_ping = new Message(jsonObject.toString());
+        Message.MessageBuilder messageBuilder = new Message.MessageBuilder("trust-ping-message" + UUID.randomUUID().hashCode(),
+                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping_test/1.0/ping")
+                .add("comment", "Hi. Are you listening?")
+                .add("response_requested", true);
+
+        Message trust_ping = messageBuilder.build();
         List<String> verkeyList = new ArrayList<>();
         verkeyList.add(entity2.getVerkey());
 
         agent1.sendMessage(trust_ping, verkeyList, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
 
-       Event event = agent2Listener.getOne(5);
-       JSONObject message = event.getJSONOBJECTFromJSON("message");
-        System.out.println("message="+message);
-    //    assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
+        Event event = agent2Listener.getOne(5);
+        JSONObject message = event.getJSONOBJECTFromJSON("message");
+        System.out.println("message=" + message);
+        //    assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
         agent1.close();
         agent2.close();
     }

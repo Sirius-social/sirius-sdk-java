@@ -1,6 +1,7 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.NYMRole;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.utils.Pair;
@@ -457,6 +458,32 @@ public class TestWallet {
         System.out.println("response=" + response);
 
         Assert.assertTrue(response.first);
+
+        agent2.close();
+    }
+
+    @Test
+    public void testRegisterCredDefInNetwork() {
+        Agent agent2 = confTest.agent2();
+        String defaultNetwork = confTest.defaultNetwork();
+
+        agent2.open();
+        String seed = "000000000000000000000000Trustee1";
+        Pair<String, String> didVerkey = agent2.getWallet().getDid().createAndStoreMyDid(null, seed);
+        String schemaName = "schema_" + UUID.randomUUID().toString();
+        Pair<String, AnonCredSchema> anoncreds = agent2.getWallet().getAnoncreds().issuerCreateSchema(didVerkey.first, schemaName, "1.0", "attr1", "attr2", "attr3");
+
+        Pair<Boolean, String> okResponse = agent2.getWallet().getLedger().registerSchema(defaultNetwork, didVerkey.first, anoncreds.second);
+
+        Assert.assertTrue(okResponse.first);
+
+        CacheOptions opt = new CacheOptions();
+
+        String schemaForLedger = agent2.getWallet().getCache().getSchema(defaultNetwork, didVerkey.first, anoncreds.first, opt);
+        Pair<String, String> credDefIdCreddef = agent2.getWallet().getAnoncreds().issuerCreateAndStoreCredentialDef(didVerkey.first, new JSONObject(schemaForLedger), "TAG");
+
+        Pair<Boolean, String> okResponse2 = agent2.getWallet().getLedger().registerCredDef(defaultNetwork, didVerkey.first, new JSONObject(credDefIdCreddef.second));
+        Assert.assertTrue(okResponse2.first);
 
         agent2.close();
     }

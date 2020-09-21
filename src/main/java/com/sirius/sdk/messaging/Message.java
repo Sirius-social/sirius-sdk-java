@@ -21,6 +21,43 @@ import java.util.UUID;
 
 public class Message implements JsonSerializable<Message> {
 
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public static final class MessageBuilder {
+        JSONObject jsonObject =new JSONObject();
+
+        public MessageBuilder( String id,String type) {
+            jsonObject.put("@id",id);
+            jsonObject.put("@type",type);
+        }
+
+        public MessageBuilder add(String key, Object value){
+            jsonObject.put(key,value);
+            return this;
+        }
+
+        public Message build() {
+            Message message = new Message(jsonObject.toString());
+            return message;
+        }
+
+
+    }
 /*
     @property
     def type(self):
@@ -64,20 +101,19 @@ public class Message implements JsonSerializable<Message> {
     public static final String FIELD_ID = "@id";
 
     @SerializedName("@type")
+    private
     String type;
     @SerializedName("@id")
+    private
     String id;
+
+    public JSONObject getMessageObj() {
+        return messageObj;
+    }
 
     JSONObject messageObj;
     Type typeOfType;
 
-    public String getType() {
-        return type;
-    }
-
-    public String getId() {
-        return id;
-    }
 
 
     public String prettyPrint() {
@@ -224,6 +260,7 @@ public class Message implements JsonSerializable<Message> {
         return pair;
 
     }
+
 /*    def restore_message_instance(payload:dict)->(bool,Message):
             if'@type'in payload:
     typ=Type.from_str(payload['@type'])

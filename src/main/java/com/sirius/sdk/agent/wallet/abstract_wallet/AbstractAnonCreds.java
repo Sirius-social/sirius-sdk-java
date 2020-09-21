@@ -3,7 +3,10 @@ package com.sirius.sdk.agent.wallet.abstract_wallet;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractAnonCreds {
@@ -33,6 +36,11 @@ public abstract class AbstractAnonCreds {
      *                  }
      */
     public abstract  Pair<String, AnonCredSchema> issuerCreateSchema(String issuerDid, String name, String version, List<String> attrs);
+
+    public   Pair<String, AnonCredSchema> issuerCreateSchema(String issuerDid, String name, String version, String... attrs){
+        return issuerCreateSchema(issuerDid,name,version,Arrays.asList(attrs));
+    }
+
 
     /**
      *   Create credential definition entity that encapsulates credentials issuer DID, credential schema, secrets used for
@@ -88,7 +96,7 @@ public abstract class AbstractAnonCreds {
      * Overload method {@link #issuerCreateAndStoreCredentialDef(String issuerDid,Object schema, String tag,String signatureType, Object config)}
      */
 
-    public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, String schema, String tag) {
+    public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, Object schema, String tag) {
         return issuerCreateAndStoreCredentialDef(issuerDid,schema,tag,null, null);
     }
 

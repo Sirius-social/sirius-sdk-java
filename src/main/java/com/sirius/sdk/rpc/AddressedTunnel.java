@@ -60,9 +60,10 @@ public class AddressedTunnel {
         try {
          String payloadString =    new String(payload,StandardCharsets.US_ASCII);
          System.out.println("payloadString="+payloadString);
-            JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObject = new JSONObject(payloadString);
             if (jsonObject.has("protected")) {
                 String unpacked = p2p.unpack(new String(payload, StandardCharsets.US_ASCII));
+                System.out.println("unpacked="+unpacked);
                 context.setEncrypted(true);
                 return new Message(unpacked);
             } else {

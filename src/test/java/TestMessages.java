@@ -1,6 +1,5 @@
-import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
-import com.sirius.sdk.agent.aries_rfc.feature_0048_trust.Ping;
-import com.sirius.sdk.agent.aries_rfc.feature_0048_trust.Pong;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import models.TestMessage1;

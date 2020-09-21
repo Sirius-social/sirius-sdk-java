@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0048_trust;
+package com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 
