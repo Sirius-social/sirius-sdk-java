@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet.model;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.sirius.sdk.base.JsonSerializable;
 import org.json.JSONObject;
 
@@ -37,6 +38,11 @@ public class RetrieveRecordOptions implements JsonSerializable<RetrieveRecordOpt
     public RetrieveRecordOptions deserialize(String string) {
         Gson gson = new Gson();
         return gson.fromJson(string, RetrieveRecordOptions.class);
+    }
+
+    @Override
+    public JsonObject serializeToJsonObject() {
+        return null;
     }
 
     public void checkAll() {

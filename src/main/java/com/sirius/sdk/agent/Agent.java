@@ -100,7 +100,6 @@ public class Agent extends TransportLayer {
                 storage = new InWalletImmutableCollection(wallet.getNonSecrets());
             }
             for (String network : rpc.getNetworks()) {
-                //TODO ledger
                 ledgers.put(network, new Ledger(network, wallet.getLedger(), wallet.getAnoncreds(), wallet.getCache(), storage));
             }
             pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());

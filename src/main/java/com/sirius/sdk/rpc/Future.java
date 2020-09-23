@@ -1,7 +1,6 @@
 package com.sirius.sdk.rpc;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.base.JsonSerializable;
@@ -9,8 +8,10 @@ import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.errors.IndyException;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.StringUtils;
+import com.sirius.sdk.utils.Triple;
 import org.apache.commons.codec.binary.Hex;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -115,6 +116,11 @@ public class Future {
             Gson gson = new GsonBuilder().create();
             return gson.fromJson(string, FuturePromise.class);
         }
+
+        @Override
+        public JsonObject serializeToJsonObject() {
+            return null;
+        }
     }
 
     /**
@@ -176,6 +182,79 @@ public class Future {
 
         return false;
     }
+
+/*
+
+    */
+/**
+     * "Wait for response
+     *
+     * @param timeout waiting timeout in seconds
+     * @return True/False
+     *//*
+
+    public boolean waitPromise(int timeout)  {
+        if (readOk) {
+            return true;
+        }
+        if (timeout == 0) {
+            return false;
+        }
+
+        try {
+            Message message = tunnel.receive(timeout);
+            JsonObject messageObject = message.serializeToJsonObject();
+            JSONObject threadObj = message.getJSONOBJECTFromJSON("~thread");
+            String threadId = null;
+            if (threadObj != null) {
+                threadId = threadObj.getString("thid");
+            }
+            boolean isType = MSG_TYPE.equals(message.getType());
+            boolean isTypeId = id.equals(threadId);
+            if (MSG_TYPE.equals(message.getType()) && id.equals(threadId)) {
+                JSONObject exception = message.getJSONOBJECTFromJSON("exception");
+                if (exception == null) {
+                    JsonElement valueElement =  messageObject.get("value");
+                    Object value =   message.getObjectFromJSON("value");
+
+                    boolean is_tuple =    messageObject.getAsJsonPrimitive("is_tuple").getAsBoolean();
+                    boolean is_bytes =     messageObject.getAsJsonPrimitive("is_bytes").getAsBoolean();
+                    if(is_tuple){
+                        JsonArray valueArray =  messageObject.getAsJsonArray();
+                        if (valueArray.size() == 2) {
+                            this.value = new Pair<JsonElement,JsonElement>(valueArray.get(0),valueArray.get(1));
+                        */
+/*}else if(valueArray.size() == 3){
+                            this.value = new Triple<JsonElement,JsonElement,JsonElement>(valueArray.get(0),valueArray.get(1),valueArray.get(2));
+                        *//*
+}else {
+                            this.value = value;
+                        }
+                    }else if(is_bytes){
+                        Custom custom = new Custom();
+                        this.value =  custom.b64ToBytes(valueElement.getAsString(),false);
+                    }else{
+                        this.value = value;
+                    }
+                } else {
+                    this.exception = exception;
+                }
+                readOk  =true;
+                return true;
+            } else {
+                System.out.println("Unexpected payload" + message.serialize() + "Expected id: " + id);
+            }
+
+
+        } catch (SiriusInvalidPayloadStructure  siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
+        }
+
+        return false;
+    }
+*/
+
+
 
     /**
      * Get response value.

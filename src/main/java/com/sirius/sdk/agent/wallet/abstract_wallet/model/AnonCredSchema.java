@@ -1,7 +1,9 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet.model;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.sirius.sdk.base.JsonSerializable;
+import com.sirius.sdk.utils.GsonUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,6 +68,11 @@ public class AnonCredSchema implements JsonSerializable<AnonCredSchema> {
     @Override
     public AnonCredSchema deserialize(String string) {
         return new Gson().fromJson(string, AnonCredSchema.class);
+    }
+
+    @Override
+    public JsonObject serializeToJsonObject() {
+       return GsonUtils.getDefaultGson().toJsonTree(this,AnonCredSchema.class).getAsJsonObject();
     }
 
     public String getId() {

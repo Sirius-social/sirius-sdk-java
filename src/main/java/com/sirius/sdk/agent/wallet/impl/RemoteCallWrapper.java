@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.wallet.impl;
 
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.JsonObject;
 import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.base.JsonSerializable;

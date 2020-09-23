@@ -2,12 +2,14 @@ package com.sirius.sdk.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessageClass;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
+import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -222,6 +224,11 @@ public class Message implements JsonSerializable<Message> {
     public Message deserialize(String string) {
         Gson gson = new Gson();
         return gson.fromJson(string, this.getClass());
+    }
+
+    @Override
+    public JsonObject serializeToJsonObject() {
+       return GsonUtils.getDefaultGson().toJsonTree(this, Message.class).getAsJsonObject();
     }
 
     public static void registerMessageClass(Class<? extends Message> clas, String protocol, String name) {
