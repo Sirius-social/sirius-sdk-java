@@ -3,15 +3,12 @@ package com.sirius.sdk.rpc;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.KeyDerivationMethod;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.*;
-import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.encryption.Custom;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
-import com.sun.deploy.ref.AppModel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

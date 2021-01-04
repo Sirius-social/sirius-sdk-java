@@ -13,7 +13,6 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
-import javafx.scene.Scene;
 import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
