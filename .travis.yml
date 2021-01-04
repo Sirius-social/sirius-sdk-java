@@ -1,0 +1,14 @@
+language: java
+
+services:
+  - docker
+  
+before_install:
+  # Run TestSuite
+  - cd ./test_suite
+  - docker-compose up -d
+  - cd ..
+  - sleep 60  # Wait for TestSuite is ready
+  
+jdk:
+  - oraclejdk11
