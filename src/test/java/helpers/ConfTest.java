@@ -100,7 +100,7 @@ public class ConfTest {
     public Agent getAgent(String name) {
         AgentParams params = getSuiteSingleton().getAgentParams(name);
         Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                params.getConnection(), 10, null, name);
+                params.getConnection(), 60, null, name);
         return agent;
     }
 
