@@ -3,14 +3,16 @@ package helpers;
 import com.sirius.sdk.base.ReadOnlyChannel;
 import com.sirius.sdk.base.WriteOnlyChannel;
 
+import java.util.concurrent.CompletableFuture;
+
 public class InMemoryChannel implements ReadOnlyChannel, WriteOnlyChannel {
 
     public InMemoryChannel() {
     }
 
     @Override
-    public byte[] read(int timeout) {
-        return new byte[0];
+    public CompletableFuture<byte[]> read() {
+        return new  CompletableFuture<>();
     }
 
     @Override

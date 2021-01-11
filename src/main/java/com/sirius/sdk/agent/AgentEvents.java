@@ -7,6 +7,12 @@ import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
  * RPC service.
  * <p>
@@ -51,23 +57,25 @@ public class AgentEvents extends BaseAgentConnection {
 
     }
 
-    public Message pull(int timeout) throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
+    public CompletableFuture<Message> pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
         if (!connector.isOpen()) {
             throw new SiriusConnectionClosed("Open agent connection at first");
         }
-        byte[] data = connector.read(timeout);
-        try {
-            JSONObject payload = new JSONObject(data);
-            if (payload.has("protected")) {
-                String message = p2p.unpack(payload.toString());
-                return new Message(message);
-            } else {
-                return new Message(payload.toString());
+        return connector.read().thenApply(data -> {
+            try {
+                System.out.println("!!!!!!!!!  " + new String(data, StandardCharsets.US_ASCII));
+                JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
+                if (payload.has("protected")) {
+                    String message = p2p.unpack(payload.toString());
+                    return new Message(message);
+                } else {
+                    return new Message(payload.toString());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+                //throw new SiriusInvalidPayloadStructure(e.getMessage());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SiriusInvalidPayloadStructure(e.getMessage());
-        }
-
+        });
     }
 }

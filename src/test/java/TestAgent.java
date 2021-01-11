@@ -16,6 +16,10 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 public class TestAgent {
@@ -64,7 +68,7 @@ public class TestAgent {
     }
 
     @Test
-    public void testAgentsCommunications() {
+    public void testAgentsCommunications() throws InterruptedException, ExecutionException, TimeoutException {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");
@@ -87,7 +91,7 @@ public class TestAgent {
             }
 
         }
-        Listener agent2Listener = agent2.subscribe();
+
 
         agent1.getWallet().getDid().storeTheirDid(entity2.getDid(), entity2.getVerkey());
         if (!agent1.getWallet().getPairwise().isPairwiseExist(entity2.getDid())) {
@@ -97,7 +101,7 @@ public class TestAgent {
         agent2.getWallet().getDid().storeTheirDid(entity1.getDid(), entity1.getVerkey());
         if (!agent2.getWallet().getPairwise().isPairwiseExist(entity1.getDid())) {
             System.out.println("#2");
-            agent1.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
+            agent2.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
         }
         //Prepare Message
         Message.MessageBuilder messageBuilder = new Message.MessageBuilder("trust-ping-message" + UUID.randomUUID().hashCode(),
@@ -110,10 +114,13 @@ public class TestAgent {
         thierVerkeys.add(entity2.getVerkey());
         String finalAgent2Endpoint = agent2Endpoint;
 
+
+        Listener agent2Listener = agent2.subscribe();
+        CompletableFuture<Event> eventFeat = agent2Listener.getOne();
         System.out.println("sendMess1=");
         agent1.sendMessage(trustPing, thierVerkeys, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
-        Event event = agent2Listener.getOne(10);
+        Event event = eventFeat.get(10, TimeUnit.SECONDS);
         System.out.println("event=" + event.getMessageObj());
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         Assert.assertNotNull(message);
@@ -130,7 +137,7 @@ public class TestAgent {
     }
 
     @Test
-    public void testListenerRestoreMessage() {
+    public void testListenerRestoreMessage() throws InterruptedException, ExecutionException, TimeoutException {
         AgentParams agent1Params = confTest.getSuiteSingleton().getAgentParams("agent1");
         AgentParams agent2Params = confTest.getSuiteSingleton().getAgentParams("agent2");
         List<Entity> agent1ParamsEntitiesList = agent1Params.getEntitiesList();
@@ -181,13 +188,14 @@ public class TestAgent {
         List<String> verkeyList = new ArrayList<>();
         verkeyList.add(entity2.getVerkey());
 
+        CompletableFuture<Event> eventFeat = agent2Listener.getOne();
         agent1.sendMessage(trust_ping, verkeyList, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
 
-        Event event = agent2Listener.getOne(5);
+        Event event = eventFeat.get(10, TimeUnit.SECONDS);
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         System.out.println("message=" + message);
-        //    assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
+           // assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
         agent1.close();
         agent2.close();
     }

@@ -10,6 +10,9 @@ import org.json.JSONObject;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Transport abstraction that help build tunnels (p2p pairwise relationships) over channel layer.
@@ -56,7 +59,16 @@ public class AddressedTunnel {
      * @return received packet
      */
     public Message receive(int timeout) throws SiriusInvalidPayloadStructure {
-        byte[] payload = input.read(timeout);
+        byte[] payload = new byte[0];
+        try {
+            payload = input.read().get(timeout, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
         try {
          String payloadString =    new String(payload,StandardCharsets.US_ASCII);
          System.out.println("payloadString="+payloadString);

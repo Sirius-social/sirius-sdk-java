@@ -8,6 +8,7 @@ import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.CompletableFuture;
 
 public class Listener {
 
@@ -20,29 +21,42 @@ public class Listener {
     }
 
 
-    public Event getOne(int timeout) {
+    public CompletableFuture<Event> getOne() {
         try {
-            Message event = source.pull(timeout);
-            if (event.messageObjectHasKey("message")) {
-                JSONObject messObj = event.getJSONOBJECTFromJSON("message");
-                Pair<Boolean, Message> result = Message.restoreMessageInstance(messObj.toString());
-                if (result.first) {
-                    //    event['message'] = message
-                } else {
-                    //    event['message'] = Message(event['message'])*/
+            return source.pull().thenApply(msg -> {
+                if (msg.messageObjectHasKey("message")) {
+                    JSONObject messObj = msg.getJSONOBJECTFromJSON("message");
+                    Pair<Boolean, Message> result = null;
+                    try {
+                        result = Message.restoreMessageInstance(messObj.toString());
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    }
+                    if (result.first) {
+                        //    msg['message'] = message
+                    } else {
+                        //    msg['message'] = Message(msg['message'])*/
+                    }
                 }
-            }
-            String theirVerkey = event.getStringFromJSON("sender_verkey");
-            Pairwise pairwise = null;
-            if (pairwiseResolver != null && theirVerkey != null) {
-                pairwise = pairwiseResolver.loadForVerkey(theirVerkey);
-            }
-            return new Event(pairwise, event.toString());
-        } catch (SiriusConnectionClosed | SiriusInvalidPayloadStructure
-                | NoSuchMethodException | IllegalAccessException |
-                InvocationTargetException | InstantiationException siriusConnectionClosed) {
+                String theirVerkey = msg.getStringFromJSON("sender_verkey");
+                Pairwise pairwise = null;
+                if (pairwiseResolver != null && theirVerkey != null) {
+                    pairwise = pairwiseResolver.loadForVerkey(theirVerkey);
+                }
+                return new Event(pairwise, msg.serialize());
+            });
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
         }
+
         return null;
     }
 

@@ -1,5 +1,7 @@
 package com.sirius.sdk.base;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Communication abstraction for reading data stream
  */
@@ -9,7 +11,7 @@ public interface ReadOnlyChannel {
      * @param timeout Operation timeout is sec
      * @return chunk of data stream
      */
-    byte[] read(int timeout);
+    CompletableFuture<byte[]> read();
 
 }
 

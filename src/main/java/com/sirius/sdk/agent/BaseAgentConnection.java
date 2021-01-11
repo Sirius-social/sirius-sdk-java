@@ -7,6 +7,9 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
 import com.sirius.sdk.messaging.Message;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class BaseAgentConnection {
 
@@ -57,7 +60,16 @@ public abstract class BaseAgentConnection {
 
     public void create() throws SiriusFieldValueError {
         connector.open();
-        byte[] payload = connector.read(getTimeout());
+        byte[] payload = new byte[0];
+        try {
+            payload = connector.read().get(getTimeout(), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
         Message context = new Message(new String(payload, StandardCharsets.UTF_8));
         if (context.getType()==null){
             throw new SiriusFieldValueError("message @type is empty");

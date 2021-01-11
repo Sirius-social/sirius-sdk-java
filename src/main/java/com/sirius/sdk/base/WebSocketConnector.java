@@ -98,17 +98,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onTextMessage(WebSocket webSocket, String s) throws Exception {
-            System.out.println("uri ="+webSocket.getURI() +"onTextMessage1="+s);
+            System.out.println("uri = "+webSocket.getURI() +" onTextMessage1 = "+s);
         }
 
         @Override
         public void onTextMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-            System.out.println("uri ="+webSocket.getURI() +"onTextMessage2="+new String(bytes, StandardCharsets.US_ASCII));
+            System.out.println("uri = "+webSocket.getURI() +" onTextMessage2 = "+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override
         public void onBinaryMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-           System.out.println("uri ="+webSocket.getURI() +"onBinaryMessage="+new String(bytes, StandardCharsets.US_ASCII));
+           System.out.println("uri = "+webSocket.getURI() +" onBinaryMessage = "+new String(bytes, StandardCharsets.US_ASCII));
         }
 
         @Override
@@ -235,18 +235,9 @@ public class WebSocketConnector extends BaseConnector {
     CompletableFuture<byte[]> readFuture = new CompletableFuture<>();
 
     @Override
-    public byte[] read(int timeout) {
+    public CompletableFuture<byte[]> read() {
         readFuture = new CompletableFuture<>();
-        try {
-            return readFuture.get(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
+        return readFuture;
     }
 
 
