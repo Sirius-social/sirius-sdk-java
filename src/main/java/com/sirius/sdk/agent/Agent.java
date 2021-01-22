@@ -14,9 +14,7 @@ import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Agent connection in the self-sovereign identity ecosystem.
@@ -149,6 +147,10 @@ public class Agent extends TransportLayer {
             siriusConnectionClosed.printStackTrace();
         }
         return new Pair<>(false, null);
+    }
+
+    public void sendTo(Message message, Pairwise to) {
+        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
     }
 
 
