@@ -9,6 +9,7 @@ import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.rpc.AddressedTunnel;
 import com.sirius.sdk.rpc.Future;
 import com.sirius.sdk.rpc.Parsing;
+import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -201,11 +202,11 @@ public class AgentRPC extends BaseAgentConnection {
      * @return Response message if coprotocol is True
      */
     public Message sendMessage(Message message, List<String> their_vk, String endpoint,
-                               String myVk, List<String> routingKeys, boolean coprotocol) throws SiriusConnectionClosed {
+                               String myVk, List<String> routingKeys, boolean coprotocol) throws SiriusConnectionClosed, SiriusRPCError {
         if(!connector.isOpen()){
             throw  new SiriusConnectionClosed("Open agent connection at first");
         }
-        RemoteParams.RemoteParamsBuilder paramsBuilder =   RemoteParams.RemoteParamsBuilder.create()
+        RemoteParams.RemoteParamsBuilder paramsBuilder = RemoteParams.RemoteParamsBuilder.create()
                 .add("message",message);
         if(routingKeys ==null){
             routingKeys = new ArrayList<>();
@@ -213,18 +214,20 @@ public class AgentRPC extends BaseAgentConnection {
         paramsBuilder.add("routing_keys",routingKeys)
                 .add("recipient_verkeys",their_vk)
                 .add("sender_verkey",myVk);
-        if(preferAgentSide){
+
+        Object response = null;
+        if (preferAgentSide) {
             paramsBuilder.add("timeout",timeout);
             paramsBuilder.add("endpoint_address",endpoint);
             try {
-               Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message",paramsBuilder.build());
+               response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message",paramsBuilder.build());
 
             } catch (Exception siriusRPCError) {
                 siriusRPCError.printStackTrace();
             }
-        }else{
+        } else {
             try {
-                Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send",paramsBuilder.build());
+                response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send",paramsBuilder.build());
             /*    wired = await self.remote_call(
                         msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prepare_message_for_send',
                         params=params
@@ -242,6 +245,12 @@ public class AgentRPC extends BaseAgentConnection {
             }
         }
 
+        boolean ok = (boolean) ((Pair) response).first;
+        String body = (String) ((Pair) response).second;
+
+        if (!ok) {
+            throw new SiriusRPCError(body);
+        }
 
         return null;
     }

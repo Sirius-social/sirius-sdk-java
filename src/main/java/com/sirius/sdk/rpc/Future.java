@@ -152,8 +152,8 @@ public class Future {
                 JSONObject exception = message.getJSONOBJECTFromJSON("exception");
                 if (exception == null) {
                     Object value =   message.getObjectFromJSON("value");
-                    boolean is_tuple =   message.getBooleanFromJSON("is_tuple");
-                    boolean is_bytes =   message.getBooleanFromJSON("is_bytes");
+                    boolean is_tuple = message.getBooleanFromJSON("is_tuple");
+                    boolean is_bytes = message.getBooleanFromJSON("is_bytes");
                     if(is_tuple){
                         if (((JSONArray) value).length() == 2) {
                             this.value = new Pair<Object,Object>(((JSONArray) value).get(0),((JSONArray) value).get(1));

@@ -10,12 +10,12 @@ public abstract class AriesProtocolMessage extends Message {
 
     public AriesProtocolMessage(String message) {
         super(message);
-        Message.registerMessageClass(this.getClass(),getProtocol(),getName());
+        Message.registerMessageClass(this.getClass(), getProtocol(), getName());
     }
 
     public AriesProtocolMessage() {
         super("{}");
-        Message.registerMessageClass(this.getClass(),getProtocol(),getName());
+        Message.registerMessageClass(this.getClass(), getProtocol(), getName());
     }
 
     public abstract String getProtocol();

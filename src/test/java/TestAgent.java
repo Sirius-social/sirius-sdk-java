@@ -3,6 +3,7 @@ import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
 import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
@@ -68,7 +69,7 @@ public class TestAgent {
     }
 
     @Test
-    public void testAgentsCommunications() throws InterruptedException, ExecutionException, TimeoutException {
+    public void testAgentsCommunications() throws InterruptedException, ExecutionException, TimeoutException, SiriusRPCError {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");
@@ -137,7 +138,7 @@ public class TestAgent {
     }
 
     @Test
-    public void testListenerRestoreMessage() throws InterruptedException, ExecutionException, TimeoutException {
+    public void testListenerRestoreMessage() throws InterruptedException, ExecutionException, TimeoutException, SiriusRPCError {
         AgentParams agent1Params = confTest.getSuiteSingleton().getAgentParams("agent1");
         AgentParams agent2Params = confTest.getSuiteSingleton().getAgentParams("agent2");
         List<Entity> agent1ParamsEntitiesList = agent1Params.getEntitiesList();

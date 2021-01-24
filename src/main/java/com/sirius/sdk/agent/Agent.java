@@ -138,7 +138,7 @@ public class Agent extends TransportLayer {
      * @return
      */
     public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
-                                              String endpoint, String my_vk, List<String> routing_keys) {
+                                              String endpoint, String my_vk, List<String> routing_keys) throws SiriusRPCError {
         checkIsOpen();
         try {
             Message message1 = rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
@@ -149,7 +149,7 @@ public class Agent extends TransportLayer {
         return new Pair<>(false, null);
     }
 
-    public void sendTo(Message message, Pairwise to) {
+    public void sendTo(Message message, Pairwise to) throws SiriusRPCError {
         sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
     }
 

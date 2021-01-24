@@ -43,9 +43,9 @@ public class Message implements JsonSerializable<Message> {
     public static final class MessageBuilder {
         JSONObject jsonObject =new JSONObject();
 
-        public MessageBuilder( String id,String type) {
-            jsonObject.put("@id",id);
-            jsonObject.put("@type",type);
+        public MessageBuilder(String id, String type) {
+            jsonObject.put("@id", id);
+            jsonObject.put("@type", type);
         }
 
         public MessageBuilder add(String key, Object value){
@@ -198,7 +198,7 @@ public class Message implements JsonSerializable<Message> {
         return defaultValue;
     }
 
-    public String generateId() {
+    public static String generateId() {
         return UUID.randomUUID().toString();
     }
 
