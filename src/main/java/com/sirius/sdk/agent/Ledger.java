@@ -220,7 +220,7 @@ public class Ledger {
 
 
 
-    public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef,String submitterDid, JsonObject tags ){
+    public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef, String submitterDid, JsonObject tags) {
 
     /*   Pair<String,String> credDefidBody =  issuer.issuerCreateAndStoreCredentialDef(submitterDid,
                 credDef.getSchema().serializeToJsonObject(),credDef.getTag(),credDef.getConfig().serialize());
@@ -261,4 +261,8 @@ public class Ledger {
     await self.__ensure_exists_in_storage(ledger_cred_def, submitter_did, tags)
             return True, ledger_cred_def
 */
+
+    public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef, String submitterDid) {
+        return registerCredDef(credDef, submitterDid, new JsonObject());
+    }
 }

@@ -41,14 +41,14 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public static final class MessageBuilder {
-        JSONObject jsonObject =new JSONObject();
+        JSONObject jsonObject = new JSONObject();
 
         public MessageBuilder(String id, String type) {
             jsonObject.put("@id", id);
             jsonObject.put("@type", type);
         }
 
-        public MessageBuilder add(String key, Object value){
+        public MessageBuilder add(String key, Object value) {
             jsonObject.put(key,value);
             return this;
         }

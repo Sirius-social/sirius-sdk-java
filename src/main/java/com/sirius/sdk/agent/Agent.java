@@ -107,6 +107,9 @@ public class Agent extends TransportLayer {
         }
     }
 
+    public String getName() {
+        return name;
+    }
 
     public boolean ping() {
         try {

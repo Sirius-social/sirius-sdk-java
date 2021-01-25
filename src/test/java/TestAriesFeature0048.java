@@ -27,16 +27,6 @@ public class TestAriesFeature0048 {
 
     ConfTest confTest;
 
-    static String getFirstEndpointAddressWIthEmptyRoutingKeys(Agent agent) {
-        for (Endpoint e : agent.getEndpoints()) {
-            if (e.getRoutingKeys().size() == 0) {
-                return e.getAddress();
-            }
-        }
-
-        return "";
-    }
-
     @Before
     public void configureTest() {
         confTest = ConfTest.newInstance();
@@ -55,8 +45,8 @@ public class TestAriesFeature0048 {
         Pair<String,String> didVerkey1 = agent1.getWallet().getDid().createAndStoreMyDid();
         Pair<String,String> didVerkey2 = agent2.getWallet().getDid().createAndStoreMyDid();
 
-        String endpointAddress2 = getFirstEndpointAddressWIthEmptyRoutingKeys(agent2);
-        String endpointAddress3 = getFirstEndpointAddressWIthEmptyRoutingKeys(agent3);
+        String endpointAddress2 = ServerTestSuite.getFirstEndpointAddressWIthEmptyRoutingKeys(agent2);
+        String endpointAddress3 = ServerTestSuite.getFirstEndpointAddressWIthEmptyRoutingKeys(agent3);
 
         agent1.getWallet().getDid().storeTheirDid(didVerkey2.first, didVerkey2.second);
         agent1.getWallet().getPairwise().createPairwise(didVerkey2.first, didVerkey1.first);
