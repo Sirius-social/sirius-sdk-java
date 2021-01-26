@@ -206,6 +206,7 @@ public class Message implements JsonSerializable<Message> {
     public String serialize() {
         Gson gson = new Gson();
       //  return gson.toJson(this, this.getClass());
+        System.out.println("msg serialize = " + messageObj.toString());
         return messageObj.toString();
 
     }

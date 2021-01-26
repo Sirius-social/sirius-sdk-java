@@ -434,7 +434,7 @@ public abstract class AbstractLedger {
      *                     }
      * @return Request result as json.
      */
-    public abstract String buildCredDef(String submitterDid, String data);
+    public abstract String buildCredDefRequest(String submitterDid, Object data);
 
     /**
      * Builds a GET_CRED_DEF request. Request to get a credential definition (in particular, public key),

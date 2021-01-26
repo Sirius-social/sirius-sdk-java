@@ -54,7 +54,7 @@ public class Schema extends AnonCredSchema {
 
     @Override
     public JSONObject serializeToJSONObject() {
-        JSONObject jsonObject =  super.serializeToJSONObject();
+        JSONObject jsonObject = super.serializeToJSONObject();
         jsonObject.put("seqNo", seqNo);
         return jsonObject;
     }

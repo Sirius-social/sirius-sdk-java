@@ -207,7 +207,7 @@ public class LedgerProxy extends AbstractLedger  {
     }
 
     @Override
-    public String buildCredDef(String submitterDid, String data) {
+    public String buildCredDefRequest(String submitterDid, Object data) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/build_cred_def_request",
                         RemoteParams.RemoteParamsBuilder.create()

@@ -44,9 +44,11 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
        return new RemoteCallWrapper<Pair<String, String>>(rpc){}.
                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/issuer_create_and_store_credential_def",
                 RemoteParams.RemoteParamsBuilder.create()
-                        .add("issuer_did", issuerDid).
-                        add("schema", schema).add("tag", tag).
-                        add("signature_type",signatureType).add("config",config));
+                        .add("issuer_did", issuerDid)
+                        .add("schema", schema)
+                        .add("tag", tag)
+                        .add("signature_type", signatureType)
+                        .add("config", config));
     }
 
     @Override
@@ -81,7 +83,7 @@ public class AnonCredsProxy extends AbstractAnonCreds  {
 
     @Override
     public String issuerCreateCredentialOffer(String credDefId) {
-      return   new RemoteCallWrapper<String>(rpc){}.
+      return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/issuer_create_credential_offer",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("cred_def_id", credDefId));

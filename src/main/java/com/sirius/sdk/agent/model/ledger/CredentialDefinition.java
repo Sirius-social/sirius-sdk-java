@@ -110,8 +110,8 @@ public class CredentialDefinition implements JsonSerializable<CredentialDefiniti
 
 
     public  String getId(){
-        if(body!=null){
-            if(body.has("id")){
+        if (body != null) {
+            if(body.has("id")) {
                 return body.getAsJsonPrimitive("id").getAsString();
             }
         }

@@ -14,6 +14,7 @@ import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
 import org.checkerframework.checker.units.qual.C;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -221,11 +222,15 @@ public class Ledger {
 
 
     public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef, String submitterDid, JsonObject tags) {
+        Pair<String, String> credDefIdBody = issuer.issuerCreateAndStoreCredentialDef(submitterDid,
+                credDef.getSchema().serializeToJSONObject(), credDef.getTag(), null, credDef.getConfig().serializeToJSONObject());
+        String body = credDefIdBody.second;
+        String buildRequest = this.api.buildCredDefRequest(submitterDid, new JSONObject(body));
+        String signedRequest = this.api.signRequest(submitterDid, buildRequest);
+        String resp = this.api.submitRequest(this.name, signedRequest);
 
-    /*   Pair<String,String> credDefidBody =  issuer.issuerCreateAndStoreCredentialDef(submitterDid,
-                credDef.getSchema().serializeToJsonObject(),credDef.getTag(),credDef.getConfig().serialize());
-*/
-        return new Pair<>(true, credDef);
+        return null;
+        //return new Pair<>(true, credDef);
     }
    /* async def register_cred_def(
             self, cred_def: CredentialDefinition, submitter_did: str, tags: dict = None
