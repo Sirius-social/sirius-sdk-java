@@ -1,4 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 
 public class IssueCredentialMessage extends BaseIssueCredentialMessage{
+    public IssueCredentialMessage(String message) {
+        super(message);
+    }
 }

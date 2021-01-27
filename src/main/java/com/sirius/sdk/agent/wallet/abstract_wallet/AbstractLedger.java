@@ -157,7 +157,7 @@ public abstract class AbstractLedger {
      * @param request  Request data json.
      * @return Request result
      */
-    public abstract String submitRequest(String poolName, String request);
+    public abstract String submitRequest(String poolName, Object request);
 
     /**
      * Send action to particular nodes of validator pool.
@@ -203,7 +203,7 @@ public abstract class AbstractLedger {
      * @param request      Request data json.
      * @return Signed request json.
      */
-    public abstract String signRequest(String submitterDid, String request);
+    public abstract String signRequest(String submitterDid, Object request);
 
     /**
      * Multi signs request message.

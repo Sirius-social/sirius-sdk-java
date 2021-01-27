@@ -24,7 +24,7 @@ public class AnonCredSchema implements JsonSerializable<AnonCredSchema> {
     }
 
     public AnonCredSchema(String json) {
-        AnonCredSchema anonCreds= deserialize(json);
+        AnonCredSchema anonCreds = deserialize(json);
         this.ver = anonCreds.ver;
         this.id = anonCreds.id;
         this.name = anonCreds.name;
@@ -89,6 +89,10 @@ public class AnonCredSchema implements JsonSerializable<AnonCredSchema> {
 
     public List<String> getAttrNames() {
         return attrNames;
+    }
+
+    public JSONObject getBody() {
+        return serializeToJSONObject();
     }
 }
 

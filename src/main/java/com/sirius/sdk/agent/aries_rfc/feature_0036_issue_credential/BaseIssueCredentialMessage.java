@@ -12,4 +12,8 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
     public String getName() {
         return null;
     }
+
+    public BaseIssueCredentialMessage(String message) {
+        super(message);
+    }
 }

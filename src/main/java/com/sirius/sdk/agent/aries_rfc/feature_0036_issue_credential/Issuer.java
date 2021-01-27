@@ -6,18 +6,24 @@ import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+
+import static java.time.LocalTime.now;
 
 public class Issuer {
 
     Pairwise holder;
     Context context;
+    int timeToLiveSec;
 
     public Issuer(Context context, Pairwise holder, int timeToLiveSec) {
         this.holder = holder;
         this.context = context;
+        this.timeToLiveSec = timeToLiveSec;
     }
 
     public Future<Boolean> issue(Map<String, String> values, Schema schema, CredentialDefinition credDef,
@@ -25,8 +31,12 @@ public class Issuer {
                           List<AttribTranslation> translation, String credId) {
 
         Agent a = context.agent;
+        Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
         String offer = a.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
-        OfferCredentialMessage offer_msg = new OfferCredentialMessage();
+        OfferCredentialMessage offerMsg = OfferCredentialMessage.create(comment, locate, offer, credDef.getBody(), preview,
+                schema.getBody(), translation, expiresTime);
+
+
 
         return null;
     }
