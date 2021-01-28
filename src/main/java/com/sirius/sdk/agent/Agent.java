@@ -107,6 +107,10 @@ public class Agent extends TransportLayer {
         }
     }
 
+    public boolean isOpen() {
+        return rpc != null && rpc.isOpen();
+    }
+
     public String getName() {
         return name;
     }

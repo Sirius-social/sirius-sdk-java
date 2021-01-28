@@ -6,13 +6,11 @@ import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import static java.time.LocalTime.now;
 
 public class Issuer {
 
