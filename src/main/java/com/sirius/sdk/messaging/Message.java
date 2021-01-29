@@ -48,6 +48,11 @@ public class Message implements JsonSerializable<Message> {
             jsonObject.put("@type", type);
         }
 
+        public MessageBuilder(String type) {
+            jsonObject.put("@id", Message.generateId());
+            jsonObject.put("@type", type);
+        }
+
         public MessageBuilder add(String key, Object value) {
             jsonObject.put(key,value);
             return this;

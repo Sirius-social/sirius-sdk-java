@@ -254,6 +254,62 @@ public class AgentRPC extends BaseAgentConnection {
 
         return null;
     }
+
+    public void startProtocolWithThreads(List<String> threads, int timeToLiveSec) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("ttl", timeToLiveSec).build());
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
+    }
+
+    public void stopProtocolWithThreads(List<String> threads, boolean offResponse) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("threads", threads)
+                            .add("off_response", offResponse).build(),
+                    !offResponse);
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
+    }
+
+    public void stopProtocolWithThreads(List<String> threads) {
+        stopProtocolWithThreads(threads, false);
+    }
+
+    public void startProtocolForP2P(String senderVerkey, String recipientVerkey, List<String> protocols, int timeToLiveSec) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/start_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("sender_verkey", senderVerkey)
+                            .add("recipient_verkey", recipientVerkey)
+                            .add("protocols", protocols)
+                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("ttl", timeToLiveSec).build());
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
+    }
+
+    public void stopProtocolForP2P(String senderVerkey, String recipientVerkey, List<String> protocols, boolean offResponse) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("sender_verkey", senderVerkey)
+                            .add("recipient_verkey", recipientVerkey)
+                            .add("protocols", protocols)
+                            .add("off_response", offResponse).build(),
+                    !offResponse);
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
+    }
+
 }
   /*  async def send_message(
             self, message: Message,
@@ -477,16 +533,6 @@ public class AgentRPC extends BaseAgentConnection {
             msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol',
             params={
             'thid': thid,
-            'off_response': off_response
-            },
-            wait_response=not off_response
-            )
-
-            async def stop_protocol_with_threads(self, threads: List[str], off_response: bool=False):
-            await self.remote_call(
-            msg_type='did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol',
-            params={
-            'threads': threads,
             'off_response': off_response
             },
             wait_response=not off_response
