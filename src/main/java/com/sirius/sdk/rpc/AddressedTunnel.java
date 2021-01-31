@@ -70,7 +70,7 @@ public class AddressedTunnel {
             e.printStackTrace();
         }
         try {
-         String payloadString =    new String(payload,StandardCharsets.US_ASCII);
+         String payloadString = new String(payload, StandardCharsets.US_ASCII);
          System.out.println("payloadString="+payloadString);
             JSONObject jsonObject = new JSONObject(payloadString);
             if (jsonObject.has("protected")) {

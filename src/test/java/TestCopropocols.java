@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.model.coprotocols.TheirEndpointCoProtocolTransport;
 import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -11,8 +12,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class TestCopropocols {
 
@@ -25,16 +29,58 @@ public class TestCopropocols {
 
     ConfTest confTest;
     ServerTestSuite testSuite;
+    List<Message> msgLog;
 
     @Before
     public void configureTest() {
         confTest = ConfTest.newInstance();
         testSuite = confTest.getSuiteSingleton();
+        msgLog = new ArrayList<>();
     }
 
     void routine1(AbstractCoProtocolTransport protocol) {
-        Message firstReq = (new Message.MessageBuilder(TEST_MSG_TYPES[0])).add("content", "Request1").build();
-        //protocol.switch
+        try {
+            Message firstReq = (new Message.MessageBuilder(TEST_MSG_TYPES[0])).add("content", "Request1").build();
+            msgLog.add(firstReq);
+            Pair<Boolean, Message> okResp1 = protocol.wait(firstReq);
+            Assert.assertTrue(okResp1.first);
+            msgLog.add(okResp1.second);
+            Message secondReq = (new Message.MessageBuilder(TEST_MSG_TYPES[2])).add("content", "Request2").build();
+            Pair<Boolean, Message> okResp2 = protocol.wait(secondReq);
+            Assert.assertTrue(okResp2.first);
+            msgLog.add(okResp2.second);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
+
+    void routine2(AbstractCoProtocolTransport protocol) {
+        try {
+            Thread.sleep(1000);
+            //protocol.getOne();
+            Message firstResp = (new Message.MessageBuilder(TEST_MSG_TYPES[1])).add("content", "Response1").build();
+            Pair<Boolean, Message> okResp1 = protocol.wait(firstResp);
+            Assert.assertTrue(okResp1.first);
+            msgLog.add(okResp1.second);
+            Message endMsg = (new Message.MessageBuilder(TEST_MSG_TYPES[3])).add("content", "End").build();
+            protocol.send(endMsg);
+
+        } catch (Exception ex) {
+            Assert.assertTrue(ex.getMessage(), false);
+        }
+    }
+
+    void checkMsgLog() {
+        Assert.assertEquals(msgLog.size(), TEST_MSG_TYPES.length);
+        for(int i = 0; i < TEST_MSG_TYPES.length; i++) {
+            Assert.assertEquals(msgLog.get(i), TEST_MSG_TYPES[i]);
+        }
+
+        Assert.assertEquals(msgLog.get(0).getStringFromJSON("content"), "Request1");
+        Assert.assertEquals(msgLog.get(1).getStringFromJSON("content"), "Response1");
+        Assert.assertEquals(msgLog.get(2).getStringFromJSON("content"), "Request2");
+        Assert.assertEquals(msgLog.get(3).getStringFromJSON("content"), "End");
     }
 
     @Test
@@ -62,8 +108,18 @@ public class TestCopropocols {
         agent1Protocol.start(Collections.singletonList("test_protocol"));
         agent2Protocol.start(Collections.singletonList("test_protocol"));
 
+        msgLog.clear();
+        CompletableFuture<Void> cf1 = CompletableFuture.runAsync(() -> routine1(agent1Protocol));
+        CompletableFuture<Void> cf2 = CompletableFuture.runAsync(() -> routine2(agent2Protocol));
 
+        cf1.join();
+        cf2.join();
+        checkMsgLog();
 
+        agent1Protocol.stop();
+        agent2Protocol.stop();
 
+        agent1.close();
+        agent2.close();
     }
 }

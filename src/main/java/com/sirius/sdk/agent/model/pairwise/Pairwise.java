@@ -36,10 +36,8 @@ public class Pairwise {
     }
 
 
-   public static class Their extends  TheirEndpoint{
+   public static class Their extends TheirEndpoint{
         String did;
-
-
 
        public String getDid() {
             return did;

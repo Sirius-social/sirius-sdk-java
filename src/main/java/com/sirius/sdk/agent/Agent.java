@@ -152,6 +152,8 @@ public class Agent extends TransportLayer {
             return new Pair<>(true, message1);
         } catch (SiriusConnectionClosed siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
         }
         return new Pair<>(false, null);
     }

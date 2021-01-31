@@ -1,10 +1,14 @@
 package com.sirius.sdk.agent.model.coprotocols;
 
 import com.sirius.sdk.agent.AgentRPC;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.agent.Event;
+import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONObject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -37,6 +41,8 @@ public abstract class AbstractCoProtocolTransport {
     int timeToLiveSec = 30;
     Date dieTimestamp = null;
     List<String> pleaseAckIds = new ArrayList<>();
+    boolean checkVerkeys = false;
+    boolean checkProtocols = true;
 
     /**
      * Should be called in Descendant
@@ -45,12 +51,12 @@ public abstract class AbstractCoProtocolTransport {
      * @param myVerkey
      * @param routing_keys
      */
-    public void  setup(String theirVerkey, String endpoint, String myVerkey, List<String> routing_keys){
+    public void setup(String theirVerkey, String endpoint, String myVerkey, List<String> routing_keys){
         this.theirVK = theirVerkey;
         this.myVerkey= myVerkey;
         this.endpoint = endpoint;
         this.routingKeys = routing_keys;
-        if(routingKeys==null) {
+        if (routingKeys == null) {
             routingKeys = new ArrayList<>();
         }
         isSetup = true;
@@ -77,6 +83,18 @@ public abstract class AbstractCoProtocolTransport {
         cleanupContext();
     }
 
+    private void cleanupContext(Message message) {
+        if (message.messageObjectHasKey(PLEASE_ACK_DECORATOR)) {
+            String ackMessageId;
+            if (message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).has("message_id"))
+                ackMessageId = message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).getString("message_id");
+            else
+                ackMessageId = message.getId();
+            rpc.stopProtocolWithThreads(pleaseAckIds, true);
+            pleaseAckIds.removeIf(ackId -> ackId.equals(ackMessageId));
+        }
+    }
+
     private void cleanupContext() {
         this.rpc.stopProtocolWithThreads(pleaseAckIds, true);
         pleaseAckIds.clear();
@@ -95,12 +113,91 @@ public abstract class AbstractCoProtocolTransport {
         }
     }
 
-    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation {
+    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
         if (!isSetup) {
             throw new SiriusPendingOperation("You must Setup protocol instance at first");
         }
 
         rpc.setTimeout(timeToLiveSec);
         setupContext(message);
+
+        Message event = null;
+        try {
+            event = rpc.sendMessage(message, Collections.singletonList(theirVK), endpoint, myVerkey, routingKeys, true);
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
+            siriusConnectionClosed.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        } finally {
+            cleanupContext();
+        }
+
+        if (checkVerkeys) {
+            String recipientVerkey = event.getStringFromJSON("recipient_verkey");
+            String senderVerkey = event.getStringFromJSON("sender_verkey");
+            if (recipientVerkey != myVerkey) {
+                throw new SiriusInvalidPayloadStructure("Unexpected recipient_verkey: " + recipientVerkey);
+            }
+            if (senderVerkey != theirVK) {
+                throw new SiriusInvalidPayloadStructure("Unexpected sender_verkey: " + senderVerkey);
+            }
+        }
+
+        JSONObject payload = event.getJSONOBJECTFromJSON("message");
+        if (payload != null) {
+            Pair<Boolean, Message> okMsg = new Pair<>(false, null);
+            try {
+                okMsg = Message.restoreMessageInstance(payload.toString());
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+            if (!okMsg.first) {
+                okMsg = new Pair<>(true, new Message(payload.toString()));
+            }
+            if (checkProtocols) {
+                try {
+                    if (!protocols.contains(Type.fromStr(message.getType()).getProtocol())) {
+                        throw new SiriusInvalidMessage("@type has unexpected protocol " + Type.fromStr(message.getType()).getProtocol());
+                    }
+                } catch (SiriusInvalidType siriusInvalidType) {
+                    siriusInvalidType.printStackTrace();
+                }
+            }
+
+            return new Pair<>(true, message);
+        } else {
+            return new Pair<>(false, null);
+        }
+    }
+
+    public Message getOne() throws SiriusInvalidPayloadStructure {
+        return rpc.readProtocolMessage();
+    }
+
+    public void send(Message message) throws SiriusPendingOperation {
+        if (!isSetup) {
+            throw new SiriusPendingOperation("You must Setup protocol instance at first");
+        }
+
+        rpc.setTimeout(timeToLiveSec);
+        setupContext(message);
+
+        try {
+            rpc.sendMessage(message, Collections.singletonList(theirVK), endpoint, myVerkey, routingKeys, false);
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
+            siriusConnectionClosed.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
+        } finally {
+            cleanupContext();
+        }
     }
 }

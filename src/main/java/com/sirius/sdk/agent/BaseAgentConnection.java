@@ -24,7 +24,7 @@ public abstract class BaseAgentConnection {
     WebSocketConnector connector;
 
     public void setTimeout(int timeout) {
-        if (timeout > 0) {
+        if (timeout <= 0) {
             throw new RuntimeException("Timeout must be > 0");
         }
         this.timeout = timeout;
