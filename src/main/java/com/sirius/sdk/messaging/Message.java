@@ -194,7 +194,7 @@ public class Message implements JsonSerializable<Message> {
     public JSONArray getJSONArrayFromJSON(String key,JSONArray defaultValue) {
         if (messageObjectHasKey(key)) {
            JSONArray object =  messageObj.getJSONArray(key);
-           if(object == null){
+           if(object == null) {
                return defaultValue;
            }
            return object;

@@ -53,7 +53,7 @@ public class Pairwise {
             this.did = did;
             this.label = label;
         }
-       public Their(String did, String label,String endpoint, String verkey) {
+       public Their(String did, String label, String endpoint, String verkey) {
            super(endpoint, verkey);
            this.did = did;
            this.label = label;

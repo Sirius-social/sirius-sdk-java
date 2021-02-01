@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 
 public class Ack extends AriesProtocolMessage {
 
+    public static final String PROTOCOL = "notification";
 
     public Ack(String message) {
         super(message);

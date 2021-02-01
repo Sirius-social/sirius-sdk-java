@@ -11,7 +11,7 @@ import com.sirius.sdk.utils.Triple;
 import java.util.List;
 import java.util.Objects;
 
-public class AnonCredsProxy extends AbstractAnonCreds  {
+public class AnonCredsProxy extends AbstractAnonCreds {
 
     AgentRPC rpc;
 

@@ -264,8 +264,9 @@ public class AgentRPC extends BaseAgentConnection {
 
     public void startProtocolWithThreads(List<String> threads, int timeToLiveSec) {
         try {
-            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol",
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/start_protocol",
                     RemoteParams.RemoteParamsBuilder.create()
+                            .add("threads", threads)
                             .add("channel_address", this.tunnelСoprotocols.getAddress())
                             .add("ttl", timeToLiveSec).build());
         } catch (Exception siriusRPCError) {
@@ -287,6 +288,30 @@ public class AgentRPC extends BaseAgentConnection {
 
     public void stopProtocolWithThreads(List<String> threads) {
         stopProtocolWithThreads(threads, false);
+    }
+
+    public void startProtocolWithThreading(String thid, int timeToLiveSec) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/start_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("thid", thid)
+                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("ttl", timeToLiveSec).build());
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
+    }
+
+    public void stopProtocolWithThreading(String thid, boolean offResponse) {
+        try {
+            this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/stop_protocol",
+                    RemoteParams.RemoteParamsBuilder.create()
+                            .add("thid", thid)
+                            .add("off_response", offResponse).build(),
+                    !offResponse);
+        } catch (Exception siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        }
     }
 
     public void startProtocolForP2P(String senderVerkey, String recipientVerkey, List<String> protocols, int timeToLiveSec) {

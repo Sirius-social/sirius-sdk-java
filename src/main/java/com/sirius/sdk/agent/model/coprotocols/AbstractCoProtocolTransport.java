@@ -37,7 +37,7 @@ public abstract class AbstractCoProtocolTransport {
     List<String> routingKeys;
     boolean isSetup;
     boolean started = false;
-    List<String> protocols;
+    List<String> protocols = new ArrayList<>();
     int timeToLiveSec = 30;
     Date dieTimestamp = null;
     List<String> pleaseAckIds = new ArrayList<>();
@@ -66,15 +66,26 @@ public abstract class AbstractCoProtocolTransport {
         return started;
     }
 
+    public void start() {
+        this.dieTimestamp = null;
+        this.protocols = new ArrayList<>();
+        this.checkProtocols = false;
+        started = true;
+    }
+
     public void start(List<String> protocols) {
         this.dieTimestamp = null;
         this.protocols = protocols;
+        if (protocols.isEmpty())
+            this.checkProtocols = false;
         started = true;
     }
 
     public void start(List<String> protocols, int timeToLiveSec) {
-        start(protocols);
+        this.protocols = protocols;
+        this.timeToLiveSec = timeToLiveSec;
         this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
+        started = true;
     }
 
     public void stop() {
@@ -170,7 +181,7 @@ public abstract class AbstractCoProtocolTransport {
                 }
             }
 
-            return new Pair<>(true, message);
+            return okMsg;
         } else {
             return new Pair<>(false, null);
         }

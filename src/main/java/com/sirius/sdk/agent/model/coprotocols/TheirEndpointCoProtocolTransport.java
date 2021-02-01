@@ -30,6 +30,12 @@ public class TheirEndpointCoProtocolTransport extends AbstractCoProtocolTranspor
     }
 
     @Override
+    public void start() {
+        super.start(protocols);
+        this.rpc.startProtocolForP2P(myVerkey, endpoint.getVerkey(), protocols, timeToLiveSec);
+    }
+
+    @Override
     public void stop() {
         super.stop();
         this.rpc.stopProtocolForP2P(myVerkey, endpoint.getVerkey(), protocols, true);
