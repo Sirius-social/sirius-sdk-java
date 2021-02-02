@@ -1,48 +1,34 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 
-import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.Triple;
+import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 
-public class Issuer {
-
-    AbstractCoProtocolTransport coprotocol = null;
+public class Issuer extends BaseIssuingStateMachine {
 
     Pairwise holder;
-    Context context;
     int timeToLiveSec;
 
     public Issuer(Context context, Pairwise holder, int timeToLiveSec) {
         this.holder = holder;
         this.context = context;
         this.timeToLiveSec = timeToLiveSec;
-    }
-
-    private void createCoprotocol(Pairwise holder) {
-        if (coprotocol == null) {
-            coprotocol = context.agent.spawn(holder);
-            coprotocol.start(Arrays.asList(BaseIssueCredentialMessage.PROTOCOL, Ack.PROTOCOL));
-        }
-    }
-
-    private void releaseCoprotocol() {
-        coprotocol.stop();
-        coprotocol = null;
     }
 
     public Future<Boolean> issue(Map<String, String> values, Schema schema, CredentialDefinition credDef,
@@ -63,8 +49,26 @@ public class Issuer {
             RequestCredentialMessage resp = (RequestCredentialMessage) okResp.second;
             RequestCredentialMessage requestMsg = resp;
 
-            //context.agent.getWallet().getAnoncreds().issuerCreateCredential(offer, requestMsg.cre)
+            JSONObject encodedCredValues = new JSONObject();
+            for (Map.Entry<String, String> entry : values.entrySet()) {
+                encodedCredValues.put(entry.getKey(), entry.getValue());
+            }
 
+            Triple<String, String, String> createCredRes = context.agent.getWallet().
+                    getAnoncreds().issuerCreateCredential(
+                            offer, requestMsg.credRequest().toString(), encodedCredValues.toString());
+
+            String cred = createCredRes.first;
+
+            IssueCredentialMessage issueMsg = IssueCredentialMessage.create(comment, locate, cred, credId);
+
+            Pair<Boolean, Message> okAck = coprotocol.wait(issueMsg);
+
+            if (!(okAck.second instanceof Ack)) {
+                throw new StateMachineTerminatedWithError("issue_processing_error", "Unexpected @type: " + okAck.second.getType());
+            }
+
+            return CompletableFuture.supplyAsync(() -> true);
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -72,6 +76,6 @@ public class Issuer {
             releaseCoprotocol();
         }
 
-        return null;
+        return CompletableFuture.supplyAsync(() -> false);
     }
 }
