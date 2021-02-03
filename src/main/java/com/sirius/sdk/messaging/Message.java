@@ -191,7 +191,21 @@ public class Message implements JsonSerializable<Message> {
         return null;
     }
 
-    public JSONArray getJSONArrayFromJSON(String key,JSONArray defaultValue) {
+    public JSONObject getJSONOBJECTFromJSON(String key, JSONObject defaultValue) {
+        if (messageObjectHasKey(key)) {
+            return messageObj.optJSONObject(key);
+        }
+        return defaultValue;
+    }
+
+    public JSONObject getJSONOBJECTFromJSON(String key, String defaultValue) {
+        if (messageObjectHasKey(key)) {
+            return messageObj.optJSONObject(key);
+        }
+        return new JSONObject(defaultValue);
+    }
+
+    public JSONArray getJSONArrayFromJSON(String key, JSONArray defaultValue) {
         if (messageObjectHasKey(key)) {
            JSONArray object =  messageObj.getJSONArray(key);
            if(object == null) {

@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0015_acks;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
+import org.json.JSONObject;
 
 public class Ack extends AriesProtocolMessage {
 
@@ -24,6 +25,17 @@ public class Ack extends AriesProtocolMessage {
         OK,
         PENDING,
         FAIL
+    }
+
+    public static Ack create(String threadId, Status status, String docUri) {
+        JSONObject ackJson = new JSONObject();
+        ackJson.put("@id", generateId());
+        ackJson.put("@type", ARIES_DOC_URI + "notification/1.0/ack");
+        ackJson.put("status", status.name());
+        JSONObject thread = new JSONObject();
+        thread.put("thid", threadId);
+        ackJson.put(THREAD_DECORATOR, thread);
+        return new Ack(ackJson.toString());
     }
 
 

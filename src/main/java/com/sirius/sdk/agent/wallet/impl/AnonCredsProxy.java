@@ -162,7 +162,7 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverStoreCredential(String credId, String credReqMetadata, String cred, String credDef, String revReqDef) {
+    public String proverStoreCredential(String credId, String credReqMetadata, String cred, String credDef, String revRegDef) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_store_credential",
                         RemoteParams.RemoteParamsBuilder.create()
@@ -170,13 +170,13 @@ public class AnonCredsProxy extends AbstractAnonCreds {
                                 .add("cred_req_metadata", credReqMetadata)
                                 .add("cred", cred)
                                 .add("cred_def", credDef)
-                                .add("rev_reg_def", revReqDef));
+                                .add("rev_reg_def", revRegDef));
 
     }
 
     @Override
     public String proverGetCredential(String credId) {
-     return    new RemoteCallWrapper<String>(rpc){}.
+     return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_get_credential",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("cred_id", credId));

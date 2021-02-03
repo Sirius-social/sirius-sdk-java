@@ -2,7 +2,6 @@ package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
-import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
@@ -12,7 +11,6 @@ import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONObject;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

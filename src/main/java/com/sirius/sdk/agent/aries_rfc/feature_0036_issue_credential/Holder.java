@@ -1,9 +1,14 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 
+import com.sirius.sdk.agent.StateMachineTerminatedWithError;
+import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
 
@@ -25,17 +30,35 @@ public class Holder extends BaseIssuingStateMachine {
                     issuer.getMe().getDid(), offerMsg.offer().toString(), offer.credDef().toString(), masterSecretId);
 
             String credRequest = createCredReqRes.first;
+            String credMetadata = createCredReqRes.second;
             RequestCredentialMessage requestMsg = RequestCredentialMessage.create(comment, locate, credRequest, docUri);
 
-            coprotocol.wait(requestMsg);
+            Pair<Boolean, Message> okResp = coprotocol.wait(requestMsg);
+            if (!(okResp.second instanceof IssueCredentialMessage)) {
+                throw new StateMachineTerminatedWithError("request_not_accepted", "Unexpected @type:" + okResp.second.getType());
+            }
 
+            IssueCredentialMessage issueMsg = (IssueCredentialMessage) okResp.second;
+            String credId = storeCredential(credMetadata, issueMsg.cred().toString(), offer.credDef().toString(), null, issueMsg.credId());
 
+            Ack ack = Ack.create(issueMsg.ackMessageId(), Ack.Status.OK, docUri);
+            coprotocol.send(ack);
+            return CompletableFuture.supplyAsync(() -> new Pair<Boolean, String>(true, credId));
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
-
+            releaseCoprotocol();
         }
 
-        return null;
+        return CompletableFuture.supplyAsync(() -> new Pair<Boolean, String>(false, ""));
+    }
+
+    private String storeCredential(String credMetadata, String cred, String credDef, String revRegDef, String credId) {
+        String credOrder = context.agent.getWallet().getAnoncreds().proverGetCredential(credId);
+        if (credOrder != "") {
+            context.agent.getWallet().getAnoncreds().proverDeleteCredential(credId);
+        }
+        credId = context.agent.getWallet().getAnoncreds().proverStoreCredential(credId, credMetadata, cred, credDef, revRegDef);
+        return credId;
     }
 }

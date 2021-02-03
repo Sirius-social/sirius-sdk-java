@@ -318,7 +318,7 @@ public abstract class AbstractAnonCreds {
      * Overload method {@link #proverCreateMasterSecret(String masterSecretName)}
      */
 
-    public  String proverCreateMasterSecret(){
+    public String proverCreateMasterSecret(){
         return proverCreateMasterSecret(null);
     }
     /**
