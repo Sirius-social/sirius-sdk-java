@@ -46,10 +46,6 @@ public  abstract class RemoteCallWrapper<T>  implements RemoteCall<T> {
     }
 
     public T serializeResponse(Object object) {
-
-        if(object!=null){
-            System.out.println("serializeResponse="+object.getClass());
-        }
         if (object instanceof JSONObject) {
             return (T) ((JSONObject) object).toString();
 

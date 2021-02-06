@@ -14,9 +14,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WebSocketConnector extends BaseConnector {
 
+
+    Logger log = Logger.getLogger(WebSocketConnector.class.getName());
     public int defTimeout = 30;
     Charset encoding = StandardCharsets.UTF_8;
     String serverAddress;
@@ -98,17 +102,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onTextMessage(WebSocket webSocket, String s) throws Exception {
-            System.out.println("uri = "+webSocket.getURI() +" onTextMessage1 = "+s);
+
         }
 
         @Override
         public void onTextMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-            System.out.println("uri = "+webSocket.getURI() +" onTextMessage2 = "+new String(bytes, StandardCharsets.US_ASCII));
+
         }
 
         @Override
         public void onBinaryMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-           System.out.println("uri = "+webSocket.getURI() +" onBinaryMessage = "+new String(bytes, StandardCharsets.US_ASCII));
+
         }
 
         @Override
@@ -242,7 +246,7 @@ public class WebSocketConnector extends BaseConnector {
 
 
     private byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
-        System.out.println("read="+frame.getPayloadText());
+        //log.log(Level.INFO, frame.getPayloadText());
         if (exception != null) {
             //  throw  new SiriusConnectionClosed();
         }
@@ -268,12 +272,14 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public boolean write(byte[] data) {
+        log.log(Level.INFO, new String(data));
         webSocket.sendBinary(data);
         return true;
     }
 
     public boolean write(Message message) {
         String payload = message.serialize();
+        log.log(Level.INFO, payload);
         webSocket.sendText(payload);
         return true;
     }

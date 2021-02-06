@@ -131,7 +131,6 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public Message(String message) {
-        System.out.println("message="+message);
         messageObj = new JSONObject(message);
         if (!messageObjectHasKey(FIELD_TYPE)) {
             //   throw new SiriusInvalidMessage("No @type in message");
@@ -225,9 +224,7 @@ public class Message implements JsonSerializable<Message> {
     public String serialize() {
         Gson gson = new Gson();
       //  return gson.toJson(this, this.getClass());
-        System.out.println("msg serialize = " + messageObj.toString());
         return messageObj.toString();
-
     }
 
 

@@ -30,7 +30,7 @@ public class AgentRPC extends BaseAgentConnection {
     Map<String, WebSocket> websockets;
     boolean preferAgentSide;
     AddressedTunnel tunnelRpc;
-    AddressedTunnel tunnelСoprotocols;
+    AddressedTunnel tunnelCoprotocols;
 
     public List<String> getNetworks() {
         return networks;
@@ -46,7 +46,7 @@ public class AgentRPC extends BaseAgentConnection {
         endpoints = new ArrayList<>();
         networks = new ArrayList<>();
         tunnelRpc = null;
-        tunnelСoprotocols = null;
+        tunnelCoprotocols = null;
         websockets = new HashMap<>();
         preferAgentSide = true;
 
@@ -141,7 +141,7 @@ public class AgentRPC extends BaseAgentConnection {
             throw new RuntimeException("sub-protocol channel is empty");
         }
         tunnelRpc = new AddressedTunnel(channel_rpc, connector, connector, p2p);
-        tunnelСoprotocols = new AddressedTunnel(channel_sub_protocol, connector, connector, p2p);
+        tunnelCoprotocols = new AddressedTunnel(channel_sub_protocol, connector, connector, p2p);
         //Extract active endpoints
         JSONArray endpointsArray = context.getJSONArrayFromJSON("~endpoints", null);
         List<Endpoint> endpointsCollection = new ArrayList<>();
@@ -267,7 +267,7 @@ public class AgentRPC extends BaseAgentConnection {
             this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/start_protocol",
                     RemoteParams.RemoteParamsBuilder.create()
                             .add("threads", threads)
-                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("channel_address", this.tunnelCoprotocols.getAddress())
                             .add("ttl", timeToLiveSec).build());
         } catch (Exception siriusRPCError) {
             siriusRPCError.printStackTrace();
@@ -295,7 +295,7 @@ public class AgentRPC extends BaseAgentConnection {
             this.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/start_protocol",
                     RemoteParams.RemoteParamsBuilder.create()
                             .add("thid", thid)
-                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("channel_address", this.tunnelCoprotocols.getAddress())
                             .add("ttl", timeToLiveSec).build());
         } catch (Exception siriusRPCError) {
             siriusRPCError.printStackTrace();
@@ -321,7 +321,7 @@ public class AgentRPC extends BaseAgentConnection {
                             .add("sender_verkey", senderVerkey)
                             .add("recipient_verkey", recipientVerkey)
                             .add("protocols", protocols)
-                            .add("channel_address", this.tunnelСoprotocols.getAddress())
+                            .add("channel_address", this.tunnelCoprotocols.getAddress())
                             .add("ttl", timeToLiveSec).build());
         } catch (Exception siriusRPCError) {
             siriusRPCError.printStackTrace();
@@ -343,7 +343,7 @@ public class AgentRPC extends BaseAgentConnection {
     }
 
     public Message readProtocolMessage() throws SiriusInvalidPayloadStructure {
-        return this.tunnelСoprotocols.receive(timeout);
+        return this.tunnelCoprotocols.receive(timeout);
     }
 
 }

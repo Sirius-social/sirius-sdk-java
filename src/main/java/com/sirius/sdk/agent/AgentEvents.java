@@ -4,6 +4,7 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.rpc.AddressedTunnel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -12,6 +13,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * RPC service.
@@ -19,7 +22,7 @@ import java.util.concurrent.TimeoutException;
  * Reactive nature of Smart-Contract design
  */
 public class AgentEvents extends BaseAgentConnection {
-
+    Logger log = Logger.getLogger(AgentEvents.class.getName());
     String tunnel;
 
     public String getBalancingGroup() {
@@ -63,12 +66,13 @@ public class AgentEvents extends BaseAgentConnection {
         }
         return connector.read().thenApply(data -> {
             try {
-                System.out.println("!!!!!!!!!  " + new String(data, StandardCharsets.US_ASCII));
                 JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
                 if (payload.has("protected")) {
                     String message = p2p.unpack(payload.toString());
+                    log.log(Level.INFO, "Received protected message. Unpacked: " + message);
                     return new Message(message);
                 } else {
+                    log.log(Level.INFO, "Received message: " + payload);
                     return new Message(payload.toString());
                 }
             } catch (Exception e) {

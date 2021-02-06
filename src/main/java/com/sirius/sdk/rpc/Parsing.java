@@ -127,7 +127,6 @@ public class Parsing {
             varParam = param.toString();
         }else{
             varParam = param.toString();
-            System.out.println("addWalletRecor5="+varParam);
         }
 
 
