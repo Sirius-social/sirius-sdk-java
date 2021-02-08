@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 public class BaseIssueCredentialMessage extends AriesProtocolMessage {
     public static final String PROTOCOL = "issue-credential";
+    public static final String DEF_LOCALE = "en";
 
     @Override
     public String getProtocol() {

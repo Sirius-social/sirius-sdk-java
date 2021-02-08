@@ -1,13 +1,14 @@
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Ledger;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.AttribTranslation;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.Issuer;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.ProposedAttrib;
+import com.sirius.sdk.agent.Listener;
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.*;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
@@ -20,6 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TestAriesFeature0036 {
 
@@ -31,7 +36,7 @@ public class TestAriesFeature0036 {
     }
 
     @Test
-    public void testSane() {
+    public void testSane() throws InterruptedException, ExecutionException, TimeoutException {
 
         Agent issuer = confTest.getAgent("agent1");
         Agent holder = confTest.getAgent("agent2");
@@ -64,16 +69,47 @@ public class TestAriesFeature0036 {
 
         String credId = "cred-id-" + UUID.randomUUID().toString();
 
-        Context context = new Context();
-        context.agent = issuer;
-        Issuer issuerMachine = new Issuer(context, i2h, 60);
+        Context context1 = new Context();
+        context1.agent = issuer;
+        Issuer issuerMachine = new Issuer(context1, i2h, 60);
+
+        Context context2 = new Context();
+        context2.agent = holder;
+        Holder holderMachine = new Holder(context2, h2i);
 
         Map<String, String> values = new HashMap<>();
         values.put("attr1", "Value-1");
         values.put("attr2", "567");
         values.put("attr3", "5.7");
-        issuerMachine.issue(values, schema, credDef, "Hello Iam issuer", "en", new ArrayList<ProposedAttrib>(),
-                new ArrayList<AttribTranslation>(), credId);
 
+        CompletableFuture<Boolean> issuerFuture = CompletableFuture.supplyAsync(
+                () -> {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return issuerMachine.issue(
+                            values, schema, credDef, "Hello Iam issuer", "en",
+                            new ArrayList<ProposedAttrib>(), new ArrayList<AttribTranslation>(), credId);
+                });
+
+        CompletableFuture<Pair<Boolean, String>> holderFuture = CompletableFuture.supplyAsync(
+                () -> {
+                    Event event = null;
+                    try {
+                        event = context2.agent.subscribe().getOne().get(10, TimeUnit.SECONDS);
+                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                        e.printStackTrace();
+                        return new Pair<Boolean, String>(false, "");
+                    }
+                    Message offer = event.message();
+                    Assert.assertTrue(offer instanceof OfferCredentialMessage);
+                    return holderMachine.accept((OfferCredentialMessage) offer, holderSecretId, "Hello, Iam holder", "en");
+                }
+        );
+
+        boolean issueRes = issuerFuture.get(10, TimeUnit.SECONDS);
+        boolean holderRes = holderFuture.get(10, TimeUnit.SECONDS).first;
     }
 }

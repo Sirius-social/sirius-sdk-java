@@ -6,6 +6,7 @@ import com.sirius.sdk.agent.model.pairwise.Pairwise;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
@@ -13,6 +14,7 @@ import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
 
 public class Holder extends BaseIssuingStateMachine {
+    Logger log = Logger.getLogger(Holder.class.getName());
     Pairwise issuer;
 
     public Holder(Context context, Pairwise issuer) {
@@ -20,17 +22,20 @@ public class Holder extends BaseIssuingStateMachine {
         this.issuer = issuer;
     }
 
-    Future<Pair<Boolean, String>> accept(OfferCredentialMessage offer, String masterSecretId, String comment, String locate) {
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String masterSecretId, String comment, String locate) {
         try {
             String docUri = Type.fromStr(offer.getType()).getDocUri();
             createCoprotocol(issuer);
             OfferCredentialMessage offerMsg = offer;
 
+            // Step-1: Process Issuer Offer
             Pair<String, String> createCredReqRes = context.agent.getWallet().getAnoncreds().proverCreateCredentialReq(
                     issuer.getMe().getDid(), offerMsg.offer().toString(), offer.credDef().toString(), masterSecretId);
 
             String credRequest = createCredReqRes.first;
             String credMetadata = createCredReqRes.second;
+
+            // Step-2: Send request to Issuer
             RequestCredentialMessage requestMsg = RequestCredentialMessage.create(comment, locate, credRequest, docUri);
 
             Pair<Boolean, Message> okResp = coprotocol.wait(requestMsg);
@@ -39,18 +44,20 @@ public class Holder extends BaseIssuingStateMachine {
             }
 
             IssueCredentialMessage issueMsg = (IssueCredentialMessage) okResp.second;
+
+            // Step-3: Store credential
             String credId = storeCredential(credMetadata, issueMsg.cred().toString(), offer.credDef().toString(), null, issueMsg.credId());
 
             Ack ack = Ack.create(issueMsg.ackMessageId(), Ack.Status.OK, docUri);
             coprotocol.send(ack);
-            return CompletableFuture.supplyAsync(() -> new Pair<Boolean, String>(true, credId));
+            return new Pair<Boolean, String>(true, credId);
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
             releaseCoprotocol();
         }
 
-        return CompletableFuture.supplyAsync(() -> new Pair<Boolean, String>(false, ""));
+        return new Pair<Boolean, String>(false, "");
     }
 
     private String storeCredential(String credMetadata, String cred, String credDef, String revRegDef, String credId) {

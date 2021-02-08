@@ -48,7 +48,6 @@ public class AgentEvents extends BaseAgentConnection {
         for (int i = 0; i < balancing.length(); i++) {
             JSONObject balance = balancing.getJSONObject(i);
             if ("kafka".equals(balance.getString("id"))) {
-                System.out.println("balance="+balance.toString());
                 JSONObject jsonObject = balance.getJSONObject("data").getJSONObject("json");
                 if(!jsonObject.isNull("group_id")){
                     balancingGroup = jsonObject.getString("group_id");
