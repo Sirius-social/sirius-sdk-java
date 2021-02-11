@@ -42,8 +42,12 @@ public class Issuer extends BaseIssuingStateMachine {
             // Step-1: Send offer to holder
             Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
             String offer = context.agent.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
-            OfferCredentialMessage offerMsg = OfferCredentialMessage.create(comment, locate, offer, credDef.getBody(), preview,
-                    schema.getBody(), translation, expiresTime);
+            OfferCredentialMessage offerMsg = null;//OfferCredentialMessage.getBuilder()
+                    //.setComment(comment).setLocate
+
+
+//                    OfferCredentialMessage.create(comment, locate, offer, credDef.getBody(), preview,
+//                    schema.getBody(), translation, expiresTime);
 
             log.log(Level.INFO, "20% - Send offer");
             // Switch to await participant action
