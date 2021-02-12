@@ -10,127 +10,19 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class OfferCredentialMessage extends BaseIssueCredentialMessage {
+
     public static class ParseResult {
         JSONObject offer = null;
         JSONObject offerBody = null;
         JSONObject credDefBody = null;
     }
 
-    JSONObject offer = null;
-    JSONObject credDef = null;
-
     public OfferCredentialMessage(String message) {
         super(message);
     }
 
-    public OfferCredentialMessage() {
-        super("{}");
-        this.getMessageObj().put("@id", generateId());
-        this.getMessageObj().put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
-    }
-
     public String getComment() {
         return this.getMessageObj().getString("comment");
-    }
-
-    public OfferCredentialMessage setComment(String comment) {
-        this.getMessageObj().put("comment", comment);
-        return this;
-    }
-
-    private void fillOffersAttach() {
-        if (offer != null && credDef != null) {
-            JSONObject payload = new JSONObject();
-            for (String key : JSONObject.getNames(offer))
-                payload.put(key, offer.get(key));
-            for (String key : JSONObject.getNames(credDef))
-                payload.put(key, credDef.get(key));
-
-            JSONObject offersAttach = new JSONObject();
-            offersAttach.put("@id", "libindy-cred-offer-" + getId());
-            offersAttach.put("mime-type", "application/json");
-            JSONObject data = new JSONObject();
-            byte[] base64 = Base64.getEncoder().encode(payload.toString().getBytes(StandardCharsets.UTF_8));
-            data.put("base64", new String(base64));
-            offersAttach.put("data", data);
-            this.getMessageObj().put("offers~attach", offersAttach);
-        }
-    }
-
-    public OfferCredentialMessage setOffer(JSONObject offer) {
-        this.offer = offer;
-        fillOffersAttach();
-        return this;
-    }
-
-    public OfferCredentialMessage setCredDef(JSONObject credDef) {
-        this.credDef = credDef;
-        fillOffersAttach();
-        return this;
-    }
-
-    public OfferCredentialMessage setPreview(List<ProposedAttrib> preview) {
-        JSONObject credPreview = new JSONObject();
-        credPreview.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
-        JSONArray attributes = new JSONArray();
-        for (ProposedAttrib attrib : preview)
-            attributes.put(attrib.getDict());
-        credPreview.put("attributes", attributes);
-        this.getMessageObj().put("credential_preview", credPreview);
-
-        return this;
-    }
-
-    public OfferCredentialMessage setIssuerSchema(JSONObject issuerSchema) {
-        if (this.getMessageObj().has("~attach"))
-            this.getMessageObj().remove("~attach");
-
-        JSONObject attach = new JSONObject();
-        attach.put("@type", BaseIssueCredentialMessage.ISSUER_SCHEMA_TYPE);
-        attach.put("id", BaseIssueCredentialMessage.ISSUER_SCHEMA_ID);
-        attach.put("mime-type", "application/json");
-        JSONObject data = new JSONObject();
-        data.put("json", issuerSchema);
-        attach.put("data", data);
-        JSONArray attaches = new JSONArray();
-        attaches.put(attach);
-        this.getMessageObj().put("~attach", attaches);
-
-        return this;
-    }
-
-    public OfferCredentialMessage setTranslation(List<AttribTranslation> translation) {
-        if (this.getMessageObj().has("~attach"))
-            this.getMessageObj().remove("~attach");
-
-        JSONObject attach = new JSONObject();
-        attach.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
-        attach.put("id", BaseIssueCredentialMessage.CREDENTIAL_TRANSLATION_ID);
-        JSONObject l10n = new JSONObject();
-        l10n.put("locale", this.locale);
-        attach.put("~l10n", l10n);
-        attach.put("mime-type", "application/json");
-        JSONObject data = new JSONObject();
-        JSONArray transArr = new JSONArray();
-        for (AttribTranslation trans : translation) {
-            transArr.put(trans.getDict());
-        }
-        data.put("json", transArr);
-        attach.put("data", data);
-        JSONArray attaches = new JSONArray();
-        attaches.put(attach);
-        this.getMessageObj().put("~attach", attaches);
-
-        return this;
-    }
-
-    public OfferCredentialMessage expiresTime(Date expiresTime) {
-        JSONObject timing = new JSONObject();
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd THH:mm:ss");
-        timing.put("expires_time", df.format(expiresTime));
-        this.getMessageObj().put("~timing", timing);
-
-        return this;
     }
 
     public ParseResult parse() throws SiriusValidationError {
@@ -189,5 +81,155 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
 
     public JSONObject credDef() throws SiriusValidationError {
         return parse().credDefBody;
+    }
+
+    public static Builder<?> builder() {
+        return new OfferCredentialMessageBuilder();
+    }
+
+    public static abstract class Builder<B extends Builder<B>> extends BaseIssueCredentialMessage.Builder<B> {
+        JSONObject offer = null;
+        JSONObject credDef = null;
+        List<AttribTranslation> translation = null;
+        List<ProposedAttrib> preview = null;
+        JSONObject issuerSchema = null;
+        String comment = null;
+        Date expiresTime = null;
+
+        public B setOffer(JSONObject offer) {
+            this.offer = offer;
+            return self();
+        }
+
+        public B setCredDef(JSONObject credDef) {
+            this.credDef = credDef;
+            return self();
+        }
+
+        public B setIssuerSchema(JSONObject issuerSchema) {
+            this.issuerSchema = issuerSchema;
+            return self();
+        }
+
+        public B setTranslation(List<AttribTranslation> translation) {
+            this.translation = translation;
+            return self();
+        }
+
+        public B setPreview(List<ProposedAttrib> preview) {
+            this.preview = preview;
+            return self();
+        }
+
+        public B setComment(String comment) {
+            this.comment = comment;
+            return self();
+        }
+
+        public B setExpiresTime(Date expiresTime) {
+            this.expiresTime = expiresTime;
+            return self();
+        }
+
+        @Override
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = super.generateJSON();
+
+            String id = generateId();
+            jsonObject.put("@id", id);
+            jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
+
+            if (comment != null) {
+                jsonObject.put("comment", comment);
+            }
+
+            if (preview != null && !preview.isEmpty()) {
+                JSONObject credPreview = new JSONObject();
+                credPreview.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
+                JSONArray attributes = new JSONArray();
+                for (ProposedAttrib attrib : preview)
+                    attributes.put(attrib.getDict());
+                credPreview.put("attributes", attributes);
+                jsonObject.put("credential_preview", credPreview);
+            }
+
+            if (offer != null && credDef != null) {
+                JSONObject payload = new JSONObject();
+                for (String key : JSONObject.getNames(offer))
+                    payload.put(key, offer.get(key));
+                for (String key : JSONObject.getNames(credDef))
+                    payload.put(key, credDef.get(key));
+
+                JSONObject offersAttach = new JSONObject();
+                offersAttach.put("@id", "libindy-cred-offer-" + id);
+                offersAttach.put("mime-type", "application/json");
+                JSONObject data = new JSONObject();
+                byte[] base64 = Base64.getEncoder().encode(payload.toString().getBytes(StandardCharsets.UTF_8));
+                data.put("base64", new String(base64));
+                offersAttach.put("data", data);
+                JSONArray attaches = new JSONArray();
+                attaches.put(offersAttach);
+                jsonObject.put("offers~attach", attaches);
+            }
+
+            if (translation != null && !translation.isEmpty()) {
+                if (jsonObject.has("~attach"))
+                    jsonObject.remove("~attach");
+
+                JSONObject attach = new JSONObject();
+                attach.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
+                attach.put("id", BaseIssueCredentialMessage.CREDENTIAL_TRANSLATION_ID);
+                JSONObject l10n = new JSONObject();
+                l10n.put("locale", this.locale);
+                attach.put("~l10n", l10n);
+                attach.put("mime-type", "application/json");
+                JSONObject data = new JSONObject();
+                JSONArray transArr = new JSONArray();
+                for (AttribTranslation trans : translation) {
+                    transArr.put(trans.getDict());
+                }
+                data.put("json", transArr);
+                attach.put("data", data);
+                JSONArray attaches = new JSONArray();
+                attaches.put(attach);
+                jsonObject.put("~attach", attaches);
+            }
+
+            if (issuerSchema != null) {
+                if (jsonObject.has("~attach"))
+                    jsonObject.remove("~attach");
+
+                JSONObject attach = new JSONObject();
+                attach.put("@type", BaseIssueCredentialMessage.ISSUER_SCHEMA_TYPE);
+                attach.put("id", BaseIssueCredentialMessage.ISSUER_SCHEMA_ID);
+                attach.put("mime-type", "application/json");
+                JSONObject data = new JSONObject();
+                data.put("json", issuerSchema);
+                attach.put("data", data);
+                JSONArray attaches = new JSONArray();
+                attaches.put(attach);
+                jsonObject.put("~attach", attaches);
+            }
+
+            if(expiresTime != null) {
+                JSONObject timing = new JSONObject();
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+                timing.put("expires_time", df.format(expiresTime));
+                jsonObject.put("~timing", timing);
+            }
+
+            return jsonObject;
+        }
+
+        public OfferCredentialMessage build() {
+            return new OfferCredentialMessage(generateJSON().toString());
+        }
+    }
+
+    private static class OfferCredentialMessageBuilder extends Builder<OfferCredentialMessageBuilder> {
+        @Override
+        protected OfferCredentialMessageBuilder self() {
+            return this;
+        }
     }
 }

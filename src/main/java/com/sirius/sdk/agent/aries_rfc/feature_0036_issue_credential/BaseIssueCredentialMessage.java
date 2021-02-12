@@ -33,4 +33,25 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
     public BaseIssueCredentialMessage(String message) {
         super(message);
     }
+
+    public static abstract class Builder<B extends Builder<B>> {
+        protected String locale = DEF_LOCALE;
+
+        public B setLocale(String locate) {
+            this.locale = locate;
+            return self();
+        }
+
+        protected abstract B self();
+
+        protected Builder() {}
+
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject l10n = new JSONObject();
+            l10n.put("locale", locale);
+            jsonObject.put("~l10n", l10n);
+            return jsonObject;
+        }
+    }
 }
