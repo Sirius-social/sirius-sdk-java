@@ -5,7 +5,6 @@ import com.sirius.sdk.utils.Triple;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -215,7 +214,7 @@ public abstract class AbstractAnonCreds {
      *                                        It should not be parsed and are likely to change in future versions).
      *          }
      */
-    public abstract String issuerCreateCredentialOffer(String credDefId);
+    public abstract JSONObject issuerCreateCredentialOffer(String credDefId);
 
     /**
      *    Check Cred Request for the given Cred Offer and issue Credential for the given Cred Request.
@@ -263,21 +262,21 @@ public abstract class AbstractAnonCreds {
      *          cred_revoc_id: local id for revocation info (Can be used for revocation of this cred)
      *          revoc_reg_delta_json: Revocation registry delta json with a newly issued credential
      */
-    public abstract Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+    public abstract Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
                                                                         Integer blobStorageReaderHandle);
 
     /**
-     * Overload method {@link #issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+     * Overload method {@link #issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
      *                                                                         Integer blobStorageReaderHandle)}
      */
-    public  Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues){
-        return issuerCreateCredential(credOffer,credReq,credValues,null,null);
+    public  Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues){
+        return issuerCreateCredential(credOffer, credReq, credValues,null,null);
     }
     /**
-     * Overload method {@link #issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId,
+     * Overload method {@link #issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
      *                                                                         Integer blobStorageReaderHandle)}
      */
-    public  Triple<String,String,String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId){
+    public  Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId){
         return issuerCreateCredential(credOffer,credReq,credValues,revRegId,null);
     }
 
@@ -354,7 +353,7 @@ public abstract class AbstractAnonCreds {
      *                                   Credential request metadata contains data structures internal to Ursa.
      *                                   Credential request metadata mustn't be shared with Issuer.
      */
-    public abstract Pair<String,String> proverCreateCredentialReq(String proverDid,String credOffer,String credDef,String masterSecretId);
+    public abstract Pair<JSONObject, JSONObject> proverCreateCredentialReq(String proverDid, JSONObject credOffer, JSONObject credDef,String masterSecretId);
 
     /**
      *      Set credential attribute tag policy for input credential definition id.
@@ -399,12 +398,12 @@ public abstract class AbstractAnonCreds {
      * @param revReqDef revocation registry definition json related to <rev_reg_def_id> in <cred_json>
      * @return  cred_id: identifier by which credential is stored in the wallet
      */
-    public abstract String proverStoreCredential(String credId,String credReqMetadata, String cred,String credDef,String revReqDef);
+    public abstract String proverStoreCredential(String credId, JSONObject credReqMetadata, JSONObject cred, JSONObject credDef, String revReqDef);
 
     /**
      * Overload method {@link #proverCreateMasterSecret(String masterSecretName)}
      */
-    public  String proverStoreCredential(String credId,String credReqMetadata, String cred,String credDef){
+    public  String proverStoreCredential(String credId,JSONObject credReqMetadata, JSONObject cred, JSONObject credDef){
         return proverStoreCredential(credId,credReqMetadata,cred,credDef,null);
     }
     /**

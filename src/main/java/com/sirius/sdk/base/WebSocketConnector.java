@@ -272,14 +272,14 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public boolean write(byte[] data) {
-        log.log(Level.INFO, new String(data));
+        log.log(Level.INFO, "Sending binary data");
         webSocket.sendBinary(data);
         return true;
     }
 
     public boolean write(Message message) {
         String payload = message.serialize();
-        log.log(Level.INFO, payload);
+        log.log(Level.INFO, "Sending message");
         webSocket.sendText(payload);
         return true;
     }

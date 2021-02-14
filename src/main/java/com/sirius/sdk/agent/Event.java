@@ -3,6 +3,7 @@ package com.sirius.sdk.agent;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -16,10 +17,10 @@ public class Event extends Message {
 
     public Message message() {
         if (getMessageObj().has("message")) {
-            String msgStr = getMessageObj().getString("message");
+            JSONObject msgJson = getMessageObj().getJSONObject("message");
             Message restored = null;
             try {
-                restored = restoreMessageInstance(msgStr).second;
+                restored = restoreMessageInstance(msgJson.toString()).second;
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
                 e.printStackTrace();
                 return null;

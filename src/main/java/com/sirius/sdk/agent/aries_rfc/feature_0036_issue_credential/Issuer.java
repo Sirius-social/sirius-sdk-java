@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 
+import com.sirius.sdk.agent.Codec;
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
@@ -33,7 +34,7 @@ public class Issuer extends BaseIssuingStateMachine {
         this.timeToLiveSec = timeToLiveSec;
     }
 
-    public Boolean issue(Map<String, String> values, Schema schema, CredentialDefinition credDef,
+    public Boolean issue(JSONObject values, Schema schema, CredentialDefinition credDef,
                           String comment, String locate, List<ProposedAttrib> preview,
                           List<AttribTranslation> translation, String credId) {
         try {
@@ -41,11 +42,11 @@ public class Issuer extends BaseIssuingStateMachine {
 
             // Step-1: Send offer to holder
             Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
-            String offer = context.agent.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
+            JSONObject offer = context.agent.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
             OfferCredentialMessage offerMsg = OfferCredentialMessage.builder().
                     setComment(comment).
                     setLocale(locate).
-                    setOffer(new JSONObject(offer)).
+                    setOffer(offer).
                     setCredDef(new JSONObject(credDef.getBody().toString())).
                     setPreview(preview).
                     setIssuerSchema(schema.getBody()).
@@ -70,14 +71,20 @@ public class Issuer extends BaseIssuingStateMachine {
             log.log(Level.INFO, "40% - Received credential request");
 
             JSONObject encodedCredValues = new JSONObject();
-            for (Map.Entry<String, String> entry : values.entrySet()) {
-                encodedCredValues.put(entry.getKey(), entry.getValue());
+            for (String key : values.keySet()) {
+                JSONObject encCredVal = new JSONObject();
+                if (values.get(key) instanceof Boolean)
+                    encCredVal.put("raw", values.get(key));
+                else
+                    encCredVal.put("raw", values.get(key).toString());
+                encCredVal.put("encoded", Codec.encode(values.get(key)));
+                encodedCredValues.put(key, encCredVal);
             }
 
             log.log(Level.INFO, "70% - Build credential with values");
             Triple<String, String, String> createCredRes = context.agent.getWallet().
                     getAnoncreds().issuerCreateCredential(
-                            offer, requestMsg.credRequest().toString(), encodedCredValues.toString());
+                            offer, requestMsg.credRequest(), encodedCredValues);
 
             String cred = createCredRes.first;
 

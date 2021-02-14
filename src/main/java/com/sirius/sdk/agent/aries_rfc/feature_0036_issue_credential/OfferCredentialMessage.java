@@ -46,19 +46,19 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
             JSONObject attach = offerAttaches.getJSONObject(i);
             if (attach.has("data") && attach.getJSONObject("data").has("base64")) {
                 String rawBase64 = attach.getJSONObject("data").getString("base64");
-                JSONObject payload = new JSONObject(Base64.getDecoder().decode(rawBase64));
+                JSONObject payload = new JSONObject(new String(Base64.getDecoder().decode(rawBase64)));
                 Set<String> offerFields = new HashSet<>(Arrays.asList("key_correctness_proof", "nonce", "schema_id", "cred_def_id"));
                 Set<String> credDefFields = new HashSet<>(Arrays.asList("value", "type", "ver", "schemaId", "id", "tag"));
                 if (payload.keySet().containsAll(offerFields)) {
                     res.offerBody = new JSONObject();
                     for (String field : offerFields) {
-                        res.offerBody.put(field, payload.getString(field));
+                        res.offerBody.put(field, payload.get(field));
                     }
                 }
                 if (payload.keySet().containsAll(credDefFields)) {
                     res.credDefBody = new JSONObject();
                     for (String field : credDefFields) {
-                        res.credDefBody.put(field, payload.getString(field));
+                        res.credDefBody.put(field, payload.get(field));
                     }
                 }
             }

@@ -4,9 +4,9 @@ import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
-import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Objects;
@@ -82,17 +82,16 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String issuerCreateCredentialOffer(String credDefId) {
-      return new RemoteCallWrapper<String>(rpc){}.
+    public JSONObject issuerCreateCredentialOffer(String credDefId) {
+      return new JSONObject(new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/issuer_create_credential_offer",
                         RemoteParams.RemoteParamsBuilder.create()
-                                .add("cred_def_id", credDefId));
+                                .add("cred_def_id", credDefId)));
     }
 
     @Override
-    public Triple<String, String, String> issuerCreateCredential(String credOffer, String credReq, String credValues, String revRegId, Integer blobStorageReaderHandle) {
-
-        return   new RemoteCallWrapper<Triple<String, String, String>>(rpc){}.
+    public Triple<String, String, String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId, Integer blobStorageReaderHandle) {
+        return new RemoteCallWrapper<Triple<String, String, String>>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/issuer_create_credential",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("cred_offer", credOffer)
@@ -132,14 +131,15 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public Pair<String, String> proverCreateCredentialReq(String proverDid, String credOffer, String credDef, String masterSecretId) {
-        return   new RemoteCallWrapper<Pair<String, String>>(rpc){}.
+    public Pair<JSONObject, JSONObject> proverCreateCredentialReq(String proverDid, JSONObject credOffer, JSONObject credDef, String masterSecretId) {
+        Pair<String, String> strPair = new RemoteCallWrapper<Pair<String, String>>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_create_credential_req",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("prover_did", proverDid)
                                 .add("cred_offer", credOffer)
                                 .add("cred_def", credDef)
                                 .add("master_secret_id", masterSecretId));
+        return new Pair<JSONObject, JSONObject>(new JSONObject(strPair.first), new JSONObject(strPair.second));
     }
 
     @Override
@@ -162,7 +162,7 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverStoreCredential(String credId, String credReqMetadata, String cred, String credDef, String revRegDef) {
+    public String proverStoreCredential(String credId, JSONObject credReqMetadata, JSONObject cred, JSONObject credDef, String revRegDef) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_store_credential",
                         RemoteParams.RemoteParamsBuilder.create()
