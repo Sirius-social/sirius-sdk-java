@@ -6,6 +6,8 @@ import com.sirius.sdk.agent.model.pairwise.Pairwise;
 
 import java.util.logging.Logger;
 
+import com.sirius.sdk.errors.IndyException;
+import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
@@ -64,8 +66,11 @@ public class Holder extends BaseIssuingStateMachine {
     }
 
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {
-        String credOrder = context.agent.getWallet().getAnoncreds().proverGetCredential(credId);
-        if (credOrder != "") {
+        String credOrder = null;
+        try {
+            credOrder = context.agent.getWallet().getAnoncreds().proverGetCredential(credId);
+        } catch (Exception ex) {}
+        if (credOrder != null) {
             context.agent.getWallet().getAnoncreds().proverDeleteCredential(credId);
         }
         credId = context.agent.getWallet().getAnoncreds().proverStoreCredential(credId, credMetadata, cred, credDef, revRegDef);

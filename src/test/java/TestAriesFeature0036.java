@@ -149,7 +149,7 @@ public class TestAriesFeature0036 {
                 }
         );
 
-        boolean issueRes = issuerFuture.get(10, TimeUnit.SECONDS);
-        boolean holderRes = holderFuture.get(10, TimeUnit.SECONDS).first;
+        boolean issueRes = issuerFuture.get(30, TimeUnit.SECONDS);
+        boolean holderRes = holderFuture.get(30, TimeUnit.SECONDS).first;
     }
 }

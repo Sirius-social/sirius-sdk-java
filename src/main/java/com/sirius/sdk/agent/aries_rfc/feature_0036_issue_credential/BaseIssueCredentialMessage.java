@@ -22,6 +22,10 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
         return null;
     }
 
+    public String getComment() {
+        return this.getMessageObj().getString("comment");
+    }
+
     public String ackMessageId() {
         JSONObject pleaseAck = getJSONOBJECTFromJSON("~please_ack", "{}");
         if (pleaseAck.has("message_id")) {
@@ -36,9 +40,15 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
 
     public static abstract class Builder<B extends Builder<B>> {
         protected String locale = DEF_LOCALE;
+        String comment = null;
 
         public B setLocale(String locate) {
             this.locale = locate;
+            return self();
+        }
+
+        B setComment(String comment) {
+            this.comment = comment;
             return self();
         }
 
@@ -51,6 +61,11 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
             JSONObject l10n = new JSONObject();
             l10n.put("locale", locale);
             jsonObject.put("~l10n", l10n);
+
+            if (comment != null) {
+                jsonObject.put("comment", comment);
+            }
+
             return jsonObject;
         }
     }

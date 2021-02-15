@@ -52,17 +52,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onConnected(WebSocket webSocket, Map<String, List<String>> map) throws Exception {
-
+            log.log(Level.INFO, "Connected");
         }
 
         @Override
         public void onConnectError(WebSocket webSocket, WebSocketException e) throws Exception {
-
+            log.log(Level.INFO, "Connect error");
         }
 
         @Override
         public void onDisconnected(WebSocket webSocket, WebSocketFrame webSocketFrame, WebSocketFrame webSocketFrame1, boolean b) throws Exception {
-
+            log.log(Level.INFO, "Disconnected");
         }
 
         @Override

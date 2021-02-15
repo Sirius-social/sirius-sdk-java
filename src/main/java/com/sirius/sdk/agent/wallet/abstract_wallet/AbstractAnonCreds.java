@@ -262,21 +262,21 @@ public abstract class AbstractAnonCreds {
      *          cred_revoc_id: local id for revocation info (Can be used for revocation of this cred)
      *          revoc_reg_delta_json: Revocation registry delta json with a newly issued credential
      */
-    public abstract Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
+    public abstract Triple<JSONObject,String,JSONObject> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
                                                                         Integer blobStorageReaderHandle);
 
     /**
      * Overload method {@link #issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
      *                                                                         Integer blobStorageReaderHandle)}
      */
-    public  Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues){
+    public  Triple<JSONObject,String,JSONObject> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues){
         return issuerCreateCredential(credOffer, credReq, credValues,null,null);
     }
     /**
      * Overload method {@link #issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId,
      *                                                                         Integer blobStorageReaderHandle)}
      */
-    public  Triple<String,String,String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId){
+    public  Triple<JSONObject,String,JSONObject> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId){
         return issuerCreateCredential(credOffer,credReq,credValues,revRegId,null);
     }
 

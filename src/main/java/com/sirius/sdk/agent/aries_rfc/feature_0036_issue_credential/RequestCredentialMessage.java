@@ -34,13 +34,7 @@ public class RequestCredentialMessage extends BaseIssueCredentialMessage{
     }
 
     public static abstract class Builder<B extends RequestCredentialMessage.Builder<B>> extends BaseIssueCredentialMessage.Builder<B> {
-        String comment = null;
         JSONObject credRequest = null;
-
-        B setComment(String comment) {
-            this.comment = comment;
-            return self();
-        }
 
         B setCredRequest(JSONObject credRequest) {
             this.credRequest = credRequest;
@@ -54,10 +48,6 @@ public class RequestCredentialMessage extends BaseIssueCredentialMessage{
             String id = generateId();
             jsonObject.put("@id", id);
             jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
-
-            if (comment != null) {
-                jsonObject.put("comment", comment);
-            }
 
             if (credRequest != null) {
                 JSONObject requestAttach = new JSONObject();

@@ -21,9 +21,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         super(message);
     }
 
-    public String getComment() {
-        return this.getMessageObj().getString("comment");
-    }
 
     public ParseResult parse() throws SiriusValidationError {
         JSONArray offerAttaches = getMessageObj().getJSONArray("offers~attach");
@@ -93,7 +90,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         List<AttribTranslation> translation = null;
         List<ProposedAttrib> preview = null;
         JSONObject issuerSchema = null;
-        String comment = null;
         Date expiresTime = null;
 
         public B setOffer(JSONObject offer) {
@@ -121,11 +117,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
             return self();
         }
 
-        public B setComment(String comment) {
-            this.comment = comment;
-            return self();
-        }
-
         public B setExpiresTime(Date expiresTime) {
             this.expiresTime = expiresTime;
             return self();
@@ -138,10 +129,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
             String id = generateId();
             jsonObject.put("@id", id);
             jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
-
-            if (comment != null) {
-                jsonObject.put("comment", comment);
-            }
 
             if (preview != null && !preview.isEmpty()) {
                 JSONObject credPreview = new JSONObject();

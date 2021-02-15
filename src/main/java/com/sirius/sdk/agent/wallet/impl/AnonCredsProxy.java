@@ -90,8 +90,8 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public Triple<String, String, String> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId, Integer blobStorageReaderHandle) {
-        return new RemoteCallWrapper<Triple<String, String, String>>(rpc){}.
+    public Triple<JSONObject, String, JSONObject> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId, Integer blobStorageReaderHandle) {
+        Triple<String, String, String> strTriple = new RemoteCallWrapper<Triple<String, String, String>>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/issuer_create_credential",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("cred_offer", credOffer)
@@ -99,6 +99,7 @@ public class AnonCredsProxy extends AbstractAnonCreds {
                                 .add("cred_values", credValues)
                                 .add("rev_reg_id", revRegId)
                                 .add("blob_storage_reader_handle", blobStorageReaderHandle));
+        return new Triple<JSONObject, String, JSONObject>(new JSONObject(strTriple.first), null, null);
     }
 
     @Override

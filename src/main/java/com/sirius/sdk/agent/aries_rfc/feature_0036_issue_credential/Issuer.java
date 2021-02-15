@@ -35,7 +35,7 @@ public class Issuer extends BaseIssuingStateMachine {
     }
 
     public Boolean issue(JSONObject values, Schema schema, CredentialDefinition credDef,
-                          String comment, String locate, List<ProposedAttrib> preview,
+                          String comment, String locale, List<ProposedAttrib> preview,
                           List<AttribTranslation> translation, String credId) {
         try {
             createCoprotocol(holder);
@@ -45,7 +45,7 @@ public class Issuer extends BaseIssuingStateMachine {
             JSONObject offer = context.agent.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
             OfferCredentialMessage offerMsg = OfferCredentialMessage.builder().
                     setComment(comment).
-                    setLocale(locate).
+                    setLocale(locale).
                     setOffer(offer).
                     setCredDef(new JSONObject(credDef.getBody().toString())).
                     setPreview(preview).
@@ -82,14 +82,19 @@ public class Issuer extends BaseIssuingStateMachine {
             }
 
             log.log(Level.INFO, "70% - Build credential with values");
-            Triple<String, String, String> createCredRes = context.agent.getWallet().
+            Triple<JSONObject, String, JSONObject> createCredRes = context.agent.getWallet().
                     getAnoncreds().issuerCreateCredential(
                             offer, requestMsg.credRequest(), encodedCredValues);
 
-            String cred = createCredRes.first;
+            JSONObject cred = createCredRes.first;
 
             // Step-3: Issue and wait Ack
-            IssueCredentialMessage issueMsg = IssueCredentialMessage.create(comment, locate, cred, credId);
+            IssueCredentialMessage issueMsg = IssueCredentialMessage.builder().
+                    setComment(comment).
+                    setLocale(locale).
+                    setCred(cred).
+                    setCredId(credId).
+                    build();
 
             log.log(Level.INFO, "90% - Send Issue message");
             Pair<Boolean, Message> okAck = coprotocol.wait(issueMsg);

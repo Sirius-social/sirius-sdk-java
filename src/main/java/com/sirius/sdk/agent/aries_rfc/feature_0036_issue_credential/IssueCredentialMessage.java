@@ -3,6 +3,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class IssueCredentialMessage extends BaseIssueCredentialMessage{
@@ -15,7 +16,7 @@ public class IssueCredentialMessage extends BaseIssueCredentialMessage{
 
         if (attach != null) {
             String b64 = attach.getJSONObject("data").getString("base64");
-            return new JSONObject(Base64.getDecoder().decode(b64));
+            return new JSONObject(new String(Base64.getDecoder().decode(b64)));
         }
 
         return null;
@@ -36,14 +37,60 @@ public class IssueCredentialMessage extends BaseIssueCredentialMessage{
         return attach;
     }
 
-    public static IssueCredentialMessage create(String comment, String locate, String cred, String credId) {
-        JSONObject issCredMsg = new JSONObject();
-        issCredMsg.put("@id", generateId());
-        issCredMsg.put("@type", ARIES_DOC_URI + "issue-credential/1.0/issue-credential");
-        issCredMsg.put("comment", comment);
-        issCredMsg.put("locate", locate);
-        issCredMsg.put("cred", cred);
-        issCredMsg.put("cred_id", credId);
-        return new IssueCredentialMessage(issCredMsg.toString());
+    public static IssueCredentialMessage.Builder<?> builder() {
+        return new IssueCredentialMessage.IssueCredentialMessageBuilder();
     }
+
+    public static abstract class Builder<B extends Builder<B>> extends BaseIssueCredentialMessage.Builder<B> {
+        JSONObject cred = null;
+        String credId = null;
+
+        public B setCred(JSONObject cred) {
+            this.cred = cred;
+            return self();
+        }
+
+        public B setCredId(String credId) {
+            this.credId = credId;
+            return self();
+        }
+
+        @Override
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = super.generateJSON();
+
+            String id = generateId();
+            jsonObject.put("@id", id);
+            jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/issue-credential");
+
+            if (cred != null) {
+                String messageId = credId != null ? credId : "libindy-cred-" + id;
+                JSONObject credAttach = new JSONObject();
+                credAttach.put("@id", messageId);
+                credAttach.put("mime-type", "application/json");
+                JSONObject data = new JSONObject();
+                byte[] base64 = Base64.getEncoder().encode(cred.toString().getBytes(StandardCharsets.UTF_8));
+                data.put("base64", new String(base64));
+                credAttach.put("data", data);
+                JSONArray attaches = new JSONArray();
+                attaches.put(credAttach);
+                jsonObject.put("credentials~attach", attaches);
+
+            }
+
+            return jsonObject;
+        }
+
+        public IssueCredentialMessage build() {
+            return new IssueCredentialMessage(generateJSON().toString());
+        }
+    }
+
+    private static class IssueCredentialMessageBuilder extends IssueCredentialMessage.Builder<IssueCredentialMessageBuilder> {
+        @Override
+        protected IssueCredentialMessageBuilder self() {
+            return this;
+        }
+    }
+
 }
