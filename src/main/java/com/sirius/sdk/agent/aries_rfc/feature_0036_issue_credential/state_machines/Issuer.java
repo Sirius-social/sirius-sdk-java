@@ -1,23 +1,20 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
+package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
 import com.sirius.sdk.agent.Codec;
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
-import com.sirius.sdk.rpc.AddressedTunnel;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,8 +32,8 @@ public class Issuer extends BaseIssuingStateMachine {
     }
 
     public Boolean issue(JSONObject values, Schema schema, CredentialDefinition credDef,
-                          String comment, String locale, List<ProposedAttrib> preview,
-                          List<AttribTranslation> translation, String credId) {
+                         String comment, String locale, List<ProposedAttrib> preview,
+                         List<AttribTranslation> translation, String credId) {
         try {
             createCoprotocol(holder);
 

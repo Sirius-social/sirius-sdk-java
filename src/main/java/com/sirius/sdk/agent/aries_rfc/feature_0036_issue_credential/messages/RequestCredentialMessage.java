@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
+package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,7 +36,7 @@ public class RequestCredentialMessage extends BaseIssueCredentialMessage{
     public static abstract class Builder<B extends RequestCredentialMessage.Builder<B>> extends BaseIssueCredentialMessage.Builder<B> {
         JSONObject credRequest = null;
 
-        B setCredRequest(JSONObject credRequest) {
+        public B setCredRequest(JSONObject credRequest) {
             this.credRequest = credRequest;
             return self();
         }

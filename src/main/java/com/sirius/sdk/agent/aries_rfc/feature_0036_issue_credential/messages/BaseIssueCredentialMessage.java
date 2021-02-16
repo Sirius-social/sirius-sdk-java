@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential;
+package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import org.json.JSONObject;
@@ -47,7 +47,7 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
             return self();
         }
 
-        B setComment(String comment) {
+        public B setComment(String comment) {
             this.comment = comment;
             return self();
         }
