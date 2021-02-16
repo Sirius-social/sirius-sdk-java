@@ -38,7 +38,7 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
         super(message);
     }
 
-    public static abstract class Builder<B extends Builder<B>> {
+    public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
         protected String locale = DEF_LOCALE;
         String comment = null;
 
@@ -52,12 +52,11 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
             return self();
         }
 
-        protected abstract B self();
-
         protected Builder() {}
 
+        @Override
         protected JSONObject generateJSON() {
-            JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObject = super.generateJSON();
             JSONObject l10n = new JSONObject();
             l10n.put("locale", locale);
             jsonObject.put("~l10n", l10n);

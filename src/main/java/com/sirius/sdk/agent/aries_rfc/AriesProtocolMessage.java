@@ -1,7 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc;
 
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONObject;
 
 public abstract class AriesProtocolMessage extends Message {
 
@@ -21,6 +21,19 @@ public abstract class AriesProtocolMessage extends Message {
     public abstract String getProtocol();
 
     public abstract String getName();
+
+    public static abstract class Builder<B extends Builder<B>> {
+
+        protected abstract B self();
+
+        protected Builder() {}
+
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = new JSONObject();
+            return jsonObject;
+        }
+
+    }
 
 
 }
