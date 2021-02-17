@@ -1,15 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc;
 
 public class AriesProblemReport extends AriesProtocolMessage {
-    @Override
-    public String getProtocol() {
-        return null;
-    }
 
-    @Override
-    public String getName() {
-        return "problem_report";
-    }
 }
 
 /*

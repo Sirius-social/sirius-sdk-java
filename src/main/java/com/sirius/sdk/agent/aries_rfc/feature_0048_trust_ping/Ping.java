@@ -35,13 +35,4 @@ public class Ping extends AriesProtocolMessage {
         return new Ping(pingObject.toString());
     }
 
-    @Override
-    public String getProtocol() {
-        return "trust_ping";
-    }
-
-    @Override
-    public String getName() {
-        return "ping";
-    }
 }

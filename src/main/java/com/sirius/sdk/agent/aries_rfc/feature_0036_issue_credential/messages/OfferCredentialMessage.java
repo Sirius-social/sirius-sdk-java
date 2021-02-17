@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages;
 
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
+import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -10,6 +11,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class OfferCredentialMessage extends BaseIssueCredentialMessage {
+
+    static {
+        Message.registerMessageClass(OfferCredentialMessage.class, "issue-credential", "offer-credential");
+    }
 
     public static class ParseResult {
         JSONObject offer = null;
@@ -128,7 +133,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
 
             String id = generateId();
             jsonObject.put("@id", id);
-            jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
 
             if (preview != null && !preview.isEmpty()) {
                 JSONObject credPreview = new JSONObject();

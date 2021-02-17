@@ -11,15 +11,6 @@ public class Ack extends AriesProtocolMessage {
         super(message);
     }
 
-    @Override
-    public String getProtocol() {
-        return "notification";
-    }
-
-    @Override
-    public String getName() {
-        return "ack";
-    }
 
     public enum Status {
         OK,

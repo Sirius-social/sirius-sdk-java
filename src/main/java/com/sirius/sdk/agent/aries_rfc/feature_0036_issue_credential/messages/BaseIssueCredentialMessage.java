@@ -12,16 +12,6 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
     public static final String CREDENTIAL_TRANSLATION_ID = "credential-translation";
     public static final String ISSUER_SCHEMA_ID = "issuer-schema";
 
-    @Override
-    public String getProtocol() {
-        return "issue-credential";
-    }
-
-    @Override
-    public String getName() {
-        return null;
-    }
-
     public String getComment() {
         return this.getMessageObj().getString("comment");
     }

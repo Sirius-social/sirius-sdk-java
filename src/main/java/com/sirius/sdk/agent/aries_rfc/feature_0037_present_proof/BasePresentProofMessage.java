@@ -9,15 +9,6 @@ public class BasePresentProofMessage extends AriesProtocolMessage {
     public static final String CREDENTIAL_TRANSLATION_ID = "credential-translation";
 
 
-    @Override
-    public String getProtocol() {
-        return "present-proof";
-    }
-
-    @Override
-    public String getName() {
-        return null;
-    }
 
     public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
         protected String locale = DEF_LOCALE;

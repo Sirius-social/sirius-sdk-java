@@ -11,14 +11,13 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessageClass;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.Triple;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 
 public class Message implements JsonSerializable<Message> {
@@ -66,7 +65,7 @@ public class Message implements JsonSerializable<Message> {
 
     }
 
-    public static Map<String, Map<String, Class<? extends Message>>> MSG_REGISTRY = new HashMap<>();
+    public static List<Triple<Class<? extends Message>, String, String>> MSG_REGISTRY = new ArrayList<>();
 
     public static final String FIELD_TYPE = "@type";
     public static final String FIELD_ID = "@id";
@@ -213,39 +212,47 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public static void registerMessageClass(Class<? extends Message> clas, String protocol, String name) {
-        Map<String, Class<? extends Message>> descriptor = MSG_REGISTRY.getOrDefault(protocol, new HashMap<>());
-        if (name != null && !name.isEmpty()) {
-            descriptor.put(name, clas);
-        } else {
-            descriptor.put("*", clas);
+        if (name == null)
+            name = "*";
+        for (int i = 0; i < MSG_REGISTRY.size(); i++) {
+            if (MSG_REGISTRY.get(i).first.equals(clas)) {
+                MSG_REGISTRY.set(i, new Triple<>(clas, protocol, name));
+                return;
+            }
         }
-        MSG_REGISTRY.put(protocol, descriptor);
+
+        MSG_REGISTRY.add(new Triple<>(clas, protocol, name));
     }
 
     public static void registerMessageClass(Class<? extends Message> clas, String protocol) {
-        registerMessageClass(clas,protocol, null);
+        registerMessageClass(clas,protocol, "*");
+    }
+
+    public static Pair<String, String> getProtocolAndName(Class<? extends Message> clas) {
+        for (int i = 0; i < MSG_REGISTRY.size(); i++) {
+            if (MSG_REGISTRY.get(i).first.equals(clas)) {
+                return new Pair<>(MSG_REGISTRY.get(i).second, MSG_REGISTRY.get(i).third);
+            }
+        }
+        return new Pair<>(null, null);
     }
 
     public static Pair<Boolean, Message> restoreMessageInstance(String payload) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Pair<Boolean, Message> pair = new Pair<>(false, null);
         Message message = new Message(payload);
         String protocol = message.typeOfType.protocol;
         String name = message.typeOfType.name;
-        Map<String, Class<? extends Message>> descriptor = MSG_REGISTRY.get(protocol);
-        if (descriptor != null) {
-            Class<? extends Message> clssTo = null;
-            if (descriptor.containsKey(name)) {
-                clssTo = descriptor.get(name);
-            } else if (descriptor.containsKey("*")) {
-                clssTo = descriptor.get("*");
-            }
-            if (clssTo != null) {
-                Constructor<? extends Message> constructor = clssTo.getConstructor(String.class);
-                return new Pair<>(true, constructor.newInstance(payload));
-            }
 
+        Class<? extends Message> clssTo = null;
+        for (Triple<Class<? extends Message>, String, String> record : MSG_REGISTRY) {
+            if (record.second.equals(protocol) && (record.third.equals(name) || record.third.equals("*"))) {
+                clssTo = record.first;
+            }
         }
-        return pair;
+        if (clssTo != null) {
+            Constructor<? extends Message> constructor = clssTo.getConstructor(String.class);
+            return new Pair<>(true, constructor.newInstance(payload));
+        }
 
+        return new Pair<>(false, null);
     }
 }

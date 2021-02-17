@@ -1,12 +1,18 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages;
 
+import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class RequestCredentialMessage extends BaseIssueCredentialMessage{
+public class RequestCredentialMessage extends BaseIssueCredentialMessage {
+
+    static {
+        Message.registerMessageClass(RequestCredentialMessage.class, "issue-credential", "request-credential");
+    }
+
     public RequestCredentialMessage(String message) {
         super(message);
     }
@@ -47,7 +53,6 @@ public class RequestCredentialMessage extends BaseIssueCredentialMessage{
 
             String id = generateId();
             jsonObject.put("@id", id);
-            jsonObject.put("@type", ARIES_DOC_URI + "issue-credential/1.0/offer-credential");
 
             if (credRequest != null) {
                 JSONObject requestAttach = new JSONObject();

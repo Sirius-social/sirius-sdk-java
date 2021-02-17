@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.aries_rfc;
 
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.messaging.Type;
+import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
 public abstract class AriesProtocolMessage extends Message {
@@ -10,17 +12,11 @@ public abstract class AriesProtocolMessage extends Message {
 
     public AriesProtocolMessage(String message) {
         super(message);
-        Message.registerMessageClass(this.getClass(), getProtocol(), getName());
     }
 
     public AriesProtocolMessage() {
         super("{}");
-        Message.registerMessageClass(this.getClass(), getProtocol(), getName());
     }
-
-    public abstract String getProtocol();
-
-    public abstract String getName();
 
     public static abstract class Builder<B extends Builder<B>> {
 
@@ -30,6 +26,10 @@ public abstract class AriesProtocolMessage extends Message {
 
         protected JSONObject generateJSON() {
             JSONObject jsonObject = new JSONObject();
+
+            Pair<String, String> protocolAndName = Message.getProtocolAndName((Class<? extends Message>) this.getClass().getDeclaringClass());
+            jsonObject.put("@type", (new Type("ARIES_DOC_URI", protocolAndName.first, "1.0", protocolAndName.second)));
+
             return jsonObject;
         }
 
