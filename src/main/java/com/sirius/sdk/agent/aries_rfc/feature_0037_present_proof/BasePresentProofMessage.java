@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import org.json.JSONObject;
 
 public class BasePresentProofMessage extends AriesProtocolMessage {
+    public static final String PROTOCOL = "present-proof";
     public static final String DEF_LOCALE = "en";
     public static final String CREDENTIAL_TRANSLATION_TYPE = "https://github.com/Sirius-social/agent/tree/master/messages/credential-translation";
     public static final String CREDENTIAL_TRANSLATION_ID = "credential-translation";

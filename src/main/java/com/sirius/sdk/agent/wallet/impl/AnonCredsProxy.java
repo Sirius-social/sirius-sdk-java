@@ -216,13 +216,13 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverSearchCredentialsForProofReq(String proofRequest, String extraQuery, int limitReferents) {
-        return new RemoteCallWrapper<String>(rpc){}.
+    public JSONObject proverSearchCredentialsForProofReq(JSONObject proofRequest, String extraQuery, int limitReferents) {
+        return new JSONObject(new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_search_credentials_for_proof_req",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("proof_request", proofRequest)
                                 .add("extra_query", extraQuery)
-                                .add("limit_referents", limitReferents));
+                                .add("limit_referents", limitReferents)));
     }
 
     @Override

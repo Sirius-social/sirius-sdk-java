@@ -18,6 +18,10 @@ public abstract class AriesProtocolMessage extends Message {
         super("{}");
     }
 
+    public boolean validate() {
+        return true;
+    }
+
     public static abstract class Builder<B extends Builder<B>> {
 
         protected abstract B self();
