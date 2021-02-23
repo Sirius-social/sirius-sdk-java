@@ -22,7 +22,6 @@ import java.util.*;
 
 public class Message implements JsonSerializable<Message> {
 
-
     public String getType() {
         return type;
     }
@@ -84,7 +83,9 @@ public class Message implements JsonSerializable<Message> {
     JSONObject messageObj;
     Type typeOfType;
 
-
+    public String getVersion() {
+        return this.typeOfType.version;
+    }
 
     public String prettyPrint() {
         GsonBuilder builder = new GsonBuilder();
@@ -140,7 +141,6 @@ public class Message implements JsonSerializable<Message> {
         return null;
 
     }
-
 
     public boolean messageObjectHasKey(String key) {
         return messageObj.has(key);

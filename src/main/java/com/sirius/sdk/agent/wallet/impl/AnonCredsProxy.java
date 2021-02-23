@@ -226,8 +226,8 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverCreateProof(String proofReq, String requestedCredentials, String masterSecretName, String schemas, String credentialDefs, String revStates) {
-        return new RemoteCallWrapper<String>(rpc){}.
+    public JSONObject proverCreateProof(JSONObject proofReq, JSONObject requestedCredentials, String masterSecretName, JSONObject schemas, JSONObject credentialDefs, JSONObject revStates) {
+        return new JSONObject(new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_create_proof",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("proof_req", proofReq)
@@ -235,11 +235,11 @@ public class AnonCredsProxy extends AbstractAnonCreds {
                                 .add("master_secret_name", masterSecretName)
                                 .add("schemas", schemas)
                                 .add("credential_defs", credentialDefs)
-                                .add("rev_states", revStates));
+                                .add("rev_states", revStates)));
     }
 
     @Override
-    public boolean verifierVerifyProof(String proofRequest, String proof, String schemas, String credentialDefs, String revRegDefs, String revRegs) {
+    public boolean verifierVerifyProof(JSONObject proofRequest, JSONObject proof, JSONObject schemas, JSONObject credentialDefs, JSONObject revRegDefs, JSONObject revRegs) {
         return new RemoteCallWrapper<Boolean>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/verifier_verify_proof",
                         RemoteParams.RemoteParamsBuilder.create()

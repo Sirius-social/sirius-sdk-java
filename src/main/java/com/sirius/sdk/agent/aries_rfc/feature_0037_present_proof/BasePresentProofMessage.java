@@ -9,7 +9,9 @@ public class BasePresentProofMessage extends AriesProtocolMessage {
     public static final String CREDENTIAL_TRANSLATION_TYPE = "https://github.com/Sirius-social/agent/tree/master/messages/credential-translation";
     public static final String CREDENTIAL_TRANSLATION_ID = "credential-translation";
 
-
+    public BasePresentProofMessage(String msg) {
+        super(msg);
+    }
 
     public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
         protected String locale = DEF_LOCALE;

@@ -54,7 +54,8 @@ public class Holder extends BaseIssuingStateMachine {
             // Step-3: Store credential
             String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
 
-            Ack ack = Ack.create(issueMsg.ackMessageId(), Ack.Status.OK, docUri);
+            Ack ack = Ack.builder().setStatus(Ack.Status.OK).setDocUri(docUri).build();
+            ack.setThreadId(issueMsg.getAckMessageId());
             coprotocol.send(ack);
             return new Pair<Boolean, String>(true, credId);
         } catch (Exception ex) {

@@ -16,14 +16,6 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
         return this.getMessageObj().getString("comment");
     }
 
-    public String ackMessageId() {
-        JSONObject pleaseAck = getJSONOBJECTFromJSON("~please_ack", "{}");
-        if (pleaseAck.has("message_id")) {
-            return pleaseAck.getString("message_id");
-        }
-        return this.getId();
-    }
-
     public BaseIssueCredentialMessage(String message) {
         super(message);
     }

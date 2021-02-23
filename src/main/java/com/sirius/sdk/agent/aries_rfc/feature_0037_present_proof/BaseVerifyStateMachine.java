@@ -10,6 +10,8 @@ import java.util.Arrays;
 public class BaseVerifyStateMachine {
     AbstractCoProtocolTransport coprotocol = null;
     Context context;
+    PresentProofProblemReport problemReport = null;
+    int timeToLiveSec = 60;
 
     protected void createCoprotocol(Pairwise pairwise) {
         if (coprotocol == null) {
@@ -23,5 +25,9 @@ public class BaseVerifyStateMachine {
             coprotocol.stop();
             coprotocol = null;
         }
+    }
+
+    public PresentProofProblemReport getProblemReport() {
+        return problemReport;
     }
 }

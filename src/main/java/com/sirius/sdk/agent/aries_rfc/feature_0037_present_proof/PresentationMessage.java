@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public class PresentationMessage extends BasePresentProofMessage {
 
+    public PresentationMessage(String msg) {
+        super(msg);
+    }
+
     public JSONObject proof() {
         Object obj = getMessageObj().get("presentations~attach");
         JSONObject attach = null;
@@ -26,7 +30,7 @@ public class PresentationMessage extends BasePresentProofMessage {
             return new JSONObject(new String(Base64.getDecoder().decode(rawBase64)));
         }
 
-        return null;
+        return new JSONObject();
     }
 
     public static PresentationMessage.Builder<?> builder() {
@@ -37,6 +41,15 @@ public class PresentationMessage extends BasePresentProofMessage {
         JSONObject proof = null;
         String presentationId = null;
 
+        public B setProof(JSONObject proof) {
+            this.proof = proof;
+            return self();
+        }
+
+        public B setPresentationId(String presentationId) {
+            this.presentationId = presentationId;
+            return self();
+        }
 
         @Override
         protected JSONObject generateJSON() {
@@ -58,6 +71,10 @@ public class PresentationMessage extends BasePresentProofMessage {
             }
 
             return jsonObject;
+        }
+
+        public PresentationMessage build() {
+            return new PresentationMessage(generateJSON().toString());
         }
     }
 

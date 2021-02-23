@@ -855,8 +855,8 @@ public abstract class AbstractAnonCreds {
      * "identifiers": [{schema_id, cred_def_id, Optional<rev_reg_id>, Optional<timestamp>}]
      * }
      */
-    public abstract String proverCreateProof(String proofReq, String requestedCredentials, String masterSecretName,
-                                             String schemas, String credentialDefs, String revStates);
+    public abstract JSONObject proverCreateProof(JSONObject proofReq, JSONObject requestedCredentials, String masterSecretName,
+                                             JSONObject schemas, JSONObject credentialDefs, JSONObject revStates);
 
     /**
      * Verifies a proof (of multiple credential).
@@ -954,8 +954,7 @@ public abstract class AbstractAnonCreds {
      *                       }
      * @return valid: true - if signature is valid, false - otherwise
      */
-    public abstract boolean verifierVerifyProof(String proofRequest, String proof, String schemas, String credentialDefs,
-                                                String revRegDefs, String revRegs);
+    public abstract boolean verifierVerifyProof(JSONObject proofRequest, JSONObject proof, JSONObject schemas, JSONObject credentialDefs, JSONObject revRegDefs, JSONObject revRegs);
 
     /**
      * Create revocation state for a credential that corresponds to a particular time.

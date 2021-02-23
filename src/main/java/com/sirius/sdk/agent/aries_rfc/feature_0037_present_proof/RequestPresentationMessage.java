@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof;
 
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueCredentialMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,6 +15,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class RequestPresentationMessage extends BasePresentProofMessage {
+
+    public RequestPresentationMessage(String msg) {
+        super(msg);
+    }
 
     public static RequestPresentationMessage.Builder<?> builder() {
         return new RequestPresentationMessageBuilder();
@@ -41,6 +46,21 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
         JSONObject proofRequest = null;
         List<AttribTranslation> translation = null;
         Date expiresTime = null;
+
+        public B setProofRequest(JSONObject proofRequest) {
+            this.proofRequest = proofRequest;
+            return self();
+        }
+
+        public B setTranslation(List<AttribTranslation> translation) {
+            this.translation = translation;
+            return self();
+        }
+
+        public B setExpiresTime(Date expiresTime) {
+            this.expiresTime = expiresTime;
+            return self();
+        }
 
         @Override
         protected JSONObject generateJSON() {
@@ -91,6 +111,11 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
 
             return jsonObject;
         }
+
+        public RequestPresentationMessage build() {
+            return new RequestPresentationMessage(generateJSON().toString());
+        }
+
     }
 
     private static class RequestPresentationMessageBuilder extends RequestPresentationMessage.Builder<RequestPresentationMessageBuilder> {
