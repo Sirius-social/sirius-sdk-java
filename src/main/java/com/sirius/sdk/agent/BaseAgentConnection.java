@@ -8,6 +8,7 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.rpc.AddressedTunnel;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -63,10 +64,11 @@ public abstract class BaseAgentConnection {
     }
 
     public void create() throws SiriusFieldValueError {
+        CompletableFuture<byte[]> feat = connector.read();
         connector.open();
         byte[] payload = new byte[0];
         try {
-            payload = connector.read().get(getTimeout(), TimeUnit.SECONDS);
+            payload = feat.get(getTimeout(), TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
         }

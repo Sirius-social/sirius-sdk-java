@@ -3,16 +3,14 @@ package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof;
 import com.sirius.sdk.agent.Ledger;
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Holder;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
-import com.sirius.sdk.agent.wallet.impl.CacheProxy;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-import org.checkerframework.checker.units.qual.C;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -24,20 +22,22 @@ import java.util.logging.Logger;
 public class StateMachineProver extends BaseVerifyStateMachine {
     Pairwise verifier = null;
     String poolName;
-    Logger log = Logger.getLogger(Holder.class.getName());
+    Logger log = Logger.getLogger(StateMachineProver.class.getName());
 
-    public StateMachineProver(Pairwise verifier, Ledger ledger, int timeToLiveSec) {
+    public StateMachineProver(Context context, Pairwise verifier, Ledger ledger, int timeToLiveSec) {
+        this.context = context;
         this.verifier = verifier;
         this.poolName = ledger.getName();
         this.timeToLiveSec = timeToLiveSec;
     }
 
-    public StateMachineProver(Pairwise verifier, Ledger ledger) {
+    public StateMachineProver(Context context, Pairwise verifier, Ledger ledger) {
+        this.context = context;
         this.verifier = verifier;
         this.poolName = ledger.getName();
     }
 
-    boolean prove(RequestPresentationMessage request, String masterSecretId) {
+    public boolean prove(RequestPresentationMessage request, String masterSecretId) {
         try {
             createCoprotocol(this.verifier);
             // Step-1: Process proof-request

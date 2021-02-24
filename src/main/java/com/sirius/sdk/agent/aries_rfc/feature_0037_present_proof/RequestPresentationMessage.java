@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class RequestPresentationMessage extends BasePresentProofMessage {
+    private static String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public RequestPresentationMessage(String msg) {
         super(msg);
@@ -39,6 +41,20 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
             return new JSONObject(new String(Base64.getDecoder().decode(rawBase64)));
         }
 
+        return null;
+    }
+
+    public Date expiresTime() {
+        JSONObject timing = getMessageObj().optJSONObject("~timing");
+        if (timing != null) {
+            String dateTimeStr = timing.optString("expires_time", "");
+            if (!dateTimeStr.isEmpty()) {
+                DateFormat df = new SimpleDateFormat(TIME_FORMAT);
+                try {
+                    return df.parse(dateTimeStr);
+                } catch (ParseException ignored) {}
+            }
+        }
         return null;
     }
 
@@ -104,7 +120,7 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
 
             if(expiresTime != null) {
                 JSONObject timing = new JSONObject();
-                DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+                DateFormat df = new SimpleDateFormat(TIME_FORMAT);
                 timing.put("expires_time", df.format(expiresTime));
                 jsonObject.put("~timing", timing);
             }

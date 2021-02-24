@@ -1,20 +1,17 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof;
 
-import com.sirius.sdk.agent.AbstractStateMachine;
 import com.sirius.sdk.agent.Ledger;
 import com.sirius.sdk.agent.StateMachineTerminatedWithError;
-import com.sirius.sdk.agent.TransportLayer;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Holder;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-import com.sun.xml.internal.bind.v2.schemagen.xmlschema.SimpleDerivation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,17 +27,19 @@ import java.util.logging.Logger;
  */
 public class StateMachineVerifier extends BaseVerifyStateMachine {
     Pairwise prover = null;
-    Logger log = Logger.getLogger(Holder.class.getName());
+    Logger log = Logger.getLogger(StateMachineVerifier.class.getName());
     String poolname;
     JSONObject requestedProof;
 
-    public StateMachineVerifier(Pairwise prover, Ledger ledger, int timeToLive) {
+    public StateMachineVerifier(Context context, Pairwise prover, Ledger ledger, int timeToLive) {
+        this.context = context;
         this.prover = prover;
         this.poolname = ledger.getName();
         this.timeToLiveSec = timeToLive;
     }
 
-    public StateMachineVerifier(Pairwise prover, Ledger ledger) {
+    public StateMachineVerifier(Context context, Pairwise prover, Ledger ledger) {
+        this.context = context;
         this.prover = prover;
         this.poolname = ledger.getName();
     }
@@ -147,6 +146,8 @@ public class StateMachineVerifier extends BaseVerifyStateMachine {
         } catch (StateMachineTerminatedWithError stateMachineTerminatedWithError) {
             this.problemReport = new PresentProofProblemReport();
             return false;
+        } catch (Exception ex) {
+            ex.printStackTrace();
         } finally {
             releaseCoprotocol();
         }
