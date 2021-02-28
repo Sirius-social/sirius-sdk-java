@@ -5,13 +5,18 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldTypeError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.rpc.AddressedTunnel;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class BaseAgentConnection {
+    Logger log = Logger.getLogger(AddressedTunnel.class.getName());
 
     public static final int IO_TIMEOUT = 30;
     String MSG_TYPE_CONTEXT = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/context";
@@ -24,7 +29,7 @@ public abstract class BaseAgentConnection {
     WebSocketConnector connector;
 
     public void setTimeout(int timeout) {
-        if (timeout > 0) {
+        if (timeout <= 0) {
             throw new RuntimeException("Timeout must be > 0");
         }
         this.timeout = timeout;
@@ -59,18 +64,17 @@ public abstract class BaseAgentConnection {
     }
 
     public void create() throws SiriusFieldValueError {
+        CompletableFuture<byte[]> feat = connector.read();
         connector.open();
         byte[] payload = new byte[0];
         try {
-            payload = connector.read().get(getTimeout(), TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+            payload = feat.get(getTimeout(), TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
         }
-        Message context = new Message(new String(payload, StandardCharsets.UTF_8));
+        String msgString = new String(payload, StandardCharsets.UTF_8);
+        log.log(Level.INFO, "Received message: " + msgString);
+        Message context = new Message(msgString);
         if (context.getType()==null){
             throw new SiriusFieldValueError("message @type is empty");
         }

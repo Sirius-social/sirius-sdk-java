@@ -81,7 +81,7 @@ public class LedgerProxy extends AbstractLedger  {
     }
 
     @Override
-    public String submitRequest(String poolName, String request) {
+    public String submitRequest(String poolName, Object request) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/submit_request",
                         RemoteParams.RemoteParamsBuilder.create()
@@ -101,7 +101,7 @@ public class LedgerProxy extends AbstractLedger  {
     }
 
     @Override
-    public String signRequest(String submitterDid, String request) {
+    public String signRequest(String submitterDid, Object request) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/sign_request",
                         RemoteParams.RemoteParamsBuilder.create()
@@ -207,7 +207,7 @@ public class LedgerProxy extends AbstractLedger  {
     }
 
     @Override
-    public String buildCredDef(String submitterDid, String data) {
+    public String buildCredDefRequest(String submitterDid, Object data) {
         return new RemoteCallWrapper<String>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/build_cred_def_request",
                         RemoteParams.RemoteParamsBuilder.create()

@@ -1,23 +1,21 @@
 package com.sirius.sdk.rpc;
 
-import com.google.gson.*;
-import com.goterl.lazycode.lazysodium.LazySodium;
-import com.sirius.sdk.base.JsonMessage;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.errors.IndyException;
-import com.sirius.sdk.errors.sirius_exceptions.*;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusPromiseContextException;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValueEmpty;
 import com.sirius.sdk.messaging.Message;
-import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
-import com.sirius.sdk.utils.StringUtils;
 import com.sirius.sdk.utils.Triple;
-import org.apache.commons.codec.binary.Hex;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -73,63 +71,13 @@ public class Future {
         return new FuturePromise(id, tunnel.address, expirationTime);
     }
 
-
-    public static class FuturePromise implements JsonSerializable<FuturePromise> {
-        public String getId() {
-            return id;
-        }
-
-        public String getChannel_address() {
-            return channel_address;
-        }
-
-        public long getExpiration_stamp() {
-            return expiration_stamp;
-        }
-
-        String id;
-        String channel_address;
-        long expiration_stamp;
-
-        public FuturePromise(String id, String channel_address, long expiration_stamp) {
-            this.id = id;
-            this.channel_address = channel_address;
-            this.expiration_stamp = expiration_stamp;
-        }
-
-
-
-        @Override
-        public String serialize() {
-            Gson gson = new GsonBuilder().create();
-            return gson.toJson(this, FuturePromise.class);
-        }
-
-        @Override
-        public JSONObject serializeToJSONObject() {
-            String object = serialize();
-            return new JSONObject(object);
-        }
-
-        @Override
-        public FuturePromise deserialize(String string) {
-            Gson gson = new GsonBuilder().create();
-            return gson.fromJson(string, FuturePromise.class);
-        }
-
-        @Override
-        public JsonObject serializeToJsonObject() {
-            return null;
-        }
-    }
-
     /**
      * "Wait for response
      *
      * @param timeout waiting timeout in seconds
      * @return True/False
      */
-    public boolean waitPromise(int timeout)  {
+    public boolean waitPromise(int timeout) {
         if (readOk) {
             return true;
         }
@@ -151,47 +99,63 @@ public class Future {
             if (MSG_TYPE.equals(message.getType()) && id.equals(threadId)) {
                 JSONObject exception = message.getJSONOBJECTFromJSON("exception");
                 if (exception == null) {
-                    Object value =   message.getObjectFromJSON("value");
-                    boolean is_tuple =   message.getBooleanFromJSON("is_tuple");
-                    boolean is_bytes =   message.getBooleanFromJSON("is_bytes");
-                    if(is_tuple){
+                    Object value = message.getObjectFromJSON("value");
+                    boolean is_tuple = message.getBooleanFromJSON("is_tuple");
+                    boolean is_bytes = message.getBooleanFromJSON("is_bytes");
+                    if (is_tuple) {
                         if (((JSONArray) value).length() == 2) {
-                            this.value = new Pair<Object,Object>(((JSONArray) value).get(0),((JSONArray) value).get(1));
-                        }else{
+                            this.value = new Pair<Object, Object>(((JSONArray) value).get(0), ((JSONArray) value).get(1));
+                        } else if (((JSONArray) value).length() == 3) {
+                            this.value = new Triple<Object, Object, Object>(((JSONArray) value).get(0), ((JSONArray) value).get(1), ((JSONArray) value).get(2));
+                        } else {
                             this.value = value;
                         }
-                    }else if(is_bytes){
+                    } else if (is_bytes) {
                         Custom custom = new Custom();
-                        this.value =  custom.b64ToBytes(value.toString(),false);
-                    }else{
+                        this.value = custom.b64ToBytes(value.toString(), false);
+                    } else {
                         this.value = value;
                     }
                 } else {
                     this.exception = exception;
                 }
-                readOk  =true;
+                readOk = true;
                 return true;
             } else {
-               System.out.println("Unexpected payload" + message.serialize() + "Expected id: " + id);
-           }
+                System.out.println("Unexpected payload" + message.serialize() + "Expected id: " + id);
+            }
 
 
-        } catch (SiriusInvalidPayloadStructure  siriusInvalidPayloadStructure) {
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
         }
 
         return false;
     }
 
-/*
-
-    */
-/**
-     * "Wait for response
+    /**
+     * Get response value.
      *
-     * @param timeout waiting timeout in seconds
-     * @return True/False
-     *//*
+     * @throws SiriusPendingOperation : response was not received yet. Call walt(0) to safely check value persists.
+     * @return: value
+     */
+    public Object getValue() throws SiriusPendingOperation {
+        if (readOk) {
+            return value;
+        } else {
+            throw new SiriusPendingOperation();
+        }
+    }
+
+    /*
+
+     */
+/**
+ * "Wait for response
+ *
+ * @param timeout waiting timeout in seconds
+ * @return True/False
+ *//*
 
     public boolean waitPromise(int timeout)  {
         if (readOk) {
@@ -254,22 +218,6 @@ public class Future {
     }
 */
 
-
-
-    /**
-     * Get response value.
-     *
-     * @throws SiriusPendingOperation : response was not received yet. Call walt(0) to safely check value persists.
-     * @return: value
-     */
-    public Object getValue() throws SiriusPendingOperation {
-        if (readOk) {
-            return value;
-        } else {
-            throw new SiriusPendingOperation();
-        }
-    }
-
     /**
      * Check if response was interrupted with exception
      *
@@ -290,17 +238,17 @@ public class Future {
      */
     public Exception getFutureException() {
         try {
-           if(hasException()){
-               if(exception.optJSONObject("indy") !=null){
-                   JSONObject indy_exc = exception.getJSONObject("indy");
+            if (hasException()) {
+                if (exception.optJSONObject("indy") != null) {
+                    JSONObject indy_exc = exception.getJSONObject("indy");
 
-                   IndyException exc_class =  IndyException.fromSdkError(indy_exc.getInt("error_code"),indy_exc);
-                   return exc_class;
-               }else{
-                   return new SiriusPromiseContextException(exception.optString("class_name"), exception.optString("printable"));
-               }
+                    IndyException exc_class = IndyException.fromSdkError(indy_exc.getInt("error_code"), indy_exc);
+                    return exc_class;
+                } else {
+                    return new SiriusPromiseContextException(exception.optString("class_name"), exception.optString("printable"));
+                }
 
-           }
+            }
         } catch (SiriusPendingOperation siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
         }
@@ -316,10 +264,57 @@ public class Future {
     public void raiseException() throws Exception {
         try {
             if (hasException()) {
-                throw  getFutureException();
+                throw getFutureException();
             }
         } catch (SiriusPendingOperation siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
+        }
+    }
+
+    public static class FuturePromise implements JsonSerializable<FuturePromise> {
+        String id;
+        String channel_address;
+        long expiration_stamp;
+
+        public FuturePromise(String id, String channel_address, long expiration_stamp) {
+            this.id = id;
+            this.channel_address = channel_address;
+            this.expiration_stamp = expiration_stamp;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getChannel_address() {
+            return channel_address;
+        }
+
+        public long getExpiration_stamp() {
+            return expiration_stamp;
+        }
+
+        @Override
+        public String serialize() {
+            Gson gson = new GsonBuilder().create();
+            return gson.toJson(this, FuturePromise.class);
+        }
+
+        @Override
+        public JSONObject serializeToJSONObject() {
+            String object = serialize();
+            return new JSONObject(object);
+        }
+
+        @Override
+        public FuturePromise deserialize(String string) {
+            Gson gson = new GsonBuilder().create();
+            return gson.fromJson(string, FuturePromise.class);
+        }
+
+        @Override
+        public JsonObject serializeToJsonObject() {
+            return null;
         }
     }
 

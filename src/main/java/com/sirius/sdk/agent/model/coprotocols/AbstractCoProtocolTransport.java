@@ -1,9 +1,15 @@
 package com.sirius.sdk.agent.model.coprotocols;
 
 import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.Event;
+import com.sirius.sdk.errors.sirius_exceptions.*;
+import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.messaging.Type;
+import com.sirius.sdk.utils.Pair;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 /**
  * Abstraction application-level protocols in the context of interactions among agent-like things.
@@ -18,6 +24,8 @@ import java.util.List;
  */
 public abstract class AbstractCoProtocolTransport {
 
+    private static final String PLEASE_ACK_DECORATOR = "~please_ack";
+
     public AbstractCoProtocolTransport(AgentRPC rpc) {
         this.rpc = rpc;
     }
@@ -28,6 +36,14 @@ public abstract class AbstractCoProtocolTransport {
     String endpoint;
     List<String> routingKeys;
     boolean isSetup;
+    boolean started = false;
+    List<String> protocols = new ArrayList<>();
+    int timeToLiveSec = 30;
+    Date dieTimestamp = null;
+    List<String> pleaseAckIds = new ArrayList<>();
+    boolean checkVerkeys = false;
+    boolean checkProtocols = true;
+
     /**
      * Should be called in Descendant
      * @param theirVerkey
@@ -35,208 +51,164 @@ public abstract class AbstractCoProtocolTransport {
      * @param myVerkey
      * @param routing_keys
      */
-    public void  setup(String theirVerkey, String endpoint, String myVerkey, List<String> routing_keys){
+    public void setup(String theirVerkey, String endpoint, String myVerkey, List<String> routing_keys){
         this.theirVK = theirVerkey;
         this.myVerkey= myVerkey;
         this.endpoint = endpoint;
         this.routingKeys = routing_keys;
-        if(routingKeys==null){
+        if (routingKeys == null) {
             routingKeys = new ArrayList<>();
         }
         isSetup = true;
     }
 
+    public boolean isStarted() {
+        return started;
+    }
 
+    public void start() {
+        this.dieTimestamp = null;
+        this.protocols = new ArrayList<>();
+        this.checkProtocols = false;
+        started = true;
+    }
 
+    public void start(List<String> protocols) {
+        this.dieTimestamp = null;
+        this.protocols = protocols;
+        if (protocols.isEmpty())
+            this.checkProtocols = false;
+        started = true;
+    }
+
+    public void start(List<String> protocols, int timeToLiveSec) {
+        this.protocols = protocols;
+        this.timeToLiveSec = timeToLiveSec;
+        this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
+        started = true;
+    }
+
+    public void stop() {
+        this.dieTimestamp = null;
+        started = false;
+        cleanupContext();
+    }
+
+    private void cleanupContext(Message message) {
+        if (message.messageObjectHasKey(PLEASE_ACK_DECORATOR)) {
+            String ackMessageId;
+            if (message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).has("message_id"))
+                ackMessageId = message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).getString("message_id");
+            else
+                ackMessageId = message.getId();
+            rpc.stopProtocolWithThreads(pleaseAckIds, true);
+            pleaseAckIds.removeIf(ackId -> ackId.equals(ackMessageId));
+        }
+    }
+
+    private void cleanupContext() {
+        this.rpc.stopProtocolWithThreads(pleaseAckIds, true);
+        pleaseAckIds.clear();
+    }
+
+    private void setupContext(Message message) {
+        if (message.messageObjectHasKey(PLEASE_ACK_DECORATOR)) {
+            String ackMessageId;
+            if (message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).has("message_id"))
+                ackMessageId = message.getJSONOBJECTFromJSON(PLEASE_ACK_DECORATOR).getString("message_id");
+            else
+                ackMessageId = message.getId();
+            int ttl = this.timeToLiveSec;
+            rpc.startProtocolWithThreads(Collections.singletonList(ackMessageId), ttl);
+            pleaseAckIds.add(ackMessageId);
+        }
+    }
+
+    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
+        if (!isSetup) {
+            throw new SiriusPendingOperation("You must Setup protocol instance at first");
+        }
+
+        rpc.setTimeout(timeToLiveSec);
+        setupContext(message);
+
+        Message event = null;
+        try {
+            event = rpc.sendMessage(message, Collections.singletonList(theirVK), endpoint, myVerkey, routingKeys, true);
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
+            siriusConnectionClosed.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        } finally {
+            cleanupContext();
+        }
+
+        if (checkVerkeys) {
+            String recipientVerkey = event.getStringFromJSON("recipient_verkey");
+            String senderVerkey = event.getStringFromJSON("sender_verkey");
+            if (recipientVerkey != myVerkey) {
+                throw new SiriusInvalidPayloadStructure("Unexpected recipient_verkey: " + recipientVerkey);
+            }
+            if (senderVerkey != theirVK) {
+                throw new SiriusInvalidPayloadStructure("Unexpected sender_verkey: " + senderVerkey);
+            }
+        }
+
+        JSONObject payload = event.getJSONOBJECTFromJSON("message");
+        if (payload != null) {
+            Pair<Boolean, Message> okMsg = new Pair<>(false, null);
+            try {
+                okMsg = Message.restoreMessageInstance(payload.toString());
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+            if (!okMsg.first) {
+                okMsg = new Pair<>(true, new Message(payload.toString()));
+            }
+            if (checkProtocols) {
+                try {
+                    if (!protocols.contains(Type.fromStr(message.getType()).getProtocol())) {
+                        throw new SiriusInvalidMessage("@type has unexpected protocol " + Type.fromStr(message.getType()).getProtocol());
+                    }
+                } catch (SiriusInvalidType siriusInvalidType) {
+                    siriusInvalidType.printStackTrace();
+                }
+            }
+
+            return okMsg;
+        } else {
+            return new Pair<>(false, null);
+        }
+    }
+
+    public Message getOne() throws SiriusInvalidPayloadStructure {
+        return rpc.readProtocolMessage();
+    }
+
+    public void send(Message message) throws SiriusPendingOperation {
+        if (!isSetup) {
+            throw new SiriusPendingOperation("You must Setup protocol instance at first");
+        }
+
+        rpc.setTimeout(timeToLiveSec);
+        setupContext(message);
+
+        try {
+            rpc.sendMessage(message, Collections.singletonList(theirVK), endpoint, myVerkey, routingKeys, false);
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
+            siriusConnectionClosed.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
+        } finally {
+            cleanupContext();
+        }
+    }
 }
-
-/*
-
-         THREAD_DECORATOR = '~thread'
-         PLEASE_ACK_DECORATOR = '~please_ack'
-
-         SEC_PER_DAY = 86400
-         SEC_PER_HOURS = 3600
-         SEC_PER_MIN = 60
-
-         def __init__(self, rpc: AgentRPC):
-         """
-        :param rpc: RPC (independent connection)
-        """
-         self.__time_to_live = None
-         self._rpc = rpc
-         self._check_protocols = True
-         self._check_verkeys = False
-         self.__default_timeout = rpc.timeout
-         self.__wallet = DynamicWallet(self._rpc)
-         self.__die_timestamp = None
-         self.__their_vk = None
-         self.__endpoint = None
-         self.__my_vk = None
-         self.__routing_keys = None
-         self.__is_setup = False
-         self.__protocols = []
-         self.__please_ack_ids = []
-
-@property
-    def protocols(self) -> List[str]:
-            return self.__protocols
-
-@property
-    def time_to_live(self) -> int:
-            return self.__time_to_live
-
-            def _setup(self, their_verkey: str, endpoint: str, my_verkey: str=None, routing_keys: List[str]=None):
-            """Should be called in Descendant"""
-            self.__their_vk = their_verkey
-            self.__my_vk = my_verkey
-            self.__endpoint = endpoint
-            self.__routing_keys = routing_keys or []
-            self.__is_setup = True
-
-@property
-    def wallet(self) -> DynamicWallet:
-            return self.__wallet
-
-@property
-    def is_alive(self) -> bool:
-            if self.__die_timestamp:
-            return datetime.now() < self.__die_timestamp
-        else:
-        return False
-
-        async def start(self, protocols: List[str], time_to_live: int=None):
-        self.__protocols = protocols
-        self.__time_to_live = time_to_live
-        if self.__time_to_live:
-        self.__die_timestamp = datetime.now() + timedelta(seconds=self.__time_to_live)
-        else:
-        self.__die_timestamp = None
-
-        async def stop(self):
-        self.__die_timestamp = None
-        await self.__cleanup_context()
-
-        async def switch(self, message: Message) -> (bool, Message):
-        """Send Message to other-side of protocol and wait for response
-
-        :param message: Protocol request
-        :return: (success, Response)
-        """
-        if not self.__is_setup:
-        raise SiriusPendingOperation('You must Setup protocol instance at first')
-        try:
-        self._rpc.timeout = self.__get_io_timeout()
-        await self.__setup_context(message)
-        try:
-        event = await self._rpc.send_message(
-        message=message,
-        their_vk=self.__their_vk,
-        endpoint=self.__endpoint,
-        my_vk=self.__my_vk,
-        routing_keys=self.__routing_keys,
-        coprotocol=True
-        )
-        finally:
-        await self.__cleanup_context(message)
-        if self._check_verkeys:
-        recipient_verkey = event.get('recipient_verkey', None)
-        sender_verkey = event.get('sender_verkey')
-        if recipient_verkey != self.__my_vk:
-        raise SiriusInvalidPayloadStructure(f'Unexpected recipient_verkey: {recipient_verkey}')
-        if sender_verkey != self.__their_vk:
-        raise SiriusInvalidPayloadStructure(f'Unexpected sender_verkey: {sender_verkey}')
-        payload = Message(event.get('message', {}))
-        if payload:
-        ok, message = restore_message_instance(payload)
-        if not ok:
-        message = Message(payload)
-        if self._check_protocols:
-        if Type.from_str(message.type).protocol not in self.protocols:
-        raise SiriusInvalidMessage('@type has unexpected protocol "%s"' % message.type.protocol)
-        return True, message
-        else:
-        return False, None
-        except SiriusTimeoutIO:
-        return False, None
-
-        async def get_one(self) -> (Optional[Message], str, Optional[str]):
-        self._rpc.timeout = self.__get_io_timeout()
-        event = await self._rpc.read_protocol_message()
-        if 'message' in event:
-        ok, message = restore_message_instance(event['message'])
-        if not ok:
-        message = Message(event['message'])
-        else:
-        message = None
-        sender_verkey = event.get('sender_verkey', None)
-        recipient_verkey = event.get('recipient_verkey', None)
-        return message, sender_verkey, recipient_verkey
-
-        async def send(self, message: Message):
-        """Send message and don't wait answer
-
-        :param message:
-        :return:
-        """
-        if not self.__is_setup:
-        raise SiriusPendingOperation('You must Setup protocol instance at first')
-        self._rpc.timeout = self.__get_io_timeout()
-        await self.__setup_context(message)
-        await self._rpc.send_message(
-        message=message,
-        their_vk=self.__their_vk,
-        endpoint=self.__endpoint,
-        my_vk=self.__my_vk,
-        routing_keys=self.__routing_keys,
-        coprotocol=False
-        )
-
-        async def send_many(self, message: Message, to: List[Pairwise]) -> List[Any]:
-        batches = [
-        RoutingBatch(p.their.verkey, p.their.endpoint, p.me.verkey, p.their.routing_keys)
-        for p in to
-        ]
-        if not self.__is_setup:
-        raise SiriusPendingOperation('You must Setup protocol instance at first')
-        self._rpc.timeout = self.__get_io_timeout()
-        await self.__setup_context(message)
-        results = await self._rpc.send_message_batched(
-        message, batches
-        )
-        return results
-
-        async def __setup_context(self, message: Message):
-        if self.PLEASE_ACK_DECORATOR in message:
-        ack_message_id = message.get(self.PLEASE_ACK_DECORATOR, {}).get('message_id', None) or message.id
-        ttl = self.__get_io_timeout() or 3600
-        await self._rpc.start_protocol_with_threads(
-        threads=[ack_message_id], ttl=ttl
-        )
-        self.__please_ack_ids.append(ack_message_id)
-
-        async def __cleanup_context(self, message: Message=None):
-        if message:
-        if self.PLEASE_ACK_DECORATOR in message:
-        ack_message_id = message.get(self.PLEASE_ACK_DECORATOR, {}).get('message_id', None) or message.id
-        await self._rpc.stop_protocol_with_threads(
-        threads=[ack_message_id], off_response=True
-        )
-        self.__please_ack_ids = [i for i in self.__please_ack_ids if i != ack_message_id]
-        else:
-        await self._rpc.stop_protocol_with_threads(
-        threads=self.__please_ack_ids, off_response=True
-        )
-        self.__please_ack_ids.clear()
-
-        def __get_io_timeout(self):
-        if self.__die_timestamp:
-        now = datetime.now()
-        if now < self.__die_timestamp:
-        delta = self.__die_timestamp - now
-        return delta.days * self.SEC_PER_DAY + delta.seconds
-        else:
-        return 0
-        else:
-        return None
-*/

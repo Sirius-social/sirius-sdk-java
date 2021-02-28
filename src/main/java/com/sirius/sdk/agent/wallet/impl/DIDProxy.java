@@ -57,7 +57,6 @@ public class DIDProxy extends AbstractDID  {
     public List<Object> listMyDidsWithMeta() {
         try {
             Object response = rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/list_my_dids_with_meta");
-            System.out.println("response" + response);
             if (response instanceof JSONArray) {
                 List<Object> objectList = new ArrayList<>();
                 for (int i = 0; i < ((JSONArray) response).length(); i++) {

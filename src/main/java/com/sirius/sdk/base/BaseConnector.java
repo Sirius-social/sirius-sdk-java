@@ -1,11 +1,13 @@
 package com.sirius.sdk.base;
 
+
 /**
  * Transport Layer.
  *
  *Connectors operate as transport provider for high-level abstractions
  */
-public abstract class BaseConnector implements ReadOnlyChannel, WriteOnlyChannel{
+public abstract class BaseConnector implements ReadOnlyChannel, WriteOnlyChannel {
+
     /**
      * Open communication
      */

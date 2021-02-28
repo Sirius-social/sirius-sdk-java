@@ -11,18 +11,16 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessageClass;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.Triple;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 
 public class Message implements JsonSerializable<Message> {
-
 
     public String getType() {
         return type;
@@ -41,14 +39,19 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public static final class MessageBuilder {
-        JSONObject jsonObject =new JSONObject();
+        JSONObject jsonObject = new JSONObject();
 
-        public MessageBuilder( String id,String type) {
-            jsonObject.put("@id",id);
-            jsonObject.put("@type",type);
+        public MessageBuilder(String id, String type) {
+            jsonObject.put("@id", id);
+            jsonObject.put("@type", type);
         }
 
-        public MessageBuilder add(String key, Object value){
+        public MessageBuilder(String type) {
+            jsonObject.put("@id", Message.generateId());
+            jsonObject.put("@type", type);
+        }
+
+        public MessageBuilder add(String key, Object value) {
             jsonObject.put(key,value);
             return this;
         }
@@ -60,44 +63,8 @@ public class Message implements JsonSerializable<Message> {
 
 
     }
-/*
-    @property
-    def type(self):
-            """ Shortcut for msg['@type'] """
-            return self['@type']
 
-    @property
-    def id(self):  # pylint:disable=invalid-name
-            """ Shortcut for msg['@id'] """
-                    return self['@id']
-
-    @property
-    def doc_uri(self)->str:
-            """ Get type doc_uri """
-            return self._type.doc_uri
-
-    @property
-    def protocol(self)->str:
-            """ Get type protocol """
-            return self._type.protocol
-
-    @property
-    def version(self)->str:
-            """ Get type version """
-            return self._type.version
-
-    @property
-    def version_info(self)->Semver:
-            """ Get type version info """
-            return self._type.version_info
-
-    @property
-    def name(self)->str:
-            """ Get type name """
-            return self._type.name*/
-
-
-    public static Map<String, Map<String, Class<? extends Message>>> MSG_REGISTRY = new HashMap<>();
+    public static List<Triple<Class<? extends Message>, String, String>> MSG_REGISTRY = new ArrayList<>();
 
     public static final String FIELD_TYPE = "@type";
     public static final String FIELD_ID = "@id";
@@ -116,7 +83,9 @@ public class Message implements JsonSerializable<Message> {
     JSONObject messageObj;
     Type typeOfType;
 
-
+    public String getVersion() {
+        return this.typeOfType.version;
+    }
 
     public String prettyPrint() {
         GsonBuilder builder = new GsonBuilder();
@@ -126,7 +95,6 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public Message(String message) {
-        System.out.println("message="+message);
         messageObj = new JSONObject(message);
         if (!messageObjectHasKey(FIELD_TYPE)) {
             //   throw new SiriusInvalidMessage("No @type in message");
@@ -174,7 +142,6 @@ public class Message implements JsonSerializable<Message> {
 
     }
 
-
     public boolean messageObjectHasKey(String key) {
         return messageObj.has(key);
     }
@@ -186,10 +153,24 @@ public class Message implements JsonSerializable<Message> {
         return null;
     }
 
-    public JSONArray getJSONArrayFromJSON(String key,JSONArray defaultValue) {
+    public JSONObject getJSONOBJECTFromJSON(String key, JSONObject defaultValue) {
+        if (messageObjectHasKey(key)) {
+            return messageObj.optJSONObject(key);
+        }
+        return defaultValue;
+    }
+
+    public JSONObject getJSONOBJECTFromJSON(String key, String defaultValue) {
+        if (messageObjectHasKey(key)) {
+            return messageObj.optJSONObject(key);
+        }
+        return new JSONObject(defaultValue);
+    }
+
+    public JSONArray getJSONArrayFromJSON(String key, JSONArray defaultValue) {
         if (messageObjectHasKey(key)) {
            JSONArray object =  messageObj.getJSONArray(key);
-           if(object == null){
+           if(object == null) {
                return defaultValue;
            }
            return object;
@@ -198,7 +179,7 @@ public class Message implements JsonSerializable<Message> {
         return defaultValue;
     }
 
-    public String generateId() {
+    public static String generateId() {
         return UUID.randomUUID().toString();
     }
 
@@ -207,7 +188,6 @@ public class Message implements JsonSerializable<Message> {
         Gson gson = new Gson();
       //  return gson.toJson(this, this.getClass());
         return messageObj.toString();
-
     }
 
 
@@ -232,177 +212,47 @@ public class Message implements JsonSerializable<Message> {
     }
 
     public static void registerMessageClass(Class<? extends Message> clas, String protocol, String name) {
-        Map<String, Class<? extends Message>> descriptor = MSG_REGISTRY.getOrDefault(protocol, new HashMap<>());
-        if (name != null && !name.isEmpty()) {
-            descriptor.put(name, clas);
-        } else {
-            descriptor.put("*", clas);
+        if (name == null)
+            name = "*";
+        for (int i = 0; i < MSG_REGISTRY.size(); i++) {
+            if (MSG_REGISTRY.get(i).first.equals(clas)) {
+                MSG_REGISTRY.set(i, new Triple<>(clas, protocol, name));
+                return;
+            }
         }
-        MSG_REGISTRY.put(protocol, descriptor);
+
+        MSG_REGISTRY.add(new Triple<>(clas, protocol, name));
     }
 
     public static void registerMessageClass(Class<? extends Message> clas, String protocol) {
-        registerMessageClass(clas,protocol, null);
+        registerMessageClass(clas,protocol, "*");
+    }
+
+    public static Pair<String, String> getProtocolAndName(Class<? extends Message> clas) {
+        for (int i = 0; i < MSG_REGISTRY.size(); i++) {
+            if (MSG_REGISTRY.get(i).first.equals(clas)) {
+                return new Pair<>(MSG_REGISTRY.get(i).second, MSG_REGISTRY.get(i).third);
+            }
+        }
+        return new Pair<>(null, null);
     }
 
     public static Pair<Boolean, Message> restoreMessageInstance(String payload) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Pair<Boolean, Message> pair = new Pair<>(false, null);
         Message message = new Message(payload);
         String protocol = message.typeOfType.protocol;
         String name = message.typeOfType.name;
-        Map<String, Class<? extends Message>> descriptor = MSG_REGISTRY.get(protocol);
-        if (descriptor != null) {
-            Class<? extends Message> clssTo = null;
-            if (descriptor.containsKey(name)) {
-                clssTo = descriptor.get(name);
-            } else if (descriptor.containsKey("*")) {
-                clssTo = descriptor.get("*");
-            }
-            if (clssTo != null) {
-                Constructor<? extends Message> constructor = clssTo.getConstructor(String.class);
-                return new Pair<>(true, constructor.newInstance(payload));
-            }
 
+        Class<? extends Message> clssTo = null;
+        for (Triple<Class<? extends Message>, String, String> record : MSG_REGISTRY) {
+            if (record.second.equals(protocol) && (record.third.equals(name) || record.third.equals("*"))) {
+                clssTo = record.first;
+            }
         }
-        return pair;
+        if (clssTo != null) {
+            Constructor<? extends Message> constructor = clssTo.getConstructor(String.class);
+            return new Pair<>(true, constructor.newInstance(payload));
+        }
 
+        return new Pair<>(false, null);
     }
-
-/*    def restore_message_instance(payload:dict)->(bool,Message):
-            if'@type'in payload:
-    typ=Type.from_str(payload['@type'])
-    descriptor=MSG_REGISTRY.get(typ.protocol,None)
-            if descriptor:
-            if typ.name in descriptor:
-    cls=descriptor[typ.name]
-    elif'*'in descriptor:
-    cls=descriptor['*']
-            else:
-    cls=None
-            else:
-    cls=None
-            if cls is not None:
-            return True,cls(**payload)
-            else:
-                    return False,None
-            else:
-                    return False,None*/
-
 }
-/*
-
-# Registry for restoring message instance from payload
-        MSG_REGISTRY={}
-
-
-        def generate_id():
-        """ Generate a message id. """
-        return str(uuid.uuid4())
-
-
-        Message(dict):
-        """ Message base class.
-        Inherits from dict meaning it behaves like a dictionary.
-    """
-        __slots__=(
-        'mtc',
-        '_type'
-        )e
-
-        def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-
-        if'@type'not in self:
-        raise SiriusInvalidMessage('No @type in message')
-
-        if'@id'not in self:
-        self['@id']=generate_id()
-        elif not isinstance(self['@id'],str):
-        raise SiriusInvalidMessage('Message @id is invalid; must be str')
-
-        if isinstance(self['@type'],Type):
-        self._type=self['@type']
-        self['@type']=str(self._type)
-        else:
-        self._type=Type.from_str(self.type)
-
-@property
-    def type(self):
-            """ Shortcut for msg['@type'] """
-            return self['@type']
-
-@property
-    def id(self):  # pylint:disable=invalid-name
-            """ Shortcut for msg['@id'] """
-            return self['@id']
-
-@property
-    def doc_uri(self)->str:
-            """ Get type doc_uri """
-            return self._type.doc_uri
-
-@property
-    def protocol(self)->str:
-            """ Get type protocol """
-            return self._type.protocol
-
-@property
-    def version(self)->str:
-            """ Get type version """
-            return self._type.version
-
-@property
-    def version_info(self)->Semver:
-            """ Get type version info """
-            return self._type.version_info
-
-@property
-    def name(self)->str:
-            """ Get type name """
-            return self._type.name
-
-@property
-    def normalized_version(self)->str:
-            """ Get type normalized version """
-            return str(self._type.version_info)
-
-            # Serialization
-@classmethod
-    def deserialize(cls,serialized:str):
-            """ Deserialize a message from a json string. """
-            try:
-            return cls(json.loads(serialized))
-            except json.decoder.JSONDecodeError as err:
-            raise SiriusInvalidMessage('Could not deserialize message')from err
-
-            def serialize(self):
-            """ Serialize a message into a json string. """
-            return json.dumps(self)
-
-            def pretty_print(self):
-            """ return a 'pretty print' representation of this message. """
-            return json.dumps(self,indent=2)
-
-            def __eq__(self,other):
-            if not isinstance(other,Message):
-            return False
-
-            return super().__eq__(other)
-
-            def __hash__(self):
-            return hash(self.id)
-
-
-            def register_message_class(cls,protocol:str,name:str=None):
-            if issubclass(cls,Message):
-            descriptor=MSG_REGISTRY.get(protocol,{})
-            if name:
-            descriptor[name]=cls
-            else:
-            descriptor['*']=cls
-            MSG_REGISTRY[protocol]=descriptor
-            else:
-            raise SiriusInvalidMessageClass()
-
-
-*/

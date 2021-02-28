@@ -36,15 +36,6 @@ public class Pong extends AriesProtocolMessage {
 
 
 
-    @Override
-    public String getProtocol() {
-        return "trust_ping";
-    }
-
-    @Override
-    public String getName() {
-        return "ping_response";
-    }
 
     public String getPingId() {
         try {

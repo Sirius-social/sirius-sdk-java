@@ -120,7 +120,7 @@ public class TestLedgers {
         Pair<Boolean,Schema> okSchema =ledger.registerSchema(didSchema.second,didVerkey.first);
         Assert.assertTrue(okSchema.first);
 
-        CredentialDefinition credDef =   new CredentialDefinition("Test Tag",okSchema.second);
+        CredentialDefinition credDef = new CredentialDefinition("Test Tag",okSchema.second);
         Assert.assertNull(  credDef.getBody());
 
     

@@ -1,5 +1,7 @@
 package helpers;
 
+import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.base.JsonMessage;
@@ -73,7 +75,7 @@ public class ServerTestSuite {
                 String seed = entityObject.getString("seed");
                 String verkey = entityObject.getString("verkey");
                 String did = entityObject.getString("did");
-                entityList.add(new Entity(seed,verkey,did));
+                entityList.add(new Entity(key, seed, verkey, did));
             }
         }
         JSONObject smartContractObject = p2pObject.getJSONObject("smart_contract");
@@ -135,6 +137,16 @@ public class ServerTestSuite {
             e.printStackTrace();
             return new Pair(false, e.getMessage());
         }
+    }
+
+    public static String getFirstEndpointAddressWIthEmptyRoutingKeys(Agent agent) {
+        for (Endpoint e : agent.getEndpoints()) {
+            if (e.getRoutingKeys().size() == 0) {
+                return e.getAddress();
+            }
+        }
+
+        return "";
     }
 
 }

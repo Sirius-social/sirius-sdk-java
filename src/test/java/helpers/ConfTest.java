@@ -4,6 +4,8 @@ import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.model.Entity;
+import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
@@ -12,9 +14,12 @@ import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.StringUtils;
 import models.AgentParams;
 import models.P2PModel;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ConfTest {
@@ -31,6 +36,8 @@ public class ConfTest {
         confTest.configureTestEnv();
         return confTest;
     }
+
+    public static String proverMasterSecretName = "prover_master_secret_name";
 
     public static ConfTest getSingletonInstance() {
         if(instance==null){
@@ -150,6 +157,73 @@ public class ConfTest {
 
     public String defaultNetwork() {
         return "default";
+    }
+
+    public Pairwise getPairwise(Agent me, Agent their) {
+        ServerTestSuite suite = getSuiteSingleton();
+        AgentParams myParams = suite.getAgentParams(me.getName());
+        AgentParams theirParams = suite.getAgentParams(their.getName());
+        Entity myEntity = myParams.getEntitiesList().get(0);
+        Entity theirEntity = theirParams.getEntitiesList().get(0);
+        String myEndpointAddress = ServerTestSuite.getFirstEndpointAddressWIthEmptyRoutingKeys(me);
+        String theirEndpointAddress = ServerTestSuite.getFirstEndpointAddressWIthEmptyRoutingKeys(their);
+
+        {
+            Pairwise pairwise = me.getPairwiseList().loadForDid(theirEntity.getDid());
+            boolean isFilled = (pairwise != null) && (pairwise.getMetadata() != null);
+            if (!isFilled) {
+                Pairwise.Me me_ = new Pairwise.Me(myEntity.getDid(), myEntity.getVerkey());
+                Pairwise.Their their_ = new Pairwise.Their(theirEntity.getDid(), theirEntity.getLabel(), theirEndpointAddress, myEntity.getVerkey(), new ArrayList<String>());
+
+                JSONObject meJson = new JSONObject();
+                meJson.put("did", myEntity.getDid());
+                meJson.put("verkey", myEntity.getDid());
+                JSONObject theirJson = new JSONObject();
+                theirJson.put("did", theirEntity.getDid());
+                theirJson.put("verkey", theirEntity.getVerkey());
+                theirJson.put("label", theirEntity.getLabel());
+                JSONObject endpointJson = new JSONObject();
+                endpointJson.put("address", theirEndpointAddress);
+                endpointJson.put("routing_keys", new JSONArray());
+                JSONObject metadata = new JSONObject();
+                metadata.put("me", meJson);
+                metadata.put("their", theirJson);
+
+                pairwise = new Pairwise(me_, their_, metadata);
+                me.getWallet().getDid().storeTheirDid(theirEntity.getDid(), theirEntity.getVerkey());
+                me.getPairwiseList().ensureExists(pairwise);
+            }
+        }
+
+        {
+            Pairwise pairwise = their.getPairwiseList().loadForDid(theirEntity.getDid());
+            boolean isFilled = (pairwise != null) && (pairwise.getMetadata() != null);
+            if (!isFilled) {
+                Pairwise.Me me_ = new Pairwise.Me(theirEntity.getDid(), theirEntity.getVerkey());
+                Pairwise.Their their_ = new Pairwise.Their(myEntity.getDid(), myEntity.getLabel(), myEndpointAddress, theirEntity.getVerkey(), new ArrayList<String>());
+
+                JSONObject meJson = new JSONObject();
+                meJson.put("did", theirEntity.getDid());
+                meJson.put("verkey", theirEntity.getDid());
+                JSONObject theirJson = new JSONObject();
+                theirJson.put("did", myEntity.getDid());
+                theirJson.put("verkey", myEntity.getVerkey());
+                theirJson.put("label", myEntity.getLabel());
+                JSONObject endpointJson = new JSONObject();
+                endpointJson.put("address", myEndpointAddress);
+                endpointJson.put("routing_keys", new JSONArray());
+                JSONObject metadata = new JSONObject();
+                metadata.put("me", meJson);
+                metadata.put("their", theirJson);
+
+                pairwise = new Pairwise(me_, their_, metadata);
+                their.getWallet().getDid().storeTheirDid(myEntity.getDid(), myEntity.getVerkey());
+                their.getPairwiseList().ensureExists(pairwise);
+            }
+        }
+
+
+        return me.getPairwiseList().loadForDid(theirEntity.getDid());
     }
 }
 

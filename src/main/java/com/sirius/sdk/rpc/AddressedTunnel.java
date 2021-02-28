@@ -1,6 +1,7 @@
 package com.sirius.sdk.rpc;
 
 import com.sirius.sdk.base.ReadOnlyChannel;
+import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.base.WriteOnlyChannel;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -13,11 +14,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Transport abstraction that help build tunnels (p2p pairwise relationships) over channel layer.
  */
 public class AddressedTunnel {
+    Logger log = Logger.getLogger(AddressedTunnel.class.getName());
     Charset ENC = StandardCharsets.UTF_8;
     String address;
     ReadOnlyChannel input;
@@ -62,25 +66,21 @@ public class AddressedTunnel {
         byte[] payload = new byte[0];
         try {
             payload = input.read().get(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
         }
         try {
-         String payloadString =    new String(payload,StandardCharsets.US_ASCII);
-         System.out.println("payloadString="+payloadString);
+         String payloadString = new String(payload, StandardCharsets.US_ASCII);
             JSONObject jsonObject = new JSONObject(payloadString);
             if (jsonObject.has("protected")) {
                 String unpacked = p2p.unpack(new String(payload, StandardCharsets.US_ASCII));
-                System.out.println("unpacked="+unpacked);
+                log.log(Level.INFO, "Received protected message. Unpacked: " + unpacked);
                 context.setEncrypted(true);
                 return new Message(unpacked);
             } else {
                 context.setEncrypted(false);
-                return new Message(new String(payload,StandardCharsets.US_ASCII));
+                log.log(Level.INFO, "Received message: " + payload);
+                return new Message(new String(payload, StandardCharsets.US_ASCII));
             }
         } catch (Exception e) {
             e.printStackTrace();

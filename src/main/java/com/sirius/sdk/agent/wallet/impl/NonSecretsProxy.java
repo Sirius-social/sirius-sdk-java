@@ -25,7 +25,6 @@ public class NonSecretsProxy extends AbstractNonSecrets  {
         if(tags!=null){
             tagObject = new JSONObject(tags);
         }
-        System.out.println("addWalletRecor="+value);
         new RemoteCallWrapper<Void>(rpc){}.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/add_wallet_record",
                 RemoteParams.RemoteParamsBuilder.create()
                 .add("type_", type).add("id_", id).add("value",value).add("tags", tagObject));

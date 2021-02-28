@@ -14,9 +14,7 @@ import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Agent connection in the self-sovereign identity ecosystem.
@@ -109,6 +107,13 @@ public class Agent extends TransportLayer {
         }
     }
 
+    public boolean isOpen() {
+        return rpc != null && rpc.isOpen();
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public boolean ping() {
         try {
@@ -140,15 +145,21 @@ public class Agent extends TransportLayer {
      * @return
      */
     public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
-                                              String endpoint, String my_vk, List<String> routing_keys) {
+                                              String endpoint, String my_vk, List<String> routing_keys) throws SiriusRPCError {
         checkIsOpen();
         try {
             Message message1 = rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
             return new Pair<>(true, message1);
         } catch (SiriusConnectionClosed siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
         }
         return new Pair<>(false, null);
+    }
+
+    public void sendTo(Message message, Pairwise to) throws SiriusRPCError {
+        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
     }
 
 

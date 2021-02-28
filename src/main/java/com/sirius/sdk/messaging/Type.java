@@ -67,6 +67,11 @@ public class Type {
         normalizedString = String.format(FORMAT_PATTERN, docUri, protocol, versionInfo, name);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s%s/%s/%s", docUri, protocol, version, name);
+    }
+
 
     /**
      * Parse type from string.
@@ -87,94 +92,3 @@ public class Type {
 
     }
 }
-
-
-/*
-MTURI_RE = re.compile(r'(.*?)([a-z0-9._-]+)/(\d[^/]*)/([a-z0-9._-]+)$')
-
-
-
-
-class Type:
-        """ Message and Module type container """
-        FORMAT = '{}{}/{}/{}'
-
-        __slots__ = (
-        'doc_uri',
-        'protocol',
-        'version',
-        'version_info',
-        'name',
-        '_normalized',
-        '_str'
-        )
-
-        def __init__(
-        self,
-        doc_uri: str,
-        protocol: str,
-        version: Union[str, Semver],
-        name: str):
-        if isinstance(version, str):
-        try:
-        self.version_info = Semver.from_str(version)
-        except ValueError as err:
-        raise SiriusInvalidType(
-        'Invalid type version {}'.format(version)
-        ) from err
-        self.version = version
-        elif isinstance(version, Semver):
-        self.version_info = version
-        self.version = str(version)
-        else:
-        raise SiriusInvalidType(
-        '`version` must be instance of str or Semver,'
-        ' got {}'.format(type(version).__name__)
-        )
-
-        self.doc_uri = doc_uri
-        self.protocol = protocol
-        self.name = name
-        self._str = Type.FORMAT.format(
-        self.doc_uri,
-        self.protocol,
-        self.version,
-        self.name
-        )
-        self._normalized = Type.FORMAT.format(
-        self.doc_uri,
-        self.protocol,
-        self.version_info,
-        self.name
-        )
-
-@classmethod
-    def from_str(cls, type_str):
-            """ Parse type from string. """
-            matches = MTURI_RE.match(type_str)
-            if not matches:
-            raise SiriusInvalidType('Invalid message type')
-
-            return cls(*matches.groups())
-
-            def __str__(self):
-            return self._str
-
-@property
-    def normalized(self):
-            """ Return the normalized string representation """
-            return self._normalized
-
-            def __hash__(self):
-            return hash(self._normalized)
-
-            def __eq__(self, other):
-            if isinstance(other, Type):
-            return self._normalized == other.normalized
-            if isinstance(other, str):
-            return self._normalized == other
-            raise TypeError('Cannot compare Type and {}'.format(type(other)))
-
-            def __ne__(self, other):
-            return not self.__eq__(other)
-*/

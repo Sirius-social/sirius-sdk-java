@@ -157,7 +157,7 @@ public abstract class AbstractLedger {
      * @param request  Request data json.
      * @return Request result
      */
-    public abstract String submitRequest(String poolName, String request);
+    public abstract String submitRequest(String poolName, Object request);
 
     /**
      * Send action to particular nodes of validator pool.
@@ -203,7 +203,7 @@ public abstract class AbstractLedger {
      * @param request      Request data json.
      * @return Signed request json.
      */
-    public abstract String signRequest(String submitterDid, String request);
+    public abstract String signRequest(String submitterDid, Object request);
 
     /**
      * Multi signs request message.
@@ -434,7 +434,7 @@ public abstract class AbstractLedger {
      *                     }
      * @return Request result as json.
      */
-    public abstract String buildCredDef(String submitterDid, String data);
+    public abstract String buildCredDefRequest(String submitterDid, Object data);
 
     /**
      * Builds a GET_CRED_DEF request. Request to get a credential definition (in particular, public key),

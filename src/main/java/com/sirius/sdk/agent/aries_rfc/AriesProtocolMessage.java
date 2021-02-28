@@ -1,50 +1,96 @@
 package com.sirius.sdk.agent.aries_rfc;
 
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.messaging.Type;
+import com.sirius.sdk.utils.Pair;
+import org.json.JSONObject;
 
 public abstract class AriesProtocolMessage extends Message {
 
     public static final String ARIES_DOC_URI = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/";
     public static final String THREAD_DECORATOR = "~thread";
+    public static final String DEF_VERSION = "1.0";
 
     public AriesProtocolMessage(String message) {
         super(message);
-        Message.registerMessageClass(this.getClass(),getProtocol(),getName());
     }
 
     public AriesProtocolMessage() {
         super("{}");
-        Message.registerMessageClass(this.getClass(),getProtocol(),getName());
     }
 
-    public abstract String getProtocol();
+    public boolean validate() {
+        return true;
+    }
 
-    public abstract String getName();
+    public String getAckMessageId() {
+        JSONObject pleaseAck = getJSONOBJECTFromJSON("~please_ack", "{}");
+        if (pleaseAck.has("message_id")) {
+            return pleaseAck.getString("message_id");
+        }
+        return this.getId();
+    }
+
+    public boolean hasPleaseAck() {
+        return getMessageObj().has("~please_ack");
+    }
+
+    public void setPleaseAck(boolean flag) {
+        if (flag) {
+            JSONObject pleaseAck = new JSONObject();
+            pleaseAck.put("message_id", this.getId());
+            getMessageObj().put("~please_ack", pleaseAck);
+        } else {
+            getMessageObj().remove("~please_ack");
+        }
+    }
+
+    public String getThreadId() {
+        if (getMessageObj().has(THREAD_DECORATOR) && getMessageObj().getJSONObject(THREAD_DECORATOR).has("thid")) {
+            return getMessageObj().getJSONObject(THREAD_DECORATOR).getString("thid");
+        }
+        return null;
+    }
+
+    public void setThreadId(String thid) {
+        JSONObject thread;
+        if (getMessageObj().has(THREAD_DECORATOR)) {
+            thread = getMessageObj().getJSONObject(THREAD_DECORATOR);
+        } else {
+            thread = new JSONObject();
+        }
+        thread.put("thid", thid);
+        getMessageObj().put(THREAD_DECORATOR, thread);
+    }
+
+    public static abstract class Builder<B extends Builder<B>> {
+        String version = DEF_VERSION;
+        String docUri = ARIES_DOC_URI;
+
+        public B setVersion(String version) {
+            this.version = version;
+            return self();
+        }
+
+        public B setDocUri(String docUri) {
+            this.docUri = docUri;
+            return self();
+        }
+
+        protected abstract B self();
+
+        protected Builder() {}
+
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = new JSONObject();
+
+            Pair<String, String> protocolAndName = Message.getProtocolAndName((Class<? extends Message>) this.getClass().getDeclaringClass());
+            jsonObject.put("@type", (new Type(docUri, protocolAndName.first, version, protocolAndName.second)));
+
+            return jsonObject;
+        }
+
+    }
 
 
 }
-
-/*   PROTOCOL = None
-           NAME = None
-
-           def __init__(self, id_: str=None, version: str='1.0', *args, **kwargs):
-           if self.NAME and ('@type' not in dict(*args, **kwargs)):
-           kwargs['@type'] = str(
-           Type(
-           doc_uri=ARIES_DOC_URI, protocol=self.PROTOCOL,
-           name=self.NAME, version=version
-           )
-           )
-           super().__init__(*args, **kwargs)
-           if id_ is not None:
-           self['@id'] = id_
-           if self.doc_uri != ARIES_DOC_URI:
-           raise SiriusValidationError('Unexpected doc_uri "%s"' % self.doc_uri)
-           if self.protocol != self.PROTOCOL:
-           raise SiriusValidationError('Unexpected protocol "%s"' % self.protocol)
-           if self.name != self.NAME:
-           raise SiriusValidationError('Unexpected name "%s"' % self.name)
-
-           def validate(self):
-           validate_common_blocks(self)*/

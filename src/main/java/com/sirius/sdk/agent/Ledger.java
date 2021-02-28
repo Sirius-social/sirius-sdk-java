@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
@@ -14,6 +15,7 @@ import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
 import org.checkerframework.checker.units.qual.C;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,8 +137,6 @@ public class Ledger {
         }
     }
 
-
-
     public void ensureExistInStorage(CredentialDefinition entity, JsonObject searchTags) {
         storage.selectDb(db);
         JsonObject tagObject = new JsonObject();
@@ -220,45 +220,27 @@ public class Ledger {
 
 
 
-    public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef,String submitterDid, JsonObject tags ){
+    public Pair<Boolean, CredentialDefinition> registerCredDef(CredentialDefinition credDef, String submitterDid, JsonObject tags) {
+        Pair<String, String> credDefIdBody = issuer.issuerCreateAndStoreCredentialDef(submitterDid,
+                credDef.getSchema().serializeToJSONObject(), credDef.getTag(), null, credDef.getConfig().serializeToJSONObject());
+        String body = credDefIdBody.second;
+        String buildRequest = this.api.buildCredDefRequest(submitterDid, new JSONObject(body));
+        String signedRequest = this.api.signRequest(submitterDid, new JSONObject(buildRequest));
+        String resp = this.api.submitRequest(this.name, new JSONObject(signedRequest));
+        JSONObject respJson = new JSONObject(resp);
 
-    /*   Pair<String,String> credDefidBody =  issuer.issuerCreateAndStoreCredentialDef(submitterDid,
-                credDef.getSchema().serializeToJsonObject(),credDef.getTag(),credDef.getConfig().serialize());
-*/
-        return new Pair<>(true, credDef);
+        if (!(respJson.has("op") && respJson.getString("op").equals("REPLY"))) {
+            return new Pair<>(false, null);
+        }
+
+        CredentialDefinition legderCredDef = new CredentialDefinition(credDef.getTag(), credDef.getSchema(), credDef.getConfig(),
+                new Gson().fromJson(body, JsonObject.class), respJson.getJSONObject("result").getJSONObject("txnMetadata").getInt("seqNo"));
+        ensureExistInStorage(legderCredDef, tags);
+
+        return new Pair<>(true, legderCredDef);
     }
-   /* async def register_cred_def(
-            self, cred_def: CredentialDefinition, submitter_did: str, tags: dict = None
-    ) -> (bool, CredentialDefinition):
-    cred_def_id, body = await self._issuer.issuer_create_and_store_credential_def(
-    issuer_did=submitter_did,
-    schema=cred_def.schema.body,
-    tag=cred_def.tag,
-    config=cred_def.config.serialize()
-            )
-    build_request = await self._api.build_cred_def_request(
-    submitter_did=submitter_did,
-    data=body
-        )
-    signed_request = await self._api.sign_request(
-    submitter_did=submitter_did,
-    request=build_request
-        )
-    resp = await self._api.submit_request(self.name, signed_request)
-    success = resp.get('op', None) == 'REPLY'
-            if success:
-    txn_response = resp
-        else:
-                return False, None
-        if success:
-    ledger_cred_def = CredentialDefinition(
-            tag=cred_def.tag,
-            schema=cred_def.schema,
-            config=cred_def.config,
-            body=body,
-            seq_no=txn_response['result']['txnMetadata']['seqNo']
-    )
-    await self.__ensure_exists_in_storage(ledger_cred_def, submitter_did, tags)
-            return True, ledger_cred_def
-*/
+
+    public Pair<Boolean,CredentialDefinition> registerCredDef(CredentialDefinition credDef, String submitterDid) {
+        return registerCredDef(credDef, submitterDid, new JsonObject());
+    }
 }
