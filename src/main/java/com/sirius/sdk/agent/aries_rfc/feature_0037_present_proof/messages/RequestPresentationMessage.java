@@ -1,8 +1,7 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof;
+package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages;
 
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueCredentialMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
