@@ -7,6 +7,8 @@ import org.json.JSONObject;
  *  https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping
  */
 public class Ping extends AriesProtocolMessage {
+    public static final String PROTOCOL = "trust_ping";
+
     public String getComment() {
         return getStringFromJSON("comment");
     }

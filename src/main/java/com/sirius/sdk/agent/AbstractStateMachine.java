@@ -1,39 +1,31 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
+import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.hub.Context;
+
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class AbstractStateMachine {
-    TransportLayer transportLayer;
-    int timeToLive;
-    Logger logger;
+    protected AbstractCoProtocolTransport coprotocol = null;
+    protected Context context;
+    int timeToLiveSec = 60;
 
-    /**
-     * @param transportLayer aries-rfc transports factory
-     * @param timeToLive     state machine time to live to finish progress
-     * @param logger
-     */
-    public AbstractStateMachine(TransportLayer transportLayer, int timeToLive, Logger logger) {
-        this.transportLayer = transportLayer;
-        this.timeToLive = timeToLive;
-        this.logger = logger;
+    protected void createCoprotocol(Pairwise pairwise) {
+        if (coprotocol == null) {
+            coprotocol = context.agent.spawn(pairwise);
+            coprotocol.start(protocols());
+        }
     }
 
-    public AbstractStateMachine(TransportLayer transportLayer, int timeToLive) {
-        this(transportLayer, timeToLive, null);
-    }
-
-    public AbstractStateMachine(TransportLayer transportLayer) {
-        this(transportLayer, 60, null);
+    protected void releaseCoprotocol() {
+        if (coprotocol != null) {
+            coprotocol.stop();
+            coprotocol = null;
+        }
     }
 
     public abstract List<String> protocols();
-
-
-    public void log(Object messages) {
-        if (logger != null) {
-            logger.log(Level.INFO, "state_machine_id= " + this + "message: " + messages.toString());
-        }
-    }
 }
