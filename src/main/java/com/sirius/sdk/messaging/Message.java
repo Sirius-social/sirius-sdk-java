@@ -94,6 +94,10 @@ public class Message implements JsonSerializable<Message> {
         return gson.toJson(this, this.getClass());
     }
 
+    public String getDocUri() {
+        return typeOfType.docUri;
+    }
+
     public Message(String message) {
         messageObj = new JSONObject(message);
         if (!messageObjectHasKey(FIELD_TYPE)) {
