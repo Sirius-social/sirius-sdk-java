@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages;
 
-
+import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -10,6 +10,10 @@ import java.util.UUID;
 
 
 public class PresentationMessage extends BasePresentProofMessage {
+
+    static {
+        Message.registerMessageClass(PresentationMessage.class, BasePresentProofMessage.PROTOCOL, "presentation");
+    }
 
     public PresentationMessage(String msg) {
         super(msg);

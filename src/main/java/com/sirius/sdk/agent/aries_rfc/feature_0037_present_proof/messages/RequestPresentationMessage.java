@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages;
 
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
+import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -15,7 +16,12 @@ import java.util.List;
 import java.util.UUID;
 
 public class RequestPresentationMessage extends BasePresentProofMessage {
-    private static String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+    static {
+        Message.registerMessageClass(RequestPresentationMessage.class, BasePresentProofMessage.PROTOCOL, "request-presentation");
+    }
+
+    private static final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public RequestPresentationMessage(String msg) {
         super(msg);

@@ -13,7 +13,7 @@ import java.util.*;
 public class OfferCredentialMessage extends BaseIssueCredentialMessage {
 
     static {
-        Message.registerMessageClass(OfferCredentialMessage.class, "issue-credential", "offer-credential");
+        Message.registerMessageClass(OfferCredentialMessage.class, BaseIssueCredentialMessage.PROTOCOL, "offer-credential");
     }
 
     public static class ParseResult {

@@ -10,7 +10,7 @@ import java.util.Base64;
 public class IssueCredentialMessage extends BaseIssueCredentialMessage {
 
     static {
-        Message.registerMessageClass(IssueCredentialMessage.class, "issue-credential", "issue-credential");
+        Message.registerMessageClass(IssueCredentialMessage.class, BaseIssueCredentialMessage.PROTOCOL, "issue-credential");
     }
 
     public IssueCredentialMessage(String message) {

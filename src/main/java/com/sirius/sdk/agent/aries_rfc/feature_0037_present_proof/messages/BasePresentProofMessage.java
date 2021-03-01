@@ -42,6 +42,5 @@ public class BasePresentProofMessage extends AriesProtocolMessage {
 
             return jsonObject;
         }
-
     }
 }
