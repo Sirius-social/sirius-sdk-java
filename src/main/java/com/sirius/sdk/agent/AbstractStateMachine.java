@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 public abstract class AbstractStateMachine {
     protected AbstractCoProtocolTransport coprotocol = null;
     protected Context context;
-    int timeToLiveSec = 60;
+    protected int timeToLiveSec = 60;
 
     protected void createCoprotocol(Pairwise pairwise) {
         if (coprotocol == null) {

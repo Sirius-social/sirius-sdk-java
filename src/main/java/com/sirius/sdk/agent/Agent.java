@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.microledgers.MicroledgerList;
 import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.agent.model.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.model.coprotocols.TheirEndpointCoProtocolTransport;
