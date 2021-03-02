@@ -38,6 +38,7 @@ public class Pairwise {
 
    public static class Their extends TheirEndpoint{
         String did;
+        JSONObject didDoc = null;
 
        public String getDid() {
             return did;
@@ -58,13 +59,20 @@ public class Pairwise {
            this.did = did;
            this.label = label;
        }
-    }
 
+       public JSONObject getDidDoc() {
+           return didDoc;
+       }
+
+       public void setDidDoc(JSONObject didDoc) {
+           this.didDoc = didDoc;
+       }
+   }
 
     public static class Me{
-
         String did;
         String verkey;
+        JSONObject didDoc = null;
 
         public String getDid() {
             return did;
@@ -74,11 +82,23 @@ public class Pairwise {
             return verkey;
         }
 
+        public JSONObject getDidDoc() {
+            return didDoc;
+        }
 
+        public void setDidDoc(JSONObject didDoc) {
+            this.didDoc = didDoc;
+        }
 
         public Me(String did, String verkey) {
             this.did = did;
             this.verkey = verkey;
+        }
+
+        public Me(String did, String verkey, JSONObject didDoc) {
+            this.did = did;
+            this.verkey = verkey;
+            this.didDoc = didDoc;
         }
 
     }

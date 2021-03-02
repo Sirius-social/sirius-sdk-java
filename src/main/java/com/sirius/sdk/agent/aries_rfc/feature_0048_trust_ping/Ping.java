@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
+import com.sirius.sdk.messaging.Message;
 import org.json.JSONObject;
 
 /**Implementation of Ping part for trust_ping protocol
@@ -9,23 +10,20 @@ import org.json.JSONObject;
 public class Ping extends AriesProtocolMessage {
     public static final String PROTOCOL = "trust_ping";
 
+    static {
+        Message.registerMessageClass(Ping.class, Ping.PROTOCOL, "ping");
+    }
+
     public String getComment() {
         return getStringFromJSON("comment");
     }
 
     public Boolean getResponseRequested() {
-        //return responseRequested;
         return getBooleanFromJSON("response_requested");
     }
 
     public Ping(String message) {
         super(message);
-    }
-
-    public Ping(String comment, Boolean responseRequested) {
-        super();
-        this.getMessageObj().put("comment", comment);
-        this.getMessageObj().put("response_requested", responseRequested);
     }
 
     static public Ping create(String comment, Boolean responseRequested) {
@@ -36,5 +34,4 @@ public class Ping extends AriesProtocolMessage {
         pingObject.put("response_requested", responseRequested);
         return new Ping(pingObject.toString());
     }
-
 }

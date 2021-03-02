@@ -53,7 +53,7 @@ public class Custom {
      * @return base64 presentation
      */
     public String bytesToB64(byte[] bytes, boolean urlSafe) {
-        if(bytes == null){
+        if(bytes == null) {
             return null;
         }
         byte[] decodedByte;
@@ -62,7 +62,7 @@ public class Custom {
         } else {
             decodedByte = Base64.getEncoder().encode(bytes);
         }
-        return new String(decodedByte,StandardCharsets.US_ASCII);
+        return new String(decodedByte, StandardCharsets.US_ASCII);
     }
 
 

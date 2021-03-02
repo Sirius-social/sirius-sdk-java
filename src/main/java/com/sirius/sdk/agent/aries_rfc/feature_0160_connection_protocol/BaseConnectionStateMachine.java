@@ -6,6 +6,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,5 +18,12 @@ public abstract class BaseConnectionStateMachine extends AbstractStateMachine {
     @Override
     public List<String> protocols() {
         return Arrays.asList(ConnProtocolMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
+    }
+
+    public void createCoprotocol(TheirEndpoint endpoint) {
+        if (coprotocol == null) {
+            coprotocol = context.agent.spawn(me.getVerkey(), endpoint);
+            coprotocol.start(protocols());
+        }
     }
 }
