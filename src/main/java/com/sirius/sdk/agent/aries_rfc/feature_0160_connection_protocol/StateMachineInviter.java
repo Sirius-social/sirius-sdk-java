@@ -23,8 +23,9 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
     Logger log = Logger.getLogger(StateMachineInviter.class.getName());
     String connectionKey;
 
-    public StateMachineInviter(Context context, String connectionKey, Endpoint myEndpoint) {
+    public StateMachineInviter(Context context, Pairwise.Me me, String connectionKey, Endpoint myEndpoint) {
         this.context = context;
+        this.me = me;
         this.connectionKey = connectionKey;
         this.myEndpoint = myEndpoint;
     }
@@ -112,5 +113,9 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
             releaseCoprotocol();
         }
         return null;
+    }
+
+    public Pairwise createConnection(ConnRequest request) {
+        return createConnection(request, null);
     }
 }

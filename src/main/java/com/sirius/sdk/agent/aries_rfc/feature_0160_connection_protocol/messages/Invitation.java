@@ -4,7 +4,9 @@ import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class Invitation extends ConnProtocolMessage {
@@ -50,6 +52,13 @@ public class Invitation extends ConnProtocolMessage {
         return false;
     }
 
+    public String invitationUrl() {
+        String b64Invite = new String(
+                Base64.getUrlEncoder().encode(getMessageObj().toString().getBytes(StandardCharsets.US_ASCII)),
+                StandardCharsets.US_ASCII);
+        return "?c_i=" + b64Invite;
+    }
+
     public static abstract class Builder<B extends Builder<B>> extends ConnProtocolMessage.Builder<B> {
         String label = null;
         List<String> recipientKeys = null;
@@ -59,6 +68,26 @@ public class Invitation extends ConnProtocolMessage {
 
         public B setDid(String did) {
             this.did = did;
+            return self();
+        }
+
+        public B setLabel(String label) {
+            this.label = label;
+            return self();
+        }
+
+        public B setRecipientKeys(List<String> recipientKeys) {
+            this.recipientKeys = recipientKeys;
+            return self();
+        }
+
+        public B setEndpoint(String endpoint) {
+            this.endpoint = endpoint;
+            return self();
+        }
+
+        public B setRoutingKeys(List<String> routingKeys) {
+            this.routingKeys = routingKeys;
             return self();
         }
 

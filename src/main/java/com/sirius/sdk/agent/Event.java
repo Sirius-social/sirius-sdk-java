@@ -29,4 +29,8 @@ public class Event extends Message {
         }
         return null;
     }
+
+    public String getRecipientVerkey() {
+        return getMessageObj().optString("recipient_verkey");
+    }
 }

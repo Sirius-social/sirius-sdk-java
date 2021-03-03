@@ -8,6 +8,7 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractDID;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractNonSecrets;
+import com.sirius.sdk.agent.wallet.impl.DIDProxy;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 
@@ -29,11 +30,43 @@ public class Hub implements Closeable {
         public AbstractImmutableCollection storage = null;
     }
 
-    Config config;
+    private final Config config;
     Agent agent = null;
 
     public Hub(Config config) {
         this.config = config;
+    }
+
+    public AbstractNonSecrets getNonSecrets() {
+        if (this.config.nonSecrets != null) {
+            return this.config.nonSecrets;
+        } else {
+            return agent.getWallet().getNonSecrets();
+        }
+    }
+
+    public AbstractCrypto getCrypto() {
+        if (this.config.crypto != null) {
+            return this.config.crypto;
+        } else {
+            return agent.getWallet().getCrypto();
+        }
+    }
+
+    public AbstractDID getDid() {
+        if (this.config.did != null) {
+            return this.config.did;
+        } else {
+            return getAgentConnectionLazy().getWallet().getDid();
+        }
+    }
+
+    public AbstractPairwiseList getPairwiseList() {
+        if (this.config.pairwiseStorage != null) {
+            return this.config.pairwiseStorage;
+        } else {
+            return getAgentConnectionLazy().getPairwiseList();
+        }
     }
 
     public String getServerUri() {
@@ -85,8 +118,16 @@ public class Hub implements Closeable {
         return this;
     }
 
+    public Agent getAgentConnectionLazy() {
+        if (!agent.isOpen()) {
+            agent.open();
+        }
+        return agent;
+    }
+
     void createAgentInstance() {
         agent = new Agent(config.serverUri, config.credentials, config.p2p, config.ioTimeout, config.storage);
+        agent.open();
     }
 
     @Override
@@ -95,9 +136,4 @@ public class Hub implements Closeable {
             agent.close();
     }
 
-    public void open() {
-        if (agent != null) {
-            agent.open();
-        }
-    }
 }

@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConnProtocolMessage extends AriesProtocolMessage {
+public abstract class ConnProtocolMessage extends AriesProtocolMessage {
     public static final String PROTOCOL = "connections";
 
     public ConnProtocolMessage(String msg) {
