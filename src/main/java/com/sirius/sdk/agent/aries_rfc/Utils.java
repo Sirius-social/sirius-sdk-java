@@ -11,6 +11,7 @@ import java.io.DataOutputStream;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 
@@ -45,29 +46,13 @@ public class Utils {
         return sign(crypto, value, verkey, false);
     }
 
-
-    //async def sign(crypto: AbstractCrypto, value: Any, verkey: str, exclude_sig_data: bool = False) -> dict:
-    //    timestamp_bytes = struct.pack(">Q", int(time.time()))
-    //
-    //    sig_data_bytes = timestamp_bytes + json.dumps(value).encode('ascii')
-    //    sig_data = base64.urlsafe_b64encode(sig_data_bytes).decode('ascii')
-    //
-    //    signature_bytes = await crypto.crypto_sign(verkey, sig_data_bytes)
-    //    signature = base64.urlsafe_b64encode(
-    //        signature_bytes
-    //    ).decode('ascii')
-    //
-    //    data = {
-    //        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/signature/1.0/ed25519Sha512_single",
-    //        "signer": verkey,
-    //        "signature": signature
-    //    }
-    //    if not exclude_sig_data:
-    //        data['sig_data'] = sig_data
-    //
-    //    return data
-
     public static Pair<JSONObject, Boolean> verifySigned(AbstractCrypto crypto, JSONObject signed) {
-        return new Pair<>(new JSONObject(), true);
+        byte[] signatureBytes = Base64.getUrlEncoder().encode(signed.optString("signature").getBytes(StandardCharsets.US_ASCII));
+        byte[] sigDataBytes = Base64.getUrlEncoder().encode(signed.optString("sig_data").getBytes(StandardCharsets.US_ASCII));
+        boolean sigVerified = crypto.cryptoVerify(signed.optString("signer"), sigDataBytes, signatureBytes);
+        byte[] dataBytes = Base64.getUrlDecoder().decode(signed.optString("sig_data"));
+        JSONObject fieldJson = new JSONObject(
+                new String(Arrays.copyOfRange(dataBytes, 8, dataBytes.length), StandardCharsets.US_ASCII));
+        return new Pair<>(fieldJson, sigVerified);
     }
 }
