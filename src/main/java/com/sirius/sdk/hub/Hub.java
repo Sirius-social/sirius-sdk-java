@@ -35,6 +35,7 @@ public class Hub implements Closeable {
 
     public Hub(Config config) {
         this.config = config;
+        createAgentInstance();
     }
 
     public AbstractNonSecrets getNonSecrets() {

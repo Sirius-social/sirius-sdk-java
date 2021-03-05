@@ -34,7 +34,7 @@ public class Main {
         String retStr = context.getNonSecrets().getWalletRecord(namespace, storeId, opts);
         if (retStr != null) {
             JSONObject ret = new JSONObject(retStr);
-            JSONArray vals = ret.optJSONArray("value");
+            JSONArray vals = new JSONArray(ret.optString("value"));
             String connectionKey = vals.getString(0);
             String qrContent = vals.getString(1);
             String qrUrl = vals.getString(2);
@@ -109,6 +109,7 @@ public class Main {
         System.out.println("Слушаем запросы");
         Listener listener = context.subscribe();
         Event event = listener.getOne().get();
+        System.out.println("Получено событие");
         // В рамках Samples интересны только запросы 0160 на установку соединения для connection_key нашего QR
         if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ConnRequest) {
             ConnRequest request = (ConnRequest) event.message();
