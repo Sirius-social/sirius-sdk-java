@@ -78,6 +78,9 @@ public class ConnResponse extends ConnProtocolMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
+            String id = generateId();
+            jsonObject.put("@id", id);
+
             if (did != null && verkey != null && endpoint != null) {
                 JSONObject extra = (didDocExtra != null) ? didDocExtra : new JSONObject();
                 jsonObject.put("connection", (new JSONObject().

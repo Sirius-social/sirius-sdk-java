@@ -7,6 +7,7 @@ public class ConnRequest extends ConnProtocolMessage {
 
     static {
         Message.registerMessageClass(ConnRequest.class, ConnProtocolMessage.PROTOCOL, "request");
+        System.out.println(ConnProtocolMessage.PROTOCOL);
     }
 
     public String getLabel() {

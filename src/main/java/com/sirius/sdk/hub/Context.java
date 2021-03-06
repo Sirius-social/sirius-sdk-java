@@ -12,10 +12,31 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractNonSecrets;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.utils.Pair;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import java.util.List;
 
 public class Context {
+
+    static {
+        Reflections reflections = new Reflections(
+                new ConfigurationBuilder()
+                        .setUrls(ClasspathHelper.forPackage("com.sirius.sdk"))
+                        .setScanners(new SubTypesScanner())
+        );
+
+        for (Class<?> cl : reflections.getSubTypesOf(com.sirius.sdk.messaging.Message.class)) {
+            try {
+                Class.forName(cl.getName(), true, cl.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public Agent agent = null;
     Hub currentHub = null;
     AbstractNonSecrets nonSecrets = new AbstractNonSecrets() {
@@ -296,6 +317,10 @@ public class Context {
 
     public Listener subscribe() {
         return currentHub.getAgentConnectionLazy().subscribe();
+    }
+
+    public Hub getCurrentHub() {
+        return currentHub;
     }
 
     public void sendTo(Message message, Pairwise to) {

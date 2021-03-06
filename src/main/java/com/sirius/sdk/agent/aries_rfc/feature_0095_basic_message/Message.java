@@ -39,9 +39,12 @@ public class Message extends AriesProtocolMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
+            String id = generateId();
+            jsonObject.put("@id", id);
+
             if (locale != null) {
                 jsonObject.put("~l10n", (new JSONObject().
-                        put(locale, locale)));
+                        put("locale", locale)));
             }
 
             if (content != null) {

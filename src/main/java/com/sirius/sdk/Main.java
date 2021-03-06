@@ -2,6 +2,7 @@ package com.sirius.sdk;
 
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.StateMachineInviter;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
@@ -15,6 +16,10 @@ import com.sirius.sdk.hub.Hub;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -31,7 +36,12 @@ public class Main {
         String storeId = "qr";
         RetrieveRecordOptions opts = new RetrieveRecordOptions();
         // Сохраняем инфо... о QR в самом Wallet чтобы не генерировать ключ при каждом запуске samples
-        String retStr = context.getNonSecrets().getWalletRecord(namespace, storeId, opts);
+        String retStr = null;
+        try {
+            retStr = context.getNonSecrets().getWalletRecord(namespace, storeId, opts);
+        } catch (Exception ignored) {
+
+        }
         if (retStr != null) {
             JSONObject ret = new JSONObject(retStr);
             JSONArray vals = new JSONArray(ret.optString("value"));
@@ -67,6 +77,8 @@ public class Main {
 
             // шаг 4 - создаем QR
             String qrUrl = context.generateQrCode(qrContent);
+            if (qrUrl == null)
+                return null;
             // Кладем в Wallet для повторного использования
             JSONArray dump = new JSONArray();
             dump.put(connectionKey).put(qrContent).put(qrUrl);
@@ -124,7 +136,9 @@ public class Main {
                         setContext("Привет в новый МИР!!!" + (new Date()).toString()).
                         setLocale("ru").
                         build();
+                System.out.println("Sending hello");
                 context.sendTo(hello, p2p);
+                System.out.println("sended");
             }
         }
     }

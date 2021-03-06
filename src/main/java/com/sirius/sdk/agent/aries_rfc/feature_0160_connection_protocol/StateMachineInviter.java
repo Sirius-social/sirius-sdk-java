@@ -70,7 +70,7 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
                 response.setThreadId(request.getAckMessageId());
             }
             DidDoc myDidDoc = response.didDoc();
-            response.signConnection(context.agent.getWallet().getCrypto(), this.connectionKey);
+            response.signConnection(context.getCrypto(), this.connectionKey);
 
             log.info("80% - Step-2: Connection response");
             Pair<Boolean, Message> okMsg = coprotocol.wait(response);
@@ -78,7 +78,7 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
                 if (okMsg.second instanceof Ack || okMsg.second instanceof Ping) {
                     // Step 3: store their did
                     log.info("90% - Step-3: Ack received, store their DID");
-                    context.agent.getWallet().getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
+                    context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
                     // Step 4: create pairwise
                     Pairwise.Their their = new Pairwise.Their(theirInfo.did, request.getLabel(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
                     JSONObject theirDidDoc = request.didDoc().getPayload();

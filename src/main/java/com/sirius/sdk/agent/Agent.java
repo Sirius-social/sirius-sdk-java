@@ -234,8 +234,8 @@ public class Agent extends TransportLayer {
                 .build();
         try {
             Object response =  rpc.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/generate_qr",params);
-            if(response instanceof String){
-                JSONObject responseObject = new JSONObject((String)response);
+            if(response instanceof JSONObject){
+                JSONObject responseObject = (JSONObject) response;
                 return  responseObject.getString("url");
             }
         } catch (Exception siriusConnectionClosed) {
