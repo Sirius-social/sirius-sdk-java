@@ -4,10 +4,7 @@ import com.sirius.sdk.agent.AbstractPairwiseList;
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.BaseAgentConnection;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractDID;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractNonSecrets;
+import com.sirius.sdk.agent.wallet.abstract_wallet.*;
 import com.sirius.sdk.agent.wallet.impl.DIDProxy;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
@@ -28,6 +25,7 @@ public class Hub implements Closeable {
         public P2PConnection p2p;
         public int ioTimeout = BaseAgentConnection.IO_TIMEOUT;
         public AbstractImmutableCollection storage = null;
+        public AbstractCache cache = null;
     }
 
     private final Config config;
@@ -95,6 +93,22 @@ public class Hub implements Closeable {
     public Hub setConnection(P2PConnection connection) {
         this.config.p2p = connection;
         return this;
+    }
+
+    public AbstractAnonCreds getAnonCreds() {
+        if (config.anoncreds != null) {
+            return config.anoncreds;
+        } else {
+            return getAgentConnectionLazy().getWallet().getAnoncreds();
+        }
+    }
+
+    public AbstractCache getCache() {
+        if (config.cache != null) {
+            return config.cache;
+        } else {
+            return getAgentConnectionLazy().getWallet().getCache();
+        }
     }
 
     public Agent getAgent() {

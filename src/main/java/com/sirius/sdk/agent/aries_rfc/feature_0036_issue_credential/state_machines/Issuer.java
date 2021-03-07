@@ -39,7 +39,7 @@ public class Issuer extends BaseIssuingStateMachine {
 
             // Step-1: Send offer to holder
             Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
-            JSONObject offer = context.agent.getWallet().getAnoncreds().issuerCreateCredentialOffer(credDef.getId());
+            JSONObject offer = context.getAnonCreds().issuerCreateCredentialOffer(credDef.getId());
             OfferCredentialMessage offerMsg = OfferCredentialMessage.builder().
                     setComment(comment).
                     setLocale(locale).
@@ -79,8 +79,8 @@ public class Issuer extends BaseIssuingStateMachine {
             }
 
             log.log(Level.INFO, "70% - Build credential with values");
-            Triple<JSONObject, String, JSONObject> createCredRes = context.agent.getWallet().
-                    getAnoncreds().issuerCreateCredential(
+            Triple<JSONObject, String, JSONObject> createCredRes = context.
+                    getAnonCreds().issuerCreateCredential(
                             offer, requestMsg.credRequest(), encodedCredValues);
 
             JSONObject cred = createCredRes.first;

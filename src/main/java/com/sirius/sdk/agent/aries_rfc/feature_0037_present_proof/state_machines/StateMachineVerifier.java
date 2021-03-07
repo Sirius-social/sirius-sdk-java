@@ -119,16 +119,16 @@ public class StateMachineVerifier extends BaseVerifyStateMachine {
 
                 if (!schemaId.isEmpty() && !schemas.has(schemaId)) {
                     schemas.put(schemaId, new JSONObject(
-                            context.agent.getWallet().getCache().getSchema(poolname, prover.getMe().getDid(), schemaId, opts)));
+                            context.getCache().getSchema(poolname, prover.getMe().getDid(), schemaId, opts)));
                 }
 
                 if (!credDefId.isEmpty() && !credentialDefs.has(credDefId)) {
                     credentialDefs.put(credDefId, new JSONObject(
-                            context.agent.getWallet().getCache().getCredDef(poolname, prover.getMe().getDid(), credDefId, opts)));
+                            context.getCache().getCredDef(poolname, prover.getMe().getDid(), credDefId, opts)));
                 }
             }
 
-            boolean success = context.agent.getWallet().getAnoncreds().verifierVerifyProof(
+            boolean success = context.getAnonCreds().verifierVerifyProof(
                     params.proofRequest, presentationMessage.proof(), schemas, credentialDefs, revRegDefs, revRegs);
 
             if (success) {

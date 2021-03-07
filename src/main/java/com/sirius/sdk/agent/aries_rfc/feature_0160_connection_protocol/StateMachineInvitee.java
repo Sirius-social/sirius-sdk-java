@@ -51,7 +51,7 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                         setVerkey(this.me.getVerkey()).
                         setEndpoint(this.myEndpoint.getAddress()).
                         setDocUri(docUri).
-                        setDidDocExtra(didDoc.getPayload()).
+                        setDidDocExtra(didDoc != null ? didDoc.getPayload() : null).
                         build();
 
                 log.info("30% - Step-1: send connection request to Inviter");
@@ -65,12 +65,12 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                             log.info("100% - Terminated with error");
                             return null;
                         }
-                        boolean success = response.verifyConnection(context.agent.getWallet().getCrypto());
+                        boolean success = response.verifyConnection(context.getCrypto());
                         if (success && response.getMessageObj().getJSONObject("connection~sig").optString("signer").equals(connectionKey)) {
                             // Step 3: extract Inviter info and store did
                             log.info("70% - Step-3: extract Inviter info and store DID");
                             ConnProtocolMessage.ExtractTheirInfoRes theirInfo = response.extractTheirInfo();
-                            context.agent.getWallet().getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
+                            context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
 
                             // Step 4: Send ack to Inviter
                             if (response.hasPleaseAck()) {
@@ -89,14 +89,14 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                             // Step 5: Make Pairwise instance
                             Pairwise.Their their = new Pairwise.Their(theirInfo.did,
                                     invitation.label(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
-                            DidDoc myDidDoc = request.didDoc();
-                            DidDoc theirDidDoc = response.didDoc();
+                            JSONObject myDidDoc = request.didDoc().getPayload();
+                            JSONObject theirDidDoc = response.didDoc().getPayload();
 
                             JSONObject metadata = (new JSONObject()).
                                     put("me", (new JSONObject()).
                                             put("did", this.me.getDid()).
                                             put("verkey", this.me.getVerkey()).
-                                            put("did_doc", myDidDoc.getPayload())).
+                                            put("did_doc", myDidDoc).
                                     put("their", (new JSONObject().
                                             put("did", theirInfo.did).
                                             put("verkey", theirInfo.verkey).
@@ -104,11 +104,11 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                                             put("endpoint", (new JSONObject()).
                                                     put("address", theirInfo.endpoint).
                                                     put("routing_keys", theirInfo.routingKeys)).
-                                            put("did_doc", theirDidDoc)));
+                                            put("did_doc", theirDidDoc))));
 
                             Pairwise pairwise = new Pairwise(this.me, their, metadata);
-                            pairwise.getMe().setDidDoc(myDidDoc.getPayload());
-                            pairwise.getTheir().setDidDoc(theirDidDoc.getPayload());
+                            pairwise.getMe().setDidDoc(myDidDoc);
+                            pairwise.getTheir().setDidDoc(theirDidDoc);
                             log.info("100% - Pairwise established");
                             return pairwise;
                         } else {
@@ -129,7 +129,12 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                 releaseCoprotocol();
             }
         }
+        log.info("100% - Terminated with error");
         return null;
+    }
+
+    public Pairwise createConnection(Invitation invitation, String mylabel) {
+        return createConnection(invitation, mylabel, null);
     }
 
 }

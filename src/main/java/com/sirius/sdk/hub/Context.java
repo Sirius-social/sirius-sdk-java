@@ -2,25 +2,35 @@ package com.sirius.sdk.hub;
 
 import com.sirius.sdk.agent.AbstractPairwiseList;
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.Ledger;
 import com.sirius.sdk.agent.Listener;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
+import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.model.Endpoint;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractDID;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractNonSecrets;
+import com.sirius.sdk.agent.wallet.abstract_wallet.*;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.PurgeOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
+import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.utils.Pair;
+import com.sirius.sdk.utils.Triple;
+import org.json.JSONObject;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-public class Context {
+public class Context implements Closeable {
 
+    // loading all Message classes to force their registration in static block
     static {
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder()
@@ -37,7 +47,6 @@ public class Context {
         }
     }
 
-    public Agent agent = null;
     Hub currentHub = null;
     AbstractNonSecrets nonSecrets = new AbstractNonSecrets() {
         @Override
@@ -287,7 +296,240 @@ public class Context {
         }
     };
 
-    public void init(Hub.Config config) {
+    AbstractAnonCreds anonCreds = new AbstractAnonCreds() {
+        @Override
+        public Pair<String, AnonCredSchema> issuerCreateSchema(String issuerDid, String name, String version, List<String> attrs) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerCreateSchema(issuerDid, name, version, attrs);
+        }
+
+        @Override
+        public Pair<String, String> issuerCreateAndStoreCredentialDef(String issuerDid, Object schema, String tag, String signatureType, Object config) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerCreateAndStoreCredentialDef(issuerDid, schema, tag, signatureType, config);
+        }
+
+        @Override
+        public String issuerRotateCredentialDefStart(String credDefId, String config) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerRotateCredentialDefStart(credDefId, config);
+        }
+
+        @Override
+        public void issuerRotateCredentialDefApply(String credDefId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            service.issuerRotateCredentialDefApply(credDefId);
+        }
+
+        @Override
+        public Triple<String, String, String> issuerCreateAndStoreRevocReg(String issuerDid, String revocDefType, String tag, String credDefId, String config, int tailsWriterHandle) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerCreateAndStoreRevocReg(issuerDid, revocDefType, tag, credDefId, config, tailsWriterHandle);
+        }
+
+        @Override
+        public JSONObject issuerCreateCredentialOffer(String credDefId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerCreateCredentialOffer(credDefId);
+        }
+
+        @Override
+        public Triple<JSONObject, String, JSONObject> issuerCreateCredential(JSONObject credOffer, JSONObject credReq, JSONObject credValues, String revRegId, Integer blobStorageReaderHandle) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerCreateCredential(credOffer, credReq, credValues, revRegId, blobStorageReaderHandle);
+        }
+
+        @Override
+        public String issuerRevokeCredential(Integer blobStorageReaderHandle, String revRegId, String credRevocId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerRevokeCredential(blobStorageReaderHandle, revRegId, credRevocId);
+        }
+
+        @Override
+        public String issuerMergeRevocationRegistryDeltas(String revRegDelta, String otherRevRegDelta) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.issuerMergeRevocationRegistryDeltas(revRegDelta, otherRevRegDelta);
+        }
+
+        @Override
+        public String proverCreateMasterSecret(String masterSecretName) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverCreateMasterSecret(masterSecretName);
+        }
+
+        @Override
+        public Pair<JSONObject, JSONObject> proverCreateCredentialReq(String proverDid, JSONObject credOffer, JSONObject credDef, String masterSecretId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverCreateCredentialReq(proverDid, credOffer, credDef, masterSecretId);
+        }
+
+        @Override
+        public void proverSetCredentialAttrTagPolicy(String credDefId, String taAttrs, boolean retroactive) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            service.proverSetCredentialAttrTagPolicy(credDefId, taAttrs, retroactive);
+        }
+
+        @Override
+        public String proverGetCredentialAttrTagPolicy(String credDefId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverGetCredentialAttrTagPolicy(credDefId);
+        }
+
+        @Override
+        public String proverStoreCredential(String credId, JSONObject credReqMetadata, JSONObject cred, JSONObject credDef, String revReqDef) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverStoreCredential(credId, credReqMetadata, cred, credDef, revReqDef);
+        }
+
+        @Override
+        public String proverGetCredential(String credDefId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverGetCredential(credDefId);
+        }
+
+        @Override
+        public void proverDeleteCredential(String credId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            service.proverDeleteCredential(credId);
+        }
+
+        @Override
+        public List<String> proverGetCredentials(String filters) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverGetCredentials(filters);
+        }
+
+        @Override
+        public List<String> proverSearchCredential(String query) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverSearchCredential(query);
+        }
+
+        @Override
+        public String proverGetCredentialsForProofReq(String proofRequest) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverGetCredentialsForProofReq(proofRequest);
+        }
+
+        @Override
+        public JSONObject proverSearchCredentialsForProofReq(JSONObject proofRequest, String extraQuery, int limitReferents) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverSearchCredentialsForProofReq(proofRequest, extraQuery, limitReferents);
+        }
+
+        @Override
+        public JSONObject proverCreateProof(JSONObject proofReq, JSONObject requestedCredentials, String masterSecretName, JSONObject schemas, JSONObject credentialDefs, JSONObject revStates) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.proverCreateProof(proofReq, requestedCredentials, masterSecretName, schemas, credentialDefs, revStates);
+        }
+
+        @Override
+        public boolean verifierVerifyProof(JSONObject proofRequest, JSONObject proof, JSONObject schemas, JSONObject credentialDefs, JSONObject revRegDefs, JSONObject revRegs) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.verifierVerifyProof(proofRequest, proof, schemas, credentialDefs, revRegDefs, revRegs);
+        }
+
+        @Override
+        public String createRevocation(int blobStorageReaderHandle, String revRegDef, String revRegDelta, int timestamp, String credRevId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.createRevocation(blobStorageReaderHandle, revRegDef, revRegDelta, timestamp, credRevId);
+        }
+
+        @Override
+        public String updateRevocationState(int blobStorageReaderHandle, String revState, String revRegDef, String revRegDelta, int timestamp, String credRevId) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.updateRevocationState(blobStorageReaderHandle, revState, revRegDef, revRegDelta, timestamp, credRevId);
+        }
+
+        @Override
+        public String generateNonce() {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.generateNonce();
+        }
+
+        @Override
+        public String toUnqualified(String entity) {
+            AbstractAnonCreds service = currentHub.getAnonCreds();
+            return service.toUnqualified(entity);
+        }
+    };
+
+    AbstractCache cache = new AbstractCache() {
+        @Override
+        public String getSchema(String poolName, String submitter_did, String id, CacheOptions options) {
+            AbstractCache service = currentHub.getCache();
+            return service.getSchema(poolName, submitter_did, id, options);
+        }
+
+        @Override
+        public String getCredDef(String poolName, String submitter_did, String id, CacheOptions options) {
+            AbstractCache service = currentHub.getCache();
+            return service.getCredDef(poolName, submitter_did, id, options);
+        }
+
+        @Override
+        public void purgeSchemaCache(PurgeOptions options) {
+            AbstractCache service = currentHub.getCache();
+            service.purgeSchemaCache(options);
+        }
+
+        @Override
+        public void purgeCredDefCache(PurgeOptions options) {
+            AbstractCache service = currentHub.getCache();
+            service.purgeCredDefCache(options);
+        }
+    };
+
+    public static class Builder {
+        Hub.Config config = new Hub.Config();
+
+        //public AbstractCrypto crypto = null;
+        //        public AbstractMicroledgerList microledgers = null;
+        //        public AbstractPairwiseList pairwiseStorage = null;
+        //        public AbstractDID did = null;
+        //        public AbstractAnonCreds anoncreds = null;
+        //        public AbstractNonSecrets nonSecrets = null;
+        //        public String serverUri = null;
+        //        public byte[] credentials;
+        //        public P2PConnection p2p;
+        //        public int ioTimeout = BaseAgentConnection.IO_TIMEOUT;
+        //        public AbstractImmutableCollection storage = null;
+
+        public Builder setCrypto(AbstractCrypto crypto) {
+            this.config.crypto = crypto;
+            return this;
+        }
+
+        public Builder setMicroledgers(AbstractMicroledgerList microledgers) {
+            this.config.microledgers = microledgers;
+            return this;
+        }
+
+        public Builder setServerUri(String serverUri) {
+            this.config.serverUri = serverUri;
+            return this;
+        }
+
+        public Builder setCredentials(byte[] credentials) {
+            this.config.credentials = credentials;
+            return this;
+        }
+
+        public Builder setP2p(P2PConnection p2p) {
+            this.config.p2p = p2p;
+            return this;
+        }
+
+        public Context build() {
+            return new Context(this.config);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Context(Hub.Config config) {
         currentHub = new Hub(config);
     }
 
@@ -311,8 +553,37 @@ public class Context {
         return pairwiseList;
     }
 
+    public AbstractAnonCreds getAnonCreds() {
+        return anonCreds;
+    }
+
+    public AbstractCache getCache() {
+        return cache;
+    }
+
+    public Map<String, Ledger> getLedgers() {
+        return currentHub.getAgentConnectionLazy().getLedgers();
+    }
+
     public String generateQrCode(String value) {
         return currentHub.getAgentConnectionLazy().generateQrCode(value);
+    }
+
+    public Endpoint getEndpointWithEmptyRoutingKeys() {
+        for (Endpoint e : getEndpoints()) {
+            if (e.getRoutingKeys().size() == 0) {
+                return e;
+            }
+        }
+        return null;
+    }
+
+    public String getEndpointAddressWithEmptyRoutingKeys() {
+        Endpoint e = getEndpointWithEmptyRoutingKeys();
+        if (e != null)
+            return e.getAddress();
+        else
+            return "";
     }
 
     public Listener subscribe() {
@@ -329,5 +600,10 @@ public class Context {
         } catch (SiriusRPCError siriusRPCError) {
             siriusRPCError.printStackTrace();
         }
+    }
+
+    @Override
+    public void close() {
+        currentHub.close();
     }
 }

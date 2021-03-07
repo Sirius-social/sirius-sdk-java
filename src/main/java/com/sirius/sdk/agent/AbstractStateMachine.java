@@ -15,7 +15,7 @@ public abstract class AbstractStateMachine {
 
     protected void createCoprotocol(Pairwise pairwise) {
         if (coprotocol == null) {
-            coprotocol = context.agent.spawn(pairwise);
+            coprotocol = context.getCurrentHub().getAgentConnectionLazy().spawn(pairwise);
             coprotocol.start(protocols());
         }
     }

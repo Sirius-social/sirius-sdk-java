@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Main {
 
-    static Context context = new Context();
+    static Context context;
 
     public static Pair<String, String> qrCode() {
         String namespace = "samples";
@@ -95,7 +95,7 @@ public class Main {
                 "y7fwmKxfatm6SLN6sqy6LFFjKufgzSsmqA2D4WZz55Y8W7JFeA3LvmicC36E8rdHoAiFhZgSf4fuKmimk9QyBec",
                 "5NUzoX1YNm5VXsgzudvVikN7VQpRf5rhaTnPxyu12eZC");
 
-        context.init(config);
+        context = new Context(config);
         Pair<String, String> qrCodeRes = qrCode();
         String connectionKey = qrCodeRes.first;
         String qrUrl = qrCodeRes.second;

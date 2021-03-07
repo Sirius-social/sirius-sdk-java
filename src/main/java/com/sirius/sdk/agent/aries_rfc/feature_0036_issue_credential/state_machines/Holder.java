@@ -31,7 +31,7 @@ public class Holder extends BaseIssuingStateMachine {
             OfferCredentialMessage offerMsg = offer;
 
             // Step-1: Process Issuer Offer
-            Pair<JSONObject, JSONObject> createCredReqRes = context.agent.getWallet().getAnoncreds().proverCreateCredentialReq(
+            Pair<JSONObject, JSONObject> createCredReqRes = context.getAnonCreds().proverCreateCredentialReq(
                     issuer.getMe().getDid(), offerMsg.offer(), offer.credDef(), masterSecretId);
 
             JSONObject credRequest = createCredReqRes.first;
@@ -70,12 +70,12 @@ public class Holder extends BaseIssuingStateMachine {
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {
         String credOrder = null;
         try {
-            credOrder = context.agent.getWallet().getAnoncreds().proverGetCredential(credId);
+            credOrder = context.getAnonCreds().proverGetCredential(credId);
         } catch (Exception ex) {}
         if (credOrder != null) {
-            context.agent.getWallet().getAnoncreds().proverDeleteCredential(credId);
+            context.getAnonCreds().proverDeleteCredential(credId);
         }
-        credId = context.agent.getWallet().getAnoncreds().proverStoreCredential(credId, credMetadata, cred, credDef, revRegDef);
+        credId = context.getAnonCreds().proverStoreCredential(credId, credMetadata, cred, credDef, revRegDef);
         return credId;
     }
 }

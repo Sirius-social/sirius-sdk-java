@@ -51,7 +51,7 @@ public class StateMachineProver extends BaseVerifyStateMachine {
             ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
 
             // Step-2: Build proof
-            JSONObject proof = context.agent.getWallet().getAnoncreds().proverCreateProof(
+            JSONObject proof = context.getAnonCreds().proverCreateProof(
                     request.proofRequest(), credInfoRes.credInfos, masterSecretId, credInfoRes.schemas, credInfoRes.credentialDefs, credInfoRes.revStates);
 
             // Step-3: Send proof and wait Ack to check success from Verifier side
@@ -97,7 +97,7 @@ public class StateMachineProver extends BaseVerifyStateMachine {
     }
 
     private ExtractCredentialsInfoResult extractCredentialsInfo(JSONObject proofRequest, String poolName) {
-        JSONObject proofResponse = context.agent.getWallet().getAnoncreds().proverSearchCredentialsForProofReq(proofRequest, 1);
+        JSONObject proofResponse = context.getAnonCreds().proverSearchCredentialsForProofReq(proofRequest, 1);
         ExtractCredentialsInfoResult res = new ExtractCredentialsInfoResult();
         CacheOptions opts = new CacheOptions();
         res.credInfos.put("self_attested_attributes", new JSONObject());
@@ -129,9 +129,9 @@ public class StateMachineProver extends BaseVerifyStateMachine {
         for (JSONObject credInfo : allInfos) {
             String schemaId = credInfo.getString("schema_id");
             String credDefId = credInfo.getString("cred_def_id");
-            JSONObject schema = new JSONObject(context.agent.getWallet().getCache().getSchema(poolName, this.verifier.getMe().getDid(), schemaId, opts));
+            JSONObject schema = new JSONObject(context.getCache().getSchema(poolName, this.verifier.getMe().getDid(), schemaId, opts));
             res.schemas.put(schemaId, schema);
-            JSONObject credDef = new JSONObject(context.agent.getWallet().getCache().getCredDef(poolName, this.verifier.getMe().getDid(), credDefId, opts));
+            JSONObject credDef = new JSONObject(context.getCache().getCredDef(poolName, this.verifier.getMe().getDid(), credDefId, opts));
             res.credentialDefs.put(credDefId, credDef);
         }
 

@@ -13,11 +13,14 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import helpers.ConfTest;
+import helpers.ServerTestSuite;
+import models.AgentParams;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
@@ -96,57 +99,79 @@ public class TestAriesFeature0037 {
 
         prover.getWallet().getAnoncreds().proverStoreCredential(credId, credMetadata, cred, new JSONObject(credDef.getBody().toString()));
 
+        issuer.close();
+        prover.close();
+        verifier.close();
+
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
+        AgentParams proverParams = testSuite.getAgentParams("agent2");
+        AgentParams verifierParams = testSuite.getAgentParams("agent3");
 
         String attrReferentId = "attr1_referent";
         String predReferentId = "predicate1_referent";
 
-        JSONObject proofRequest = (new JSONObject()).
-                put("nonce", verifier.getWallet().getAnoncreds().generateNonce()).
-                put("name", "Test ProofRequest").
-                put("version", "0.1").
-                put("requested_attributes", (new JSONObject()).
-                        put("attr_referent_id", (new JSONObject()).
-                                put("name", "attr1").
-                                put("restrictions", (new JSONObject()).
-                                        put("issuer_did", issuerDid)))).
-                put("requested_predicates", (new JSONObject()).
-                        put("pred_referent_id", (new JSONObject()).
-                                put("name", "attr2").
-                                put("p_type", ">=").
-                                put("p_value", 100).
-                                put("restrictions", (new JSONObject()).
-                                        put("issuer_did", issuerDid))));
-
+        JSONObject proofRequest = null;
+        try (Context context = Context.builder().
+                setServerUri(verifierParams.getServerAddress()).
+                setCredentials(verifierParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                setP2p(verifierParams.getConnection()).
+                build()) {
+            proofRequest = (new JSONObject()).
+                    put("nonce", context.getAnonCreds().generateNonce()).
+                    put("name", "Test ProofRequest").
+                    put("version", "0.1").
+                    put("requested_attributes", (new JSONObject()).
+                            put("attr_referent_id", (new JSONObject()).
+                                    put("name", "attr1").
+                                    put("restrictions", (new JSONObject()).
+                                            put("issuer_did", issuerDid)))).
+                    put("requested_predicates", (new JSONObject()).
+                            put("pred_referent_id", (new JSONObject()).
+                                    put("name", "attr2").
+                                    put("p_type", ">=").
+                                    put("p_value", 100).
+                                    put("restrictions", (new JSONObject()).
+                                            put("issuer_did", issuerDid))));
+        }
         //run_verifier
+        JSONObject finalProofRequest = proofRequest;
         CompletableFuture<Boolean> runVerifier = CompletableFuture.supplyAsync(() -> {
-            Ledger verLedger = verifier.getLedgers().get("default");
-            Context context = new Context();
-            context.agent = verifier;
-            StateMachineVerifier machine = new StateMachineVerifier(context, v2p, verLedger);
-            StateMachineVerifier.VerifyParams params = new StateMachineVerifier.VerifyParams();
-            params.proofRequest = proofRequest;
-            params.comment = "I am Verifier";
-            params.protoVersion = "1.0";
-            return machine.verify(params);
+            try (Context context = Context.builder().
+                    setServerUri(verifierParams.getServerAddress()).
+                    setCredentials(verifierParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                    setP2p(verifierParams.getConnection()).
+                    build()) {
+                Ledger verLedger = context.getLedgers().get("default");
+                StateMachineVerifier machine = new StateMachineVerifier(context, v2p, verLedger);
+                StateMachineVerifier.VerifyParams params = new StateMachineVerifier.VerifyParams();
+                params.proofRequest = finalProofRequest;
+                params.comment = "I am Verifier";
+                params.protoVersion = "1.0";
+                return machine.verify(params);
+            }
         }, r -> new Thread(r).start());
 
         //run prover
         CompletableFuture<Boolean> runProver = CompletableFuture.supplyAsync(() -> {
-            Event event = null;
-            try {
-                event = prover.subscribe().getOne().get(30, TimeUnit.SECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                e.printStackTrace();
-                return false;
+            try (Context context = Context.builder().
+                    setServerUri(proverParams.getServerAddress()).
+                    setCredentials(proverParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                    setP2p(proverParams.getConnection()).
+                    build()) {
+                Event event = null;
+                try {
+                    event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                Assert.assertTrue(event.message() instanceof RequestPresentationMessage);
+                RequestPresentationMessage requestPresentationMessage = (RequestPresentationMessage) event.message();
+                int ttl = 60;
+                Ledger proverLedger = context.getLedgers().get("default");
+                StateMachineProver machine = new StateMachineProver(context, p2v, proverLedger);
+                return machine.prove(requestPresentationMessage, proverSecretId);
             }
-            Assert.assertTrue(event.message() instanceof RequestPresentationMessage);
-            RequestPresentationMessage requestPresentationMessage = (RequestPresentationMessage) event.message();
-            int ttl = 60;
-            Ledger proverLedger = prover.getLedgers().get("default");
-            Context context = new Context();
-            context.agent = prover;
-            StateMachineProver machine = new StateMachineProver(context, p2v, proverLedger);
-            return machine.prove(requestPresentationMessage, proverSecretId);
         }, r -> new Thread(r).start());
 
         Assert.assertTrue(runProver.get(30, TimeUnit.SECONDS));
