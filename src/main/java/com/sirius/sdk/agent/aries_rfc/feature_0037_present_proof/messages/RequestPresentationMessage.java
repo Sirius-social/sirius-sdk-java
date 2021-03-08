@@ -87,30 +87,29 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
+            String id = generateId();
+            jsonObject.put("@id", id);
+
             if (proofRequest != null) {
-                JSONObject requestPresentationsAttach = new JSONObject();
-                requestPresentationsAttach.put("@id", "libindy-request-presentation-" + UUID.randomUUID().toString());
-                requestPresentationsAttach.put("mime-type", "application/json");
-                JSONObject data = new JSONObject();
                 byte[] base64 = Base64.getEncoder().encode(proofRequest.toString().getBytes(StandardCharsets.UTF_8));
-                data.put("base64", new String(base64));
-                requestPresentationsAttach.put("data", data);
-                JSONArray arr = new JSONArray();
-                arr.put(requestPresentationsAttach);
-                jsonObject.put("request_presentations~attach", arr);
+                jsonObject.put("request_presentations~attach", (new JSONArray()).
+                        put((new JSONObject()).
+                                put("@id", "libindy-request-presentation-" + UUID.randomUUID().toString()).
+                                put("mime-type", "application/json").
+                                put("data", (new JSONObject().
+                                        put("base64", new String(base64))))));
             }
 
             if (translation != null && !translation.isEmpty()) {
                 if (jsonObject.has("~attach"))
                     jsonObject.remove("~attach");
 
-                JSONObject attach = new JSONObject();
-                attach.put("@type", BasePresentProofMessage.CREDENTIAL_TRANSLATION_TYPE);
-                attach.put("id", BasePresentProofMessage.CREDENTIAL_TRANSLATION_ID);
-                JSONObject l10n = new JSONObject();
-                l10n.put("locale", this.locale);
-                attach.put("~l10n", l10n);
-                attach.put("mime-type", "application/json");
+                JSONObject attach = (new JSONObject()).
+                        put("@type", BasePresentProofMessage.CREDENTIAL_TRANSLATION_TYPE).
+                        put("id", BasePresentProofMessage.CREDENTIAL_TRANSLATION_ID).
+                        put("~l10n", (new JSONObject()).
+                                        put("locale", this.locale)).
+                        put("mime-type", "application/json");
                 JSONObject data = new JSONObject();
                 JSONArray transArr = new JSONArray();
                 for (AttribTranslation trans : translation) {
@@ -118,9 +117,7 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
                 }
                 data.put("json", transArr);
                 attach.put("data", data);
-                JSONArray attaches = new JSONArray();
-                attaches.put(attach);
-                jsonObject.put("~attach", attaches);
+                jsonObject.put("~attach", (new JSONArray()).put(attach));
             }
 
             if(expiresTime != null) {

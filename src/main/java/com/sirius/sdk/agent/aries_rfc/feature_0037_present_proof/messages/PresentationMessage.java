@@ -59,6 +59,9 @@ public class PresentationMessage extends BasePresentProofMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
+            String id = generateId();
+            jsonObject.put("@id", id);
+
             if (proof != null) {
                 presentationId = presentationId != null ? presentationId : UUID.randomUUID().toString();
                 JSONObject attach = new JSONObject();

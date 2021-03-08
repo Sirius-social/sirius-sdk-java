@@ -16,7 +16,7 @@ public abstract class ConnProtocolMessage extends AriesProtocolMessage {
         super(msg);
     }
 
-    public class ExtractTheirInfoRes {
+    public static class ExtractTheirInfoRes {
         public String did;
         public String verkey;
         public String endpoint;

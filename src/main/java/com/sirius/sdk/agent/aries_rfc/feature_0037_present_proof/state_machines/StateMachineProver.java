@@ -46,7 +46,6 @@ public class StateMachineProver extends BaseVerifyStateMachine {
             // Step-1: Process proof-request
             log.log(Level.INFO, "10% - Received proof request");
             request.validate();
-            request.proofRequest();
 
             ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
 
@@ -117,8 +116,8 @@ public class StateMachineProver extends BaseVerifyStateMachine {
         }
 
         JSONObject requestedPredicates = proofResponse.getJSONObject("requested_predicates");
-        for (String referentId : requestedAttributes.keySet()) {
-            JSONArray predicates = requestedAttributes.getJSONArray(referentId);
+        for (String referentId : requestedPredicates.keySet()) {
+            JSONArray predicates = requestedPredicates.getJSONArray(referentId);
             JSONObject predInfo = predicates.getJSONObject(0).getJSONObject("cred_info");
             JSONObject info = new JSONObject();
             info.put("cred_id", predInfo.getString("referent"));

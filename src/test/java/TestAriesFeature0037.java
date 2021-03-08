@@ -121,12 +121,12 @@ public class TestAriesFeature0037 {
                     put("name", "Test ProofRequest").
                     put("version", "0.1").
                     put("requested_attributes", (new JSONObject()).
-                            put("attr_referent_id", (new JSONObject()).
+                            put(attrReferentId, (new JSONObject()).
                                     put("name", "attr1").
                                     put("restrictions", (new JSONObject()).
                                             put("issuer_did", issuerDid)))).
                     put("requested_predicates", (new JSONObject()).
-                            put("pred_referent_id", (new JSONObject()).
+                            put(predReferentId, (new JSONObject()).
                                     put("name", "attr2").
                                     put("p_type", ">=").
                                     put("p_value", 100).
@@ -174,7 +174,7 @@ public class TestAriesFeature0037 {
             }
         }, r -> new Thread(r).start());
 
-        Assert.assertTrue(runProver.get(30, TimeUnit.SECONDS));
-        Assert.assertTrue(runVerifier.get(30, TimeUnit.SECONDS));
+        Assert.assertTrue(runProver.get(60, TimeUnit.SECONDS));
+        Assert.assertTrue(runVerifier.get(60, TimeUnit.SECONDS));
     }
 }

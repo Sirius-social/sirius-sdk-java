@@ -2,7 +2,6 @@ package com.sirius.sdk;
 
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
-import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.StateMachineInviter;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
@@ -16,10 +15,6 @@ import com.sirius.sdk.hub.Hub;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
