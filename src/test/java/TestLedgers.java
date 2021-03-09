@@ -44,7 +44,7 @@ public class TestLedgers {
 
         Schema restoredSchema = ledger.ensureSchemaExists(schemaIdAnonCredSchema.second, didVerkey.first);
         Assert.assertNotNull(restoredSchema);
-        Assert.assertEquals(okSchema.second.serialize(), restoredSchema.serialize());
+        Assert.assertEquals(okSchema.second, restoredSchema);
 
         agent1.close();
     }
@@ -72,7 +72,7 @@ public class TestLedgers {
         for (int i=0;i<5;i++){
            Schema laodedSchema =  ledger2.loadSchema(okSchema.second.getId(),didVerkey2.first);
            Assert.assertNotNull(laodedSchema);
-           Assert.assertEquals(okSchema.second.serializeToJsonObject().toString(),laodedSchema.serializeToJsonObject().toString());
+           Assert.assertEquals(okSchema.second,laodedSchema);
         }
         agent1.close();
         agent2.close();

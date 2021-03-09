@@ -7,8 +7,10 @@ import com.sirius.sdk.utils.GsonUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class AnonCredSchema implements JsonSerializable<AnonCredSchema> {
@@ -38,10 +40,12 @@ public class AnonCredSchema implements JsonSerializable<AnonCredSchema> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AnonCredSchema that = (AnonCredSchema) o;
+        Set<String> thisAttrNamesSet = new HashSet<>(this.attrNames);
+        Set<String> thatAttrNamesSet = new HashSet<>(that.attrNames);
         return id.equals(that.id) &&
                 name.equals(that.name) &&
                 version.equals(that.version) &&
-                attrNames.equals(that.attrNames);
+                thisAttrNamesSet.equals(thatAttrNamesSet);
     }
 
 
