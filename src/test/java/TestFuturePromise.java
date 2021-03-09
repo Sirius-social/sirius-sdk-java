@@ -1,4 +1,3 @@
-import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.rpc.AddressedTunnel;
@@ -29,11 +28,13 @@ public class TestFuturePromise {
         AddressedTunnel sdk_to_agent = p2pPair.second.getTunnel();
 
         Future future = new Future(sdk_to_agent);
-        /*try {
+        boolean isSiriusPendingOperation = false;
+        try {
             future.getValue();
         } catch (SiriusPendingOperation siriusPendingOperation) {
-           siriusPendingOperation.printStackTrace();
-        }*/
+            isSiriusPendingOperation = true;
+        }
+        Assert.assertTrue(isSiriusPendingOperation);
         String expected = "Test OK";
         JSONObject promiseMsgObj = new JSONObject();
         promiseMsgObj.put("@type", Future.MSG_TYPE);
@@ -46,12 +47,12 @@ public class TestFuturePromise {
         threadObject.put("thid", future.promise().getId());
         promiseMsgObj.put("~thread", threadObject);
         Message message = new Message(promiseMsgObj.toString());
-   /*     boolean isWait = false;
-        try{
-             isWait = future.waitPromise(5);
-        }catch (Exception e){
+        boolean isWait = false;
+        try {
+            isWait = future.waitPromise(5);
+        } catch (Exception ignored) {
         }
-        Assert.assertFalse(isWait);*/
+        Assert.assertFalse(isWait);
 
         agent_to_sdk.post(message);
         boolean isOk = future.waitPromise(5);
