@@ -1,12 +1,19 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
+import com.sirius.sdk.messaging.Message;
 
 /**
  * Implementation of Pong part for trust_ping protocol
  * https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping
  */
 public class Pong extends AriesProtocolMessage {
+
+    public static final String PROTOCOL = "trust_ping";
+
+    static {
+        Message.registerMessageClass(Pong.class, Pong.PROTOCOL, "ping_response");
+    }
 
     public String getComment() {
         return comment;
@@ -34,9 +41,6 @@ public class Pong extends AriesProtocolMessage {
         threadId = getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
     }
 
-
-
-
     public String getPingId() {
         try {
             return getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
@@ -45,26 +49,4 @@ public class Pong extends AriesProtocolMessage {
         }
         return null;
     }
-
-
 }
-
-/*
-class Pong(AriesProtocolMessage, metaclass=RegisterMessage):
-
-    def __init__(self, ping_id: str=None, comment: Optional[str]=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if ping_id is not None:
-            self.get(THREAD_DECORATOR, {}).update({'thid': ping_id})
-        if comment is not None:
-            self['comment'] = comment
-
-    @property
-    def comment(self) -> Optional[str]:
-        return self.get('comment', None)
-
-    @property
-    def ping_id(self):
-        return self.get(THREAD_DECORATOR, {}).get('thid', None)
-
-*/
