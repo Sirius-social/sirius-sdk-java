@@ -2,6 +2,13 @@ package com.sirius.sdk.agent.model.coprotocols;
 
 import com.sirius.sdk.agent.AgentRPC;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.Pair;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,16 +26,61 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
     String thid;
     Pairwise pairwise;
     String pthid;
-    List<String> receivedOrders;
-    int senderOrder;
+    JSONObject receivedOrders;
+    int senderOrder = 0;
+    Pairwise.Their their = null;
 
     public ThreadBasedCoProtocolTransport(String thid, Pairwise pairwise, AgentRPC rpc,String pthid) {
         super(rpc);
         this.thid = thid;
         this.pairwise = pairwise;
+        this.their = pairwise.getTheir();
         this.pthid = pthid;
         senderOrder = 0;
-        receivedOrders = new ArrayList<>();
+        receivedOrders = new JSONObject();
+        setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpoint(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
+    }
+
+    @Override
+    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
+        prepareMessage(message);
+        Pair<Boolean, Message> res = super.wait(message);
+        Message response = res.second;
+        if (res.first) {
+            if (response.messageObjectHasKey(THREAD_DECORATOR)) {
+                if (response.getMessageObj().getJSONObject(THREAD_DECORATOR).has("sender_order")) {
+                    int respondSenderOrder = response.getMessageObj().getJSONObject(THREAD_DECORATOR).getInt("sender_order");
+                    if (this.their != null) {
+                        String recipient = this.their.getDid();
+                        //err = DIDField().validate(recipient)
+                        //if err is None:
+                        {
+                            int order = receivedOrders.optInt(recipient, 0);
+                            receivedOrders.put(recipient, Math.max(order, respondSenderOrder));
+                        }
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    private void prepareMessage(Message msg) {
+        if (!msg.messageObjectHasKey(THREAD_DECORATOR)) {
+            JSONObject threadDecorator = new JSONObject().
+                    put("thid", this.thid).
+                    put("sender_order", senderOrder);
+            if (pthid != null && !pthid.isEmpty()) {
+                threadDecorator.put("pthid", pthid);
+            }
+
+            if (receivedOrders != null) {
+                threadDecorator.put("received_orders", receivedOrders);
+            }
+
+            this.senderOrder++;
+            msg.getMessageObj().put(THREAD_DECORATOR, threadDecorator);
+        }
     }
 
     @Override
@@ -49,4 +101,9 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
         this.rpc.startProtocolWithThreading(thid, timeToLiveSec);
     }
 
+    @Override
+    public void stop() {
+        super.stop();
+        this.rpc.stopProtocolWithThreading(thid, true);
+    }
 }

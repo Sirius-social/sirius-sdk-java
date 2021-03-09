@@ -68,6 +68,7 @@ public class AddressedTunnel {
             payload = input.read().get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
+            return null;
         }
         try {
          String payloadString = new String(payload, StandardCharsets.US_ASCII);

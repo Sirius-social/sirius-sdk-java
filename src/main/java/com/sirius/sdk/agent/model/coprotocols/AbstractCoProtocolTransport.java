@@ -24,7 +24,8 @@ import java.util.*;
  */
 public abstract class AbstractCoProtocolTransport {
 
-    private static final String PLEASE_ACK_DECORATOR = "~please_ack";
+    public static final String THREAD_DECORATOR = "~thread";
+    public static final String PLEASE_ACK_DECORATOR = "~please_ack";
 
     public AbstractCoProtocolTransport(AgentRPC rpc) {
         this.rpc = rpc;

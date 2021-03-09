@@ -197,8 +197,8 @@ public class TestCopropocols {
         ThreadBasedCoProtocolTransport agent1Protocol = agent1.spawn(threadUi, pairwise1);
         ThreadBasedCoProtocolTransport agent2Protocol = agent2.spawn(threadUi, pairwise2);
 
-        agent1Protocol.start();
-        agent2Protocol.start();
+        agent1Protocol.start(Collections.singletonList("test_protocol"));
+        agent2Protocol.start(Collections.singletonList("test_protocol"));
 
         msgLog.clear();
         CompletableFuture<Void> cf1 = CompletableFuture.runAsync(() -> routine1(agent1Protocol));
