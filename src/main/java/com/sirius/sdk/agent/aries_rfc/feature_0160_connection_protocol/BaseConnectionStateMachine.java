@@ -23,7 +23,7 @@ public abstract class BaseConnectionStateMachine extends AbstractStateMachine {
     public void createCoprotocol(TheirEndpoint endpoint) {
         if (coprotocol == null) {
             coprotocol = context.getCurrentHub().getAgentConnectionLazy().spawn(me.getVerkey(), endpoint);
-            coprotocol.start(protocols());
+            coprotocol.start(protocols(), timeToLiveSec);
         }
     }
 }

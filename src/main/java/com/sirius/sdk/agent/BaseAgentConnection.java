@@ -41,7 +41,7 @@ public abstract class BaseAgentConnection {
         this.credentials = credentials;
         this.p2p = p2p;
         this.timeout = timeout;
-        connector = new WebSocketConnector(IO_TIMEOUT, StandardCharsets.UTF_8, serverAddress, path(), credentials);
+        connector = new WebSocketConnector(this.timeout, StandardCharsets.UTF_8, serverAddress, path(), credentials);
     }
 
     public abstract String path();

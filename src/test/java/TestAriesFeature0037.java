@@ -140,6 +140,7 @@ public class TestAriesFeature0037 {
                     setServerUri(verifierParams.getServerAddress()).
                     setCredentials(verifierParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                     setP2p(verifierParams.getConnection()).
+                    setTimeoutSec(60).
                     build()) {
                 Ledger verLedger = context.getLedgers().get("default");
                 StateMachineVerifier machine = new StateMachineVerifier(context, v2p, verLedger);
@@ -157,6 +158,7 @@ public class TestAriesFeature0037 {
                     setServerUri(proverParams.getServerAddress()).
                     setCredentials(proverParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                     setP2p(proverParams.getConnection()).
+                    setTimeoutSec(60).
                     build()) {
                 Event event = null;
                 try {

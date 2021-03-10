@@ -520,6 +520,11 @@ public class Context implements Closeable {
             return this;
         }
 
+        public Builder setTimeoutSec(int timeoutSec) {
+            this.config.ioTimeout = timeoutSec;
+            return this;
+        }
+
         public Context build() {
             return new Context(this.config);
         }
