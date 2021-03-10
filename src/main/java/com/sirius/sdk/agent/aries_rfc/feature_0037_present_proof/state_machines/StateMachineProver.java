@@ -67,7 +67,7 @@ public class StateMachineProver extends BaseVerifyStateMachine {
             log.log(Level.INFO, "50% - Send presentation");
 
             // Switch to await participant action
-            Pair<Boolean, Message> okMsg = coprotocol.wait(presentationMessage);
+            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(presentationMessage);
 
             if (okMsg.second instanceof Ack) {
                 log.log(Level.INFO, "100% - Verify OK!");

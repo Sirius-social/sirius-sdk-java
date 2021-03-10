@@ -73,7 +73,7 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
             response.signConnection(context.getCrypto(), this.connectionKey);
 
             log.info("80% - Step-2: Connection response");
-            Pair<Boolean, Message> okMsg = coprotocol.wait(response);
+            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(response);
             if (okMsg.first) {
                 if (okMsg.second instanceof Ack || okMsg.second instanceof Ping) {
                     // Step 3: store their did

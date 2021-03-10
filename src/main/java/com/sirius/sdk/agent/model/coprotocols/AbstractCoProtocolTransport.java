@@ -125,7 +125,7 @@ public abstract class AbstractCoProtocolTransport {
         }
     }
 
-    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
+    public Pair<Boolean, Message> sendAndWait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
         if (!isSetup) {
             throw new SiriusPendingOperation("You must Setup protocol instance at first");
         }

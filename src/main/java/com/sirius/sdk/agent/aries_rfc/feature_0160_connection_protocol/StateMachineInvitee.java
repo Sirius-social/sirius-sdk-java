@@ -15,7 +15,6 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 public class StateMachineInvitee extends BaseConnectionStateMachine {
@@ -55,7 +54,7 @@ public class StateMachineInvitee extends BaseConnectionStateMachine {
                         build();
 
                 log.info("30% - Step-1: send connection request to Inviter");
-                Pair<Boolean, Message> okMsg = coprotocol.wait(request);
+                Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(request);
                 if (okMsg.first) {
                     if (okMsg.second instanceof ConnResponse) {
                         // Step 2: process connection response from Inviter

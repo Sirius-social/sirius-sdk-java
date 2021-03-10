@@ -92,7 +92,7 @@ public class StateMachineVerifier extends BaseVerifyStateMachine {
 
             log.log(Level.INFO, "30% - Send request");
 
-            Pair<Boolean, Message> okMsg = coprotocol.wait(requestPresentationMessage);
+            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(requestPresentationMessage);
             if (!(okMsg.second instanceof PresentationMessage)) {
                 throw new StateMachineTerminatedWithError("response_not_accepted", "Unexpected @type: " + okMsg.second.getType());
             }

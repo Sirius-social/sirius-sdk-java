@@ -7,11 +7,8 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,9 +39,9 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
     }
 
     @Override
-    public Pair<Boolean, Message> wait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
+    public Pair<Boolean, Message> sendAndWait(Message message) throws SiriusPendingOperation, SiriusInvalidPayloadStructure, SiriusInvalidMessage {
         prepareMessage(message);
-        Pair<Boolean, Message> res = super.wait(message);
+        Pair<Boolean, Message> res = super.sendAndWait(message);
         Message response = res.second;
         if (res.first) {
             if (response.messageObjectHasKey(THREAD_DECORATOR)) {

@@ -56,7 +56,7 @@ public class Issuer extends BaseIssuingStateMachine {
 
             log.log(Level.INFO, offerMsg.getMessageObj().toString());
 
-            Pair<Boolean, Message> okResp = coprotocol.wait(offerMsg);
+            Pair<Boolean, Message> okResp = coprotocol.sendAndWait(offerMsg);
 
             if (!(okResp.second instanceof RequestCredentialMessage)) {
                 throw new StateMachineTerminatedWithError("offer_processing_error", "Unexpected @type: " + okResp.second.getType());
@@ -94,7 +94,7 @@ public class Issuer extends BaseIssuingStateMachine {
                     build();
 
             log.log(Level.INFO, "90% - Send Issue message");
-            Pair<Boolean, Message> okAck = coprotocol.wait(issueMsg);
+            Pair<Boolean, Message> okAck = coprotocol.sendAndWait(issueMsg);
 
             if (!(okAck.second instanceof Ack)) {
                 throw new StateMachineTerminatedWithError("issue_processing_error", "Unexpected @type: " + okAck.second.getType());

@@ -44,7 +44,7 @@ public class Holder extends BaseIssuingStateMachine {
                     setCredRequest(credRequest).
                     build();
 
-            Pair<Boolean, Message> okResp = coprotocol.wait(requestMsg);
+            Pair<Boolean, Message> okResp = coprotocol.sendAndWait(requestMsg);
             if (!(okResp.second instanceof IssueCredentialMessage)) {
                 throw new StateMachineTerminatedWithError("request_not_accepted", "Unexpected @type:" + okResp.second.getType());
             }

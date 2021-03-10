@@ -42,11 +42,11 @@ public class TestCopropocols {
         try {
             Message firstReq = (new Message.MessageBuilder(TEST_MSG_TYPES[0])).add("content", "Request1").build();
             msgLog.add(firstReq);
-            Pair<Boolean, Message> okResp1 = protocol.wait(firstReq);
+            Pair<Boolean, Message> okResp1 = protocol.sendAndWait(firstReq);
             Assert.assertTrue(okResp1.first);
             msgLog.add(okResp1.second);
             Message secondReq = (new Message.MessageBuilder(TEST_MSG_TYPES[2])).add("content", "Request2").build();
-            Pair<Boolean, Message> okResp2 = protocol.wait(secondReq);
+            Pair<Boolean, Message> okResp2 = protocol.sendAndWait(secondReq);
             Assert.assertTrue(okResp2.first);
             msgLog.add(okResp2.second);
         } catch (Exception ex) {
@@ -59,7 +59,7 @@ public class TestCopropocols {
         try {
             Thread.sleep(1000);
             Message firstResp = (new Message.MessageBuilder(TEST_MSG_TYPES[1])).add("content", "Response1").build();
-            Pair<Boolean, Message> okResp1 = protocol.wait(firstResp);
+            Pair<Boolean, Message> okResp1 = protocol.sendAndWait(firstResp);
             Assert.assertTrue(okResp1.first);
             msgLog.add(okResp1.second);
             Message endMsg = (new Message.MessageBuilder(TEST_MSG_TYPES[3])).add("content", "End").build();
