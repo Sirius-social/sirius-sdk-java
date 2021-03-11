@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol;
+package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines;
 
 import com.sirius.sdk.agent.AbstractStateMachine;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;

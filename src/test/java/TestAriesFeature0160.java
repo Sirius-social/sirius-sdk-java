@@ -1,7 +1,7 @@
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
-import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.StateMachineInvitee;
-import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.StateMachineInviter;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.model.Endpoint;
@@ -41,7 +41,7 @@ public class TestAriesFeature0160 {
             if (expectedConnectionKey.equals(event.getRecipientVerkey())) {
                 if (event.message() instanceof ConnRequest) {
                     ConnRequest request = (ConnRequest) event.message();
-                    StateMachineInviter machine = new StateMachineInviter(context, me, expectedConnectionKey, myEndpoint);
+                    Inviter machine = new Inviter(context, me, expectedConnectionKey, myEndpoint);
                     Pairwise pairwise = machine.createConnection(request);
                     if (pairwise == null) {
                         Assert.fail();
@@ -66,7 +66,7 @@ public class TestAriesFeature0160 {
                 build()) {
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             // Create and start machine
-            StateMachineInvitee machine = new StateMachineInvitee(context, me, myEndpoint);
+            Invitee machine = new Invitee(context, me, myEndpoint);
             Pairwise pairwise = machine.createConnection(invitation, myLabel);
             if (pairwise == null) {
                 Assert.fail();

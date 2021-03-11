@@ -22,19 +22,19 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class StateMachineProver extends BaseVerifyStateMachine {
+public class Prover extends BaseVerifyStateMachine {
     Pairwise verifier = null;
     String poolName;
-    Logger log = Logger.getLogger(StateMachineProver.class.getName());
+    Logger log = Logger.getLogger(Prover.class.getName());
 
-    public StateMachineProver(Context context, Pairwise verifier, Ledger ledger, int timeToLiveSec) {
+    public Prover(Context context, Pairwise verifier, Ledger ledger, int timeToLiveSec) {
         this.context = context;
         this.verifier = verifier;
         this.poolName = ledger.getName();
         this.timeToLiveSec = timeToLiveSec;
     }
 
-    public StateMachineProver(Context context, Pairwise verifier, Ledger ledger) {
+    public Prover(Context context, Pairwise verifier, Ledger ledger) {
         this.context = context;
         this.verifier = verifier;
         this.poolName = ledger.getName();

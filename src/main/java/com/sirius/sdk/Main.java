@@ -3,7 +3,7 @@ package com.sirius.sdk;
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Listener;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
-import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.StateMachineInviter;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.model.Endpoint;
@@ -122,7 +122,7 @@ public class Main {
             ConnRequest request = (ConnRequest) event.message();
             // Establish connection with Sirius Communicator via standard Aries protocol
             // https://github.com/hyperledger/aries-rfcs/blob/master/features/0160-connection-protocol/README.md#states
-            StateMachineInviter sm = new StateMachineInviter(context, new Pairwise.Me(myDid, myVerkey), connectionKey, myEndpoint);
+            Inviter sm = new Inviter(context, new Pairwise.Me(myDid, myVerkey), connectionKey, myEndpoint);
             Pairwise p2p = sm.createConnection(request);
             if (p2p != null) {
                 // Ensure pairwise is stored

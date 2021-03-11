@@ -29,20 +29,20 @@ import java.util.logging.Logger;
  *
  * See details: https://github.com/hyperledger/aries-rfcs/tree/master/features/0037-present-proof
  */
-public class StateMachineVerifier extends BaseVerifyStateMachine {
+public class Verifier extends BaseVerifyStateMachine {
     Pairwise prover = null;
-    Logger log = Logger.getLogger(StateMachineVerifier.class.getName());
+    Logger log = Logger.getLogger(Verifier.class.getName());
     String poolname;
     JSONObject requestedProof;
 
-    public StateMachineVerifier(Context context, Pairwise prover, Ledger ledger, int timeToLive) {
+    public Verifier(Context context, Pairwise prover, Ledger ledger, int timeToLive) {
         this.context = context;
         this.prover = prover;
         this.poolname = ledger.getName();
         this.timeToLiveSec = timeToLive;
     }
 
-    public StateMachineVerifier(Context context, Pairwise prover, Ledger ledger) {
+    public Verifier(Context context, Pairwise prover, Ledger ledger) {
         this.context = context;
         this.prover = prover;
         this.poolname = ledger.getName();

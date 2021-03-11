@@ -3,8 +3,8 @@ import com.sirius.sdk.agent.Codec;
 import com.sirius.sdk.agent.Event;
 import com.sirius.sdk.agent.Ledger;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.StateMachineProver;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.StateMachineVerifier;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.Prover;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.Verifier;
 import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
@@ -143,8 +143,8 @@ public class TestAriesFeature0037 {
                     setTimeoutSec(60).
                     build()) {
                 Ledger verLedger = context.getLedgers().get("default");
-                StateMachineVerifier machine = new StateMachineVerifier(context, v2p, verLedger);
-                StateMachineVerifier.VerifyParams params = new StateMachineVerifier.VerifyParams();
+                Verifier machine = new Verifier(context, v2p, verLedger);
+                Verifier.VerifyParams params = new Verifier.VerifyParams();
                 params.proofRequest = finalProofRequest;
                 params.comment = "I am Verifier";
                 params.protoVersion = "1.0";
@@ -171,7 +171,7 @@ public class TestAriesFeature0037 {
                 RequestPresentationMessage requestPresentationMessage = (RequestPresentationMessage) event.message();
                 int ttl = 60;
                 Ledger proverLedger = context.getLedgers().get("default");
-                StateMachineProver machine = new StateMachineProver(context, p2v, proverLedger);
+                Prover machine = new Prover(context, p2v, proverLedger);
                 return machine.prove(requestPresentationMessage, proverSecretId);
             }
         }, r -> new Thread(r).start());

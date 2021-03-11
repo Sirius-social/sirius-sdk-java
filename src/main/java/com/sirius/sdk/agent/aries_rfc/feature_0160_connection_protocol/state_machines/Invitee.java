@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol;
+package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines;
 
 import com.sirius.sdk.agent.aries_rfc.DidDoc;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -11,7 +11,6 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.coprotocols.AbstractCoProtocol;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
@@ -21,10 +20,10 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-public class StateMachineInvitee extends BaseConnectionStateMachine {
-    Logger log = Logger.getLogger(StateMachineInvitee.class.getName());
+public class Invitee extends BaseConnectionStateMachine {
+    Logger log = Logger.getLogger(Invitee.class.getName());
 
-    public StateMachineInvitee(Context context, Pairwise.Me me, Endpoint myEndpoint) {
+    public Invitee(Context context, Pairwise.Me me, Endpoint myEndpoint) {
         this.context = context;
         this.me = me;
         this.myEndpoint = myEndpoint;

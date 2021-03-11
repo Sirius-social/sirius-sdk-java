@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol;
+package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines;
 
 import com.sirius.sdk.agent.aries_rfc.DidDoc;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -22,11 +22,11 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-public class StateMachineInviter extends BaseConnectionStateMachine {
-    Logger log = Logger.getLogger(StateMachineInviter.class.getName());
+public class Inviter extends BaseConnectionStateMachine {
+    Logger log = Logger.getLogger(Inviter.class.getName());
     String connectionKey;
 
-    public StateMachineInviter(Context context, Pairwise.Me me, String connectionKey, Endpoint myEndpoint) {
+    public Inviter(Context context, Pairwise.Me me, String connectionKey, Endpoint myEndpoint) {
         this.context = context;
         this.me = me;
         this.connectionKey = connectionKey;
