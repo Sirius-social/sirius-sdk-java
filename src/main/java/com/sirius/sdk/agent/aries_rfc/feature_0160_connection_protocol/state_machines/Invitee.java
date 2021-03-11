@@ -82,7 +82,10 @@ public class Invitee extends BaseConnectionStateMachine {
                                 cp.send(ack);
                                 log.info("90% - Step-4: Send ack to Inviter");
                             } else {
-                                Ping ping = Ping.create("Connection established", false);
+                                Ping ping = Ping.builder().
+                                        setComment("Connection established").
+                                        setResponseRequested(false).
+                                        build();
                                 cp.send(ping);
                                 log.info("90% - Step-4: Send ping to Inviter");
                             }

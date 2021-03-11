@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import com.sirius.sdk.messaging.Message;
 import org.json.JSONObject;
 
+
 /**Implementation of Ping part for trust_ping protocol
  *  https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping
  */
@@ -26,12 +27,48 @@ public class Ping extends AriesProtocolMessage {
         super(message);
     }
 
-    static public Ping create(String comment, Boolean responseRequested) {
-        JSONObject pingObject = new JSONObject();
-        pingObject.put("@id", generateId());
-        pingObject.put("@type", ARIES_DOC_URI + "trust_ping/1.0/ping");
-        pingObject.put("comment", comment);
-        pingObject.put("response_requested", responseRequested);
-        return new Ping(pingObject.toString());
+    public static Builder<?> builder() {
+        return new PingBuilder();
+    }
+
+    public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
+        String comment = null;
+        Boolean responseRequested = null;
+
+        public B setComment(String comment) {
+            this.comment = comment;
+            return self();
+        }
+
+        public B setResponseRequested(boolean responseRequested) {
+            this.responseRequested = responseRequested;
+            return self();
+        }
+
+        @Override
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = super.generateJSON();
+
+            if (comment != null) {
+                jsonObject.put("comment", comment);
+            }
+
+            if (responseRequested != null) {
+                jsonObject.put("response_requested", responseRequested);
+            }
+
+            return jsonObject;
+        }
+
+        public Ping build() {
+            return new Ping(generateJSON().toString());
+        }
+    }
+
+    private static class PingBuilder extends Builder<PingBuilder> {
+        @Override
+        protected PingBuilder self() {
+            return this;
+        }
     }
 }

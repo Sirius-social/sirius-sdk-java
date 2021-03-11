@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONObject;
 
 /**
  * Implementation of Pong part for trust_ping protocol
@@ -16,37 +17,59 @@ public class Pong extends AriesProtocolMessage {
     }
 
     public String getComment() {
-        return comment;
+        return getStringFromJSON("comment");
     }
-
-    String comment;
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public void setThreadId(String threadId) {
-        this.threadId = threadId;
-    }
-
-    public String getThreadId() {
-        return threadId;
-    }
-
-    String threadId;
 
     public Pong(String message) {
         super(message);
-        comment = getStringFromJSON("comment");
-        threadId = getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
     }
 
-    public String getPingId() {
-        try {
-            return getJSONOBJECTFromJSON(THREAD_DECORATOR).getString("thid");
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static Builder<?> builder() {
+        return new PongBuilder();
+    }
+
+    public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
+        String comment = null;
+        String pingId = null;
+
+        public B setComment(String comment) {
+            this.comment = comment;
+            return self();
         }
-        return null;
+
+        public B setPingId(String pingId) {
+            this.pingId = pingId;
+            return self();
+        }
+
+        @Override
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = super.generateJSON();
+
+            if (comment != null) {
+                jsonObject.put("comment", comment);
+            }
+
+            if (pingId != null) {
+                JSONObject thread = jsonObject.optJSONObject(THREAD_DECORATOR);
+                if (thread == null)
+                    thread = new JSONObject();
+                thread.put("thid", pingId);
+                jsonObject.put(THREAD_DECORATOR, thread);
+            }
+
+            return jsonObject;
+        }
+
+        public Pong build() {
+            return new Pong(generateJSON().toString());
+        }
+    }
+
+    private static class PongBuilder extends Builder<PongBuilder> {
+        @Override
+        protected PongBuilder self() {
+            return this;
+        }
     }
 }

@@ -57,7 +57,10 @@ public class TestAriesFeature0048 {
                 new Pairwise.Their(didVerkey2.first, "Agent2", endpointAddress2, didVerkey2.second));
 
         Listener listener2 = agent2.subscribe();
-        Ping ping = Ping.create("testMsg", false);
+        Ping ping = Ping.builder().
+                setComment("testMsg").
+                setResponseRequested(false).
+                build();
 
         Future<Event> feature2 = listener2.getOne();
         agent1.sendTo(ping, to);

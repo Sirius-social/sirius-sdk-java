@@ -66,6 +66,7 @@ public abstract class AriesProtocolMessage extends Message {
     public static abstract class Builder<B extends Builder<B>> {
         String version = DEF_VERSION;
         String docUri = ARIES_DOC_URI;
+        String id = null;
 
         public B setVersion(String version) {
             this.version = version;
@@ -74,6 +75,11 @@ public abstract class AriesProtocolMessage extends Message {
 
         public B setDocUri(String docUri) {
             this.docUri = docUri;
+            return self();
+        }
+
+        public B setId(String id) {
+            this.id = id;
             return self();
         }
 
@@ -87,7 +93,7 @@ public abstract class AriesProtocolMessage extends Message {
             Pair<String, String> protocolAndName = Message.getProtocolAndName((Class<? extends Message>) this.getClass().getDeclaringClass());
             jsonObject.put("@type", (new Type(docUri, protocolAndName.first, version, protocolAndName.second)));
 
-            jsonObject.put("@id", generateId());
+            jsonObject.put("@id", this.id == null ? generateId() : this.id);
 
             return jsonObject;
         }
