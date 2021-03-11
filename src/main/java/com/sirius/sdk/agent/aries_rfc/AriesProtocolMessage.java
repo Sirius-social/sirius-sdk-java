@@ -87,6 +87,8 @@ public abstract class AriesProtocolMessage extends Message {
             Pair<String, String> protocolAndName = Message.getProtocolAndName((Class<? extends Message>) this.getClass().getDeclaringClass());
             jsonObject.put("@type", (new Type(docUri, protocolAndName.first, version, protocolAndName.second)));
 
+            jsonObject.put("@id", generateId());
+
             return jsonObject;
         }
 

@@ -87,8 +87,7 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
-            String id = generateId();
-            jsonObject.put("@id", id);
+            String id = jsonObject.optString("id");
 
             if (proofRequest != null) {
                 byte[] base64 = Base64.getEncoder().encode(proofRequest.toString().getBytes(StandardCharsets.UTF_8));

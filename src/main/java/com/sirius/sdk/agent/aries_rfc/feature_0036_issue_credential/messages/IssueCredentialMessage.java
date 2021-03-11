@@ -65,8 +65,7 @@ public class IssueCredentialMessage extends BaseIssueCredentialMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
-            String id = generateId();
-            jsonObject.put("@id", id);
+            String id = jsonObject.optString("id");
 
             if (cred != null) {
                 String messageId = credId != null ? credId : "libindy-cred-" + id;

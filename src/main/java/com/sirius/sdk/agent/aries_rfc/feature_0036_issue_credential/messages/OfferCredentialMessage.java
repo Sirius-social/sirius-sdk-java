@@ -131,8 +131,7 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
-            String id = generateId();
-            jsonObject.put("@id", id);
+            String id = jsonObject.optString("id");
 
             if (preview != null && !preview.isEmpty()) {
                 JSONObject credPreview = new JSONObject();

@@ -95,8 +95,7 @@ public class Invitation extends ConnProtocolMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
-            String id = generateId();
-            jsonObject.put("@id", id);
+            String id = jsonObject.optString("id");
 
             if (label != null) {
                 jsonObject.put("label", label);

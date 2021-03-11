@@ -114,7 +114,6 @@ public class Message implements JsonSerializable<Message> {
         if (id.isEmpty()) {
             this.id = generateId();
         }
-
     }
 
     public Object getObjectFromJSON(String key) {
