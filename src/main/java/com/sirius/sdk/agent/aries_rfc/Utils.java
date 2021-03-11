@@ -33,7 +33,8 @@ public class Utils {
 
         JSONObject data = (new JSONObject()).
                 put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/signature/1.0/ed25519Sha512_single").
-                put("signer", verkey).put("signature", signature);
+                put("signer", verkey).
+                put("signature", signature);
 
         if (!excludeSigData) {
             data.put("sig_data", sigSata);
@@ -47,8 +48,8 @@ public class Utils {
     }
 
     public static Pair<JSONObject, Boolean> verifySigned(AbstractCrypto crypto, JSONObject signed) {
-        byte[] signatureBytes = Base64.getUrlEncoder().encode(signed.optString("signature").getBytes(StandardCharsets.US_ASCII));
-        byte[] sigDataBytes = Base64.getUrlEncoder().encode(signed.optString("sig_data").getBytes(StandardCharsets.US_ASCII));
+        byte[] signatureBytes = Base64.getUrlDecoder().decode(signed.optString("signature").getBytes(StandardCharsets.US_ASCII));
+        byte[] sigDataBytes = Base64.getUrlDecoder().decode(signed.optString("sig_data").getBytes(StandardCharsets.US_ASCII));
         boolean sigVerified = crypto.cryptoVerify(signed.optString("signer"), sigDataBytes, signatureBytes);
         byte[] dataBytes = Base64.getUrlDecoder().decode(signed.optString("sig_data"));
         JSONObject fieldJson = new JSONObject(

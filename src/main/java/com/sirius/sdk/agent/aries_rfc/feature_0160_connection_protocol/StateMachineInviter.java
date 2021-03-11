@@ -13,10 +13,13 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 public class StateMachineInviter extends BaseConnectionStateMachine {
@@ -56,8 +59,7 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
                 theirInfo.verkey, theirInfo.routingKeys);
 
         // Allocate transport channel between self and theirs by verkeys factor
-        try {
-            createCoprotocol(inviteeEndpoint);
+        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, me.getVerkey(), inviteeEndpoint, protocols(), timeToLiveSec)) {
             // Step 2: build connection response
             ConnResponse response = ConnResponse.builder().
                     setDid(this.me.getDid()).
@@ -73,7 +75,7 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
             response.signConnection(context.getCrypto(), this.connectionKey);
 
             log.info("80% - Step-2: Connection response");
-            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(response);
+            Pair<Boolean, Message> okMsg = cp.sendAndWait(response);
             if (okMsg.first) {
                 if (okMsg.second instanceof Ack || okMsg.second instanceof Ping) {
                     // Step 3: store their did
@@ -105,12 +107,10 @@ public class StateMachineInviter extends BaseConnectionStateMachine {
                     return null;
                 }
             }
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
+        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | IOException siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
             log.info("100% - Terminated with error");
             return null;
-        } finally {
-            releaseCoprotocol();
         }
         return null;
     }

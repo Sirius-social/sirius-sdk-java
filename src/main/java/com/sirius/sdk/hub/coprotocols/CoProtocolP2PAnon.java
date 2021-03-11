@@ -19,7 +19,7 @@ public class CoProtocolP2PAnon extends AbstractP2PCoProtocol {
     String myVerkey;
     TheirEndpoint endpoint;
     List<String> protocols;
-    String threadId;
+    String threadId = "";
 
     public CoProtocolP2PAnon(Context context, String myVerkey, TheirEndpoint endpoint, List<String> protocols, int timeToLiveSec) {
         super(context);
