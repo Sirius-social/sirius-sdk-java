@@ -12,11 +12,14 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,8 +44,7 @@ public class Prover extends BaseVerifyStateMachine {
     }
 
     public boolean prove(RequestPresentationMessage request, String masterSecretId) {
-        try {
-            createCoprotocol(this.verifier);
+        try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, verifier, protocols(), timeToLiveSec)) {
             // Step-1: Process proof-request
             log.log(Level.INFO, "10% - Received proof request");
             request.validate();
@@ -82,8 +84,8 @@ public class Prover extends BaseVerifyStateMachine {
             siriusPendingOperation.printStackTrace();
         } catch (StateMachineTerminatedWithError stateMachineTerminatedWithError) {
             stateMachineTerminatedWithError.printStackTrace();
-        } finally {
-            releaseCoprotocol();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return false;
     }

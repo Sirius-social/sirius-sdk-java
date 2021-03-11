@@ -14,6 +14,8 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
@@ -76,8 +78,7 @@ public class Verifier extends BaseVerifyStateMachine {
     }
 
     public boolean verify(VerifyParams params) {
-        try {
-            createCoprotocol(this.prover);
+        try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, prover, protocols(), timeToLiveSec)) {
             // Step-1: Send proof request
             Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
             RequestPresentationMessage requestPresentationMessage = RequestPresentationMessage.builder().
@@ -152,13 +153,8 @@ public class Verifier extends BaseVerifyStateMachine {
             return false;
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
-            releaseCoprotocol();
         }
 
         return false;
     }
-
-
-
 }

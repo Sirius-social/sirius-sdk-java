@@ -19,11 +19,4 @@ public abstract class BaseConnectionStateMachine extends AbstractStateMachine {
     public List<String> protocols() {
         return Arrays.asList(ConnProtocolMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
     }
-
-    public void createCoprotocol(TheirEndpoint endpoint) {
-        if (coprotocol == null) {
-            coprotocol = context.getCurrentHub().getAgentConnectionLazy().spawn(me.getVerkey(), endpoint);
-            coprotocol.start(protocols(), timeToLiveSec);
-        }
-    }
 }

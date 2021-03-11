@@ -10,6 +10,8 @@ import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import java.util.logging.Logger;
 
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
@@ -25,9 +27,8 @@ public class Holder extends BaseIssuingStateMachine {
     }
 
     public Pair<Boolean, String> accept(OfferCredentialMessage offer, String masterSecretId, String comment, String locale) {
-        try {
+        try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, issuer, protocols(), timeToLiveSec)) {
             String docUri = Type.fromStr(offer.getType()).getDocUri();
-            createCoprotocol(issuer);
             OfferCredentialMessage offerMsg = offer;
 
             // Step-1: Process Issuer Offer
@@ -60,8 +61,6 @@ public class Holder extends BaseIssuingStateMachine {
             return new Pair<Boolean, String>(true, credId);
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
-            releaseCoprotocol();
         }
 
         return new Pair<Boolean, String>(false, "");

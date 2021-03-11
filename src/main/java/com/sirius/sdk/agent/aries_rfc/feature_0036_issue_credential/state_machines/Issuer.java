@@ -8,6 +8,8 @@ import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.model.ledger.Schema;
 import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -34,9 +36,7 @@ public class Issuer extends BaseIssuingStateMachine {
     public Boolean issue(JSONObject values, Schema schema, CredentialDefinition credDef,
                          String comment, String locale, List<ProposedAttrib> preview,
                          List<AttribTranslation> translation, String credId) {
-        try {
-            createCoprotocol(holder);
-
+        try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, holder, protocols(), timeToLiveSec)) {
             // Step-1: Send offer to holder
             Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
             JSONObject offer = context.getAnonCreds().issuerCreateCredentialOffer(credDef.getId());
@@ -105,8 +105,6 @@ public class Issuer extends BaseIssuingStateMachine {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
-            releaseCoprotocol();
         }
 
         return false;
