@@ -45,7 +45,7 @@ public class TestAgent {
             String agentName = allAgentsList.get(i);
             AgentParams params = testSuite.getAgentParams(agentName);
             Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                    params.getConnection(), 5);
+                    params.getConnection(), 10);
             agent.open();
             boolean isPinged = agent.ping();
             Assert.assertTrue(isPinged);
@@ -58,7 +58,7 @@ public class TestAgent {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams params = testSuite.getAgentParams("agent1");
         Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
-                params.getConnection(), 5);
+                params.getConnection(), 10);
         agent.open();
         //Check wallet calls is ok
         Pair<String, String> didVerkey = agent.getWallet().getDid().createAndStoreMyDid();
@@ -146,9 +146,9 @@ public class TestAgent {
         Entity entity1 = agent1ParamsEntitiesList.get(0);
         Entity entity2 = agent2ParamsEntitiesList.get(0);
         Agent agent1 = new Agent(agent1Params.getServerAddress(), agent1Params.getCredentials().
-                getBytes(StandardCharsets.US_ASCII), agent1Params.getConnection(), 5);
+                getBytes(StandardCharsets.US_ASCII), agent1Params.getConnection(), 10);
         Agent agent2 = new Agent(agent2Params.getServerAddress(), agent2Params.getCredentials().
-                getBytes(StandardCharsets.US_ASCII), agent2Params.getConnection(), 5);
+                getBytes(StandardCharsets.US_ASCII), agent2Params.getConnection(), 10);
 
         agent1.open();
         agent2.open();
