@@ -1,7 +1,7 @@
 package com.sirius.sdk.hub.coprotocols;
 
-import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
@@ -12,8 +12,8 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-import static com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport.PLEASE_ACK_DECORATOR;
-import static com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport.THREAD_DECORATOR;
+import static com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport.PLEASE_ACK_DECORATOR;
+import static com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport.THREAD_DECORATOR;
 
 public class CoProtocolP2PAnon extends AbstractP2PCoProtocol {
     String myVerkey;

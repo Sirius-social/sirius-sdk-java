@@ -1,7 +1,7 @@
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.Ledger;
-import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
-import com.sirius.sdk.agent.model.ledger.Schema;
+import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.ledger.CredentialDefinition;
+import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;

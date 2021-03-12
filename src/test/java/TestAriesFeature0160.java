@@ -1,11 +1,11 @@
-import com.sirius.sdk.agent.Event;
-import com.sirius.sdk.agent.Listener;
+import com.sirius.sdk.agent.listener.Event;
+import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
-import com.sirius.sdk.agent.model.Endpoint;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;

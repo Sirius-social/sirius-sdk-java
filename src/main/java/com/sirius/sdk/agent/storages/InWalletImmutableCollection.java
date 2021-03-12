@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.storages;
 
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractNonSecrets;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;

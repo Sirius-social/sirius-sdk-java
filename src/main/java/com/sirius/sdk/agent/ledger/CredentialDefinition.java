@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.model.ledger;
+package com.sirius.sdk.agent.ledger;
 
 import com.google.gson.*;
 import com.google.gson.annotations.Expose;

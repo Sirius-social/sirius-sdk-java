@@ -1,13 +1,12 @@
 package com.sirius.sdk.hub;
 
-import com.sirius.sdk.agent.AbstractPairwiseList;
-import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.Ledger;
-import com.sirius.sdk.agent.Listener;
+import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
+import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
-import com.sirius.sdk.agent.model.Endpoint;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.*;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
@@ -24,7 +23,6 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 

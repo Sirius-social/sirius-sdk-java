@@ -1,11 +1,10 @@
 package com.sirius.sdk.hub;
 
-import com.sirius.sdk.agent.AbstractPairwiseList;
+import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.BaseAgentConnection;
+import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.wallet.abstract_wallet.*;
-import com.sirius.sdk.agent.wallet.impl.DIDProxy;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 

@@ -1,7 +1,7 @@
-package com.sirius.sdk.agent.model.coprotocols;
+package com.sirius.sdk.agent.coprotocols;
 
-import com.sirius.sdk.agent.AgentRPC;
-import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 
 import java.util.List;
 

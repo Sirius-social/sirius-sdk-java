@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.errors;
 
 import com.sirius.sdk.errors.BaseSiriusException;
 

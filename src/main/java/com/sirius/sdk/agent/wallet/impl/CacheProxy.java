@@ -1,12 +1,10 @@
 package com.sirius.sdk.agent.wallet.impl;
 
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCache;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.PurgeOptions;
-import com.sirius.sdk.errors.sirius_exceptions.*;
-import com.sirius.sdk.utils.Pair;
 
 public class CacheProxy extends AbstractCache {
 

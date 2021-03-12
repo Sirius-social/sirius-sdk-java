@@ -1,7 +1,7 @@
-package com.sirius.sdk.agent.model.coprotocols;
+package com.sirius.sdk.agent.coprotocols;
 
-import com.sirius.sdk.agent.AgentRPC;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;

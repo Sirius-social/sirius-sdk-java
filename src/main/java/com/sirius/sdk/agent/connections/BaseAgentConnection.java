@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.connections;
 
 import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.encryption.P2PConnection;

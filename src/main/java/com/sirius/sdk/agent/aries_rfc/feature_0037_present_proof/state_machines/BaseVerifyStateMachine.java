@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines;
 
-import com.sirius.sdk.agent.AbstractStateMachine;
+import com.sirius.sdk.base.AbstractStateMachine;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.BasePresentProofMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentProofProblemReport;

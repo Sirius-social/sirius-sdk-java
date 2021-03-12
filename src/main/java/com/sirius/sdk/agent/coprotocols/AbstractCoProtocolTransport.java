@@ -1,7 +1,6 @@
-package com.sirius.sdk.agent.model.coprotocols;
+package com.sirius.sdk.agent.coprotocols;
 
-import com.sirius.sdk.agent.AgentRPC;
-import com.sirius.sdk.agent.Event;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;

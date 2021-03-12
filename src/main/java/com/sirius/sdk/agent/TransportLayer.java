@@ -1,10 +1,10 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.model.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.TheirEndpointCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.ThreadBasedCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
-import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 
 public abstract  class TransportLayer {
 

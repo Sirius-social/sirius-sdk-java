@@ -1,11 +1,11 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
-import com.sirius.sdk.agent.StateMachineTerminatedWithError;
+import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueCredentialMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.OfferCredentialMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.RequestCredentialMessage;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 
 import java.util.logging.Logger;
 

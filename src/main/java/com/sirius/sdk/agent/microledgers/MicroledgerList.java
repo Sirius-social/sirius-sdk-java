@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.microledgers;
 
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 
 public class MicroledgerList {
     AgentRPC api;

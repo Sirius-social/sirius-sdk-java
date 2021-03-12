@@ -1,9 +1,8 @@
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.model.coprotocols.ThreadBasedCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import helpers.ConfTest;
 import org.junit.Before;
-import org.junit.Test;
 
 public class TestPerformance {
 

@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent.wallet.impl;
 
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractLedger;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;

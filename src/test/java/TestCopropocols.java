@@ -1,11 +1,11 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.model.Entity;
-import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.TheirEndpointCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.ThreadBasedCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
-import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;

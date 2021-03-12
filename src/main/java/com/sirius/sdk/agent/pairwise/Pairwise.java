@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.model.pairwise;
+package com.sirius.sdk.agent.pairwise;
 
 import org.json.JSONObject;
 

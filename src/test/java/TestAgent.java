@@ -1,7 +1,7 @@
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.Event;
-import com.sirius.sdk.agent.Listener;
-import com.sirius.sdk.agent.model.Endpoint;
+import com.sirius.sdk.agent.listener.Event;
+import com.sirius.sdk.agent.listener.Listener;
+import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 public class TestAgent {
 

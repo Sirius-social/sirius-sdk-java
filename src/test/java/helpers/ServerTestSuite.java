@@ -1,9 +1,8 @@
 package helpers;
 
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.model.Endpoint;
+import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
 import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.utils.Pair;

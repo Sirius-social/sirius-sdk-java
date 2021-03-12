@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.model;
+package com.sirius.sdk.agent.connections;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package com.sirius.sdk.hub.coprotocols;
 
-import com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
@@ -10,11 +10,10 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.List;
 
-import static com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport.PLEASE_ACK_DECORATOR;
-import static com.sirius.sdk.agent.model.coprotocols.AbstractCoProtocolTransport.THREAD_DECORATOR;
+import static com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport.PLEASE_ACK_DECORATOR;
+import static com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport.THREAD_DECORATOR;
 
 public class CoProtocolP2P extends AbstractP2PCoProtocol {
     Pairwise pairwise;

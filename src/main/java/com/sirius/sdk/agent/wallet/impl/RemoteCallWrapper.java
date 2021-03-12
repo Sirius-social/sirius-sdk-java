@@ -2,7 +2,7 @@ package com.sirius.sdk.agent.wallet.impl;
 
 
 import com.google.common.reflect.TypeToken;
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;

@@ -1,11 +1,11 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.ledger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.sirius.sdk.agent.model.ledger.CredentialDefinition;
-import com.sirius.sdk.agent.model.ledger.Schema;
-import com.sirius.sdk.agent.model.ledger.SchemaFilters;
+import com.sirius.sdk.agent.ledger.CredentialDefinition;
+import com.sirius.sdk.agent.ledger.Schema;
+import com.sirius.sdk.agent.ledger.SchemaFilters;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCache;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractLedger;
@@ -14,7 +14,6 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.GsonUtils;
 import com.sirius.sdk.utils.Pair;
-import org.checkerframework.checker.units.qual.C;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

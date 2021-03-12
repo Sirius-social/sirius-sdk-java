@@ -1,13 +1,8 @@
 package com.sirius.sdk.agent.wallet;
 
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.impl.*;
-import com.sirius.sdk.errors.sirius_exceptions.*;
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class DynamicWallet {
     AnonCredsProxy anoncreds;

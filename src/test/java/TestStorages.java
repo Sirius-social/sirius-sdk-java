@@ -1,12 +1,11 @@
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.InWalletImmutableCollection;
+import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryKeyValueStorage;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;

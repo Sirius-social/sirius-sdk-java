@@ -1,14 +1,10 @@
 package com.sirius.sdk.agent.wallet.impl;
 
-import com.sirius.sdk.agent.AgentRPC;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
-import com.sirius.sdk.errors.sirius_exceptions.*;
-import org.json.JSONObject;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CryptoProxy extends AbstractCrypto   {
 

@@ -1,6 +1,8 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.listener;
 
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
+import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;

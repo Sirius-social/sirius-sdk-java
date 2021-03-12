@@ -5,7 +5,7 @@ import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.model.Entity;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.Custom;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
@@ -19,7 +19,6 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class ConfTest {

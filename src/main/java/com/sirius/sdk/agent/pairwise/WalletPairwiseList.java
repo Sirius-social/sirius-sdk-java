@@ -1,6 +1,7 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.pairwise;
 
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractDID;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractPairwise;
 import com.sirius.sdk.utils.Pair;

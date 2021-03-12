@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.model.pairwise;
+package com.sirius.sdk.agent.pairwise;
 
 import java.util.ArrayList;
 import java.util.List;

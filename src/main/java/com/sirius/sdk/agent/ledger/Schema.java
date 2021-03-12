@@ -1,11 +1,9 @@
-package com.sirius.sdk.agent.model.ledger;
+package com.sirius.sdk.agent.ledger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
-import com.sirius.sdk.base.JsonSerializable;
 import com.sirius.sdk.utils.GsonUtils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Schema extends AnonCredSchema {

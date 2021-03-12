@@ -1,5 +1,5 @@
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import org.json.JSONObject;

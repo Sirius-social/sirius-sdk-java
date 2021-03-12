@@ -1,12 +1,19 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.BaseAgentConnection;
+import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
-import com.sirius.sdk.agent.model.Endpoint;
-import com.sirius.sdk.agent.model.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.TheirEndpointCoProtocolTransport;
-import com.sirius.sdk.agent.model.coprotocols.ThreadBasedCoProtocolTransport;
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
-import com.sirius.sdk.agent.model.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
+import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
@@ -178,7 +185,7 @@ public class Agent extends TransportLayer {
     public List<Endpoint> checkIsOpen() {
         if (rpc != null) {
             if (rpc.isOpen()) {
-                return rpc.endpoints;
+                return rpc.getEndpoints();
             }
         }
         throw new RuntimeException("Open Agent at first!");

@@ -1,8 +1,7 @@
-package com.sirius.sdk.agent;
+package com.sirius.sdk.agent.listener;
 
-import com.sirius.sdk.agent.model.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.messaging.Message;
-import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
