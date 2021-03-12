@@ -74,8 +74,8 @@ public class TestAriesFeature0037 {
         String proverSecretId = ConfTest.proverMasterSecretName;
         JSONObject credValues = (new JSONObject()).
                 put("attr1", "Value-1").
-                put("attr2", "456").
-                put("attr3", "5.67");
+                put("attr2", 456).
+                put("attr3", 4.67);
 
         String credId = "cred-id-" + UUID.randomUUID().toString();
 

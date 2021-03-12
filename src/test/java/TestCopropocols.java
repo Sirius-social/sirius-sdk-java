@@ -11,6 +11,7 @@ import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,12 +41,16 @@ public class TestCopropocols {
 
     void routine1(AbstractCoProtocolTransport protocol) {
         try {
-            Message firstReq = (new Message.MessageBuilder(TEST_MSG_TYPES[0])).add("content", "Request1").build();
+            Message firstReq = new Message(new JSONObject().
+                    put("@type", TEST_MSG_TYPES[0]).
+                    put("content", "Request1"));
             msgLog.add(firstReq);
             Pair<Boolean, Message> okResp1 = protocol.sendAndWait(firstReq);
             Assert.assertTrue(okResp1.first);
             msgLog.add(okResp1.second);
-            Message secondReq = (new Message.MessageBuilder(TEST_MSG_TYPES[2])).add("content", "Request2").build();
+            Message secondReq = new Message(new JSONObject().
+                    put("@type", TEST_MSG_TYPES[2]).
+                    put("content", "Request2"));
             Pair<Boolean, Message> okResp2 = protocol.sendAndWait(secondReq);
             Assert.assertTrue(okResp2.first);
             msgLog.add(okResp2.second);
@@ -58,11 +63,15 @@ public class TestCopropocols {
     void routine2(AbstractCoProtocolTransport protocol) {
         try {
             Thread.sleep(1000);
-            Message firstResp = (new Message.MessageBuilder(TEST_MSG_TYPES[1])).add("content", "Response1").build();
+            Message firstResp = new Message(new JSONObject().
+                    put("@type", TEST_MSG_TYPES[1]).
+                    put("content", "Response1"));
             Pair<Boolean, Message> okResp1 = protocol.sendAndWait(firstResp);
             Assert.assertTrue(okResp1.first);
             msgLog.add(okResp1.second);
-            Message endMsg = (new Message.MessageBuilder(TEST_MSG_TYPES[3])).add("content", "End").build();
+            Message endMsg = new Message(new JSONObject().
+                    put("@type", TEST_MSG_TYPES[3]).
+                    put("content", "End"));
             protocol.send(endMsg);
 
         } catch (Exception ex) {

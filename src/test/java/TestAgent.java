@@ -105,12 +105,11 @@ public class TestAgent {
             agent2.getWallet().getPairwise().createPairwise(entity1.getDid(), entity2.getDid());
         }
         //Prepare Message
-        Message.MessageBuilder messageBuilder = new Message.MessageBuilder("trust-ping-message" + UUID.randomUUID().hashCode(),
-                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping")
-                .add("comment", "Hi. Are you listening?")
-                .add("response_requested", true);
-
-        Message trustPing = messageBuilder.build();
+        Message trustPing = new Message(new JSONObject().
+                put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping").
+                put("@id", "trust-ping-message" + UUID.randomUUID().hashCode()).
+                put("comment", "Hi. Are you listening?").
+                put("response_requested", true));
         List<String> thierVerkeys = new ArrayList<>();
         thierVerkeys.add(entity2.getVerkey());
         String finalAgent2Endpoint = agent2Endpoint;
@@ -180,12 +179,11 @@ public class TestAgent {
         //Bind Message class to protocol
         Message.registerMessageClass(TrustPingMessageUnderTest.class, "trust_ping_test");
         //Prepare message
-        Message.MessageBuilder messageBuilder = new Message.MessageBuilder("trust-ping-message" + UUID.randomUUID().hashCode(),
-                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping_test/1.0/ping")
-                .add("comment", "Hi. Are you listening?")
-                .add("response_requested", true);
-
-        Message trust_ping = messageBuilder.build();
+        Message trust_ping = new Message(new JSONObject().
+                put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping_test/1.0/ping").
+                put("@id", "trust-ping-message" + UUID.randomUUID().hashCode()).
+                put("comment", "Hi. Are you listening?").
+                put("response_requested", true));
         List<String> verkeyList = new ArrayList<>();
         verkeyList.add(entity2.getVerkey());
 
