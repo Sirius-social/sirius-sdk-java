@@ -1,7 +1,6 @@
-package com.sirius.sdk.agent.wallet.impl;
+package com.sirius.sdk.agent.connections;
 
 
-import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;

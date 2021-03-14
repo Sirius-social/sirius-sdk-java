@@ -15,6 +15,7 @@ import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
@@ -251,8 +252,6 @@ public class Agent extends TransportLayer {
         return null;
     }
 
-
-
     @Override
     public TheirEndpointCoProtocolTransport spawn(String myVerkey, TheirEndpoint endpoint) {
         AgentRPC new_rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
@@ -323,6 +322,32 @@ public class Agent extends TransportLayer {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Acquire N resources given by names
+     * @param resources names of resources that you are going to lock
+     * @param lockTimeoutSec max timeout resources will be locked. Resources will be automatically unlocked on expire
+     * @param enterTimeoutSec timeout to wait resources are released
+     * @return
+     */
+    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec, double enterTimeoutSec) {
+        checkIsOpen();
+        return new RemoteCallWrapper<Pair<Boolean, List<String>>>(rpc){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/acquire",
+                        RemoteParams.RemoteParamsBuilder.create()
+                                .add("names", resources)
+                                .add("enter_timeout", (int) enterTimeoutSec)
+                                .add("lock_timeout", (int) lockTimeoutSec));
+    }
+
+    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec) {
+        return acquire(resources, lockTimeoutSec, 3);
+    }
+
+    public void release() {
+        new RemoteCallWrapper<Void>(rpc){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/release");
     }
 }
 

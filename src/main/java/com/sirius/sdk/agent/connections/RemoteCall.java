@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.wallet.impl;
+package com.sirius.sdk.agent.connections;
 
 import com.sirius.sdk.agent.RemoteParams;
 

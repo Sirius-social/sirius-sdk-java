@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.wallet.impl;
 
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
+import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCache;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.PurgeOptions;

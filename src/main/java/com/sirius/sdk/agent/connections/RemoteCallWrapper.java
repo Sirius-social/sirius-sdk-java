@@ -1,9 +1,10 @@
-package com.sirius.sdk.agent.wallet.impl;
+package com.sirius.sdk.agent.connections;
 
 
 import com.google.common.reflect.TypeToken;
-import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
+import com.sirius.sdk.agent.wallet.impl.AbstractDAO;
+import com.sirius.sdk.agent.wallet.impl.AbstractGenericType;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONArray;
