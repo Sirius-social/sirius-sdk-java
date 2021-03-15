@@ -13,6 +13,8 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.PurgeOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
+import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -350,7 +352,7 @@ public class Context implements Closeable {
         }
 
         @Override
-        public String proverCreateMasterSecret(String masterSecretName) {
+        public String proverCreateMasterSecret(String masterSecretName) throws DuplicateMasterSecretNameException {
             AbstractAnonCreds service = currentHub.getAnonCreds();
             return service.proverCreateMasterSecret(masterSecretName);
         }
@@ -380,7 +382,7 @@ public class Context implements Closeable {
         }
 
         @Override
-        public String proverGetCredential(String credDefId) {
+        public String proverGetCredential(String credDefId) throws WalletItemNotFoundException {
             AbstractAnonCreds service = currentHub.getAnonCreds();
             return service.proverGetCredential(credDefId);
         }

@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.wallet.abstract_wallet;
 
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
+import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONObject;
@@ -321,13 +323,13 @@ public abstract class AbstractAnonCreds {
      * @param masterSecretName (optional, if not present random one will be generated) new master id
      * @return id of generated master secret.
      */
-    public abstract String proverCreateMasterSecret(String masterSecretName);
+    public abstract String proverCreateMasterSecret(String masterSecretName) throws DuplicateMasterSecretNameException;
 
     /**
      * Overload method {@link #proverCreateMasterSecret(String masterSecretName)}
      */
 
-    public String proverCreateMasterSecret() {
+    public String proverCreateMasterSecret() throws DuplicateMasterSecretNameException {
         return proverCreateMasterSecret(null);
     }
 
@@ -436,7 +438,7 @@ public abstract class AbstractAnonCreds {
      * "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
      * }
      */
-    public abstract String proverGetCredential(String credDefId);
+    public abstract String proverGetCredential(String credDefId) throws WalletItemNotFoundException;
 
     /**
      * Delete identified credential from wallet.

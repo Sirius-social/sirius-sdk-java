@@ -5,6 +5,8 @@ import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractAnonCreds;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
+import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONObject;
@@ -125,11 +127,18 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverCreateMasterSecret(String masterSecretName) {
-        return   new RemoteCallWrapper<String>(rpc){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_create_master_secret",
-                        RemoteParams.RemoteParamsBuilder.create()
-                                .add("master_secret_name", masterSecretName));
+    public String proverCreateMasterSecret(String masterSecretName) throws DuplicateMasterSecretNameException {
+        try {
+            return new RemoteCallWrapper<String>(rpc){}.
+                    remoteCallEx("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_create_master_secret",
+                            RemoteParams.RemoteParamsBuilder.create()
+                                    .add("master_secret_name", masterSecretName));
+        } catch (DuplicateMasterSecretNameException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -177,11 +186,18 @@ public class AnonCredsProxy extends AbstractAnonCreds {
     }
 
     @Override
-    public String proverGetCredential(String credId) {
-     return new RemoteCallWrapper<String>(rpc){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_get_credential",
-                        RemoteParams.RemoteParamsBuilder.create()
-                                .add("cred_id", credId));
+    public String proverGetCredential(String credId) throws WalletItemNotFoundException {
+        try {
+            return new RemoteCallWrapper<String>(rpc){}.
+                       remoteCallEx("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/prover_get_credential",
+                               RemoteParams.RemoteParamsBuilder.create()
+                                       .add("cred_id", credId));
+        } catch (WalletItemNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

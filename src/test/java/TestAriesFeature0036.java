@@ -10,6 +10,7 @@ import com.sirius.sdk.agent.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
@@ -62,7 +63,9 @@ public class TestAriesFeature0036 {
         Assert.assertTrue(okCredDef.first);
         CredentialDefinition credDef = okCredDef.second;
 
-        holder.getWallet().getAnoncreds().proverCreateMasterSecret(ConfTest.proverMasterSecretName);
+        try {
+            holder.getWallet().getAnoncreds().proverCreateMasterSecret(ConfTest.proverMasterSecretName);
+        } catch (DuplicateMasterSecretNameException ignored) {}
 
         issuer.close();
         holder.close();

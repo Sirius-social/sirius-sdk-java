@@ -69,17 +69,21 @@ public abstract class RemoteCallWrapper<T> implements RemoteCall<T> {
     @Override
     public T remoteCall(String type, RemoteParams.RemoteParamsBuilder params) {
         try {
-            Object response;
-            if (params == null) {
-                response = rpc.remoteCall(type);
-            } else {
-                response = rpc.remoteCall(type, params.build());
-            }
-            return serializeResponse(response);
+            return remoteCallEx(type, params);
         } catch (Exception siriusConnectionClosed) {
             siriusConnectionClosed.printStackTrace();
         }
         return null;
+    }
+
+    public T remoteCallEx(String type, RemoteParams.RemoteParamsBuilder params) throws Exception {
+        Object response;
+        if (params == null) {
+            response = rpc.remoteCall(type);
+        } else {
+            response = rpc.remoteCall(type, params.build());
+        }
+        return serializeResponse(response);
     }
 
     public T remoteCall(String type) {
