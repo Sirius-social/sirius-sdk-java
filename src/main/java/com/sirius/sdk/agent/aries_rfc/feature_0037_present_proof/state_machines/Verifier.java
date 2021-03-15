@@ -146,13 +146,13 @@ public class Verifier extends BaseVerifyStateMachine {
             }
 
 
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
-            siriusPendingOperation.printStackTrace();
-        } catch (StateMachineTerminatedWithError stateMachineTerminatedWithError) {
-            this.problemReport = new PresentProofProblemReport();
-            return false;
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (StateMachineTerminatedWithError e) {
+            this.problemReport = PresentProofProblemReport.builder().
+                    setProblemCode(e.getProblemCode()).
+                    setExplain(e.getExplain()).
+                    build();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return false;

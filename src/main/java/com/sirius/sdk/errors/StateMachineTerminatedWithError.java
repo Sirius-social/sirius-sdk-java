@@ -14,8 +14,20 @@ public class StateMachineTerminatedWithError extends BaseSiriusException {
         this.explain = explain;
         this.notify = notify;
     }
+
     public StateMachineTerminatedWithError(String problemCode, String explain) {
         this(problemCode,explain,true);
     }
 
+    public String getProblemCode() {
+        return problemCode;
+    }
+
+    public String getExplain() {
+        return explain;
+    }
+
+    public boolean isNotify() {
+        return notify;
+    }
 }

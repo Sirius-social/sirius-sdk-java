@@ -80,11 +80,7 @@ public class Prover extends BaseVerifyStateMachine {
             } else {
                 throw new StateMachineTerminatedWithError("response_for_unknown_request", "Unexpected response @type:" + okMsg.second.getType().toString());
             }
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
-            siriusPendingOperation.printStackTrace();
-        } catch (StateMachineTerminatedWithError stateMachineTerminatedWithError) {
-            stateMachineTerminatedWithError.printStackTrace();
-        } catch (IOException e) {
+        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | IOException | StateMachineTerminatedWithError e) {
             e.printStackTrace();
         }
         return false;

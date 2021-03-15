@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueProblemReport;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueCredentialMessage;
@@ -28,8 +29,9 @@ public class Holder extends BaseIssuingStateMachine {
     }
 
     public Pair<Boolean, String> accept(OfferCredentialMessage offer, String masterSecretId, String comment, String locale) {
+        String docUri = "";
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, issuer, protocols(), timeToLiveSec)) {
-            String docUri = Type.fromStr(offer.getType()).getDocUri();
+            docUri = Type.fromStr(offer.getType()).getDocUri();
             OfferCredentialMessage offerMsg = offer;
 
             // Step-1: Process Issuer Offer
@@ -56,15 +58,24 @@ public class Holder extends BaseIssuingStateMachine {
             // Step-3: Store credential
             String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
 
-            Ack ack = Ack.builder().setStatus(Ack.Status.OK).setDocUri(docUri).build();
+            Ack ack = Ack.builder().
+                    setStatus(Ack.Status.OK).
+                    setDocUri(docUri).
+                    build();
             ack.setThreadId(issueMsg.getAckMessageId());
             coprotocol.send(ack);
-            return new Pair<Boolean, String>(true, credId);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            return new Pair<>(true, credId);
+        } catch (StateMachineTerminatedWithError ex) {
+            problemReport = IssueProblemReport.builder().
+                    setProblemCode(ex.getProblemCode()).
+                    setExplain(ex.getExplain()).
+                    setDocUri(docUri).
+                    build();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return new Pair<Boolean, String>(false, "");
+        return new Pair<>(false, "");
     }
 
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {
