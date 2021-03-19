@@ -12,6 +12,7 @@ import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
@@ -36,7 +37,10 @@ public class Inviter extends BaseConnectionStateMachine {
     public Pairwise createConnection(ConnRequest request, JSONObject didDoc) {
         // Validate request
         log.info("0% - Validate request");
-        if (!request.validate()) {
+        try {
+            request.validate();
+        } catch (SiriusValidationError e) {
+            e.printStackTrace();
             log.info("100% - Terminated with error");
             return null;
         }

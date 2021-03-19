@@ -11,6 +11,7 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
@@ -47,7 +48,11 @@ public class Prover extends BaseVerifyStateMachine {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, verifier, protocols(), timeToLiveSec)) {
             // Step-1: Process proof-request
             log.log(Level.INFO, "10% - Received proof request");
-            request.validate();
+            try {
+                request.validate();
+            } catch (SiriusValidationError e) {
+                throw new StateMachineTerminatedWithError("request_not_accepted", e.getMessage());
+            }
 
             ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
 

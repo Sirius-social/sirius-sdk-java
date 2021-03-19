@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages;
 
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -43,13 +44,12 @@ public class Invitation extends ConnProtocolMessage {
     }
 
     @Override
-    public boolean validate() {
-        if (super.validate()) {
-            return getMessageObj().has("label") &&
-                    getMessageObj().has("recipientKeys") &&
-                    getMessageObj().has("serviceEndpoint");
-        }
-        return false;
+    public void validate() throws SiriusValidationError {
+        super.validate();
+        if (!(getMessageObj().has("label") &&
+                getMessageObj().has("recipientKeys") &&
+                getMessageObj().has("serviceEndpoint")))
+            throw new SiriusValidationError("Attribute is missing");
     }
 
     public String invitationUrl() {

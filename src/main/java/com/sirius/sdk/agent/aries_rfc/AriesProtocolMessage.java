@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc;
 
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
@@ -19,9 +20,7 @@ public abstract class AriesProtocolMessage extends Message {
         super("{}");
     }
 
-    public boolean validate() {
-        return true;
-    }
+    public void validate() throws SiriusValidationError {}
 
     public String getAckMessageId() {
         JSONObject pleaseAck = getJSONOBJECTFromJSON("~please_ack", "{}");

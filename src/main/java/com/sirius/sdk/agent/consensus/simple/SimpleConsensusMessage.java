@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleConsensusMessage extends AriesProtocolMessage {
@@ -11,6 +12,19 @@ public class SimpleConsensusMessage extends AriesProtocolMessage {
 
     public SimpleConsensusMessage(String msg) {
         super(msg);
+    }
+
+    public List<String> getParticipants() {
+        List<String> res = new ArrayList<>();
+        if (getMessageObj().has("participants")) {
+            JSONArray jArr = getMessageObj().optJSONArray("participants");
+            for (Object o : jArr) {
+                if (o instanceof String)
+                    res.add((String) o);
+            }
+        }
+
+        return res;
     }
 
     public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {

@@ -1,11 +1,11 @@
 package com.sirius.sdk.agent.consensus.simple;
 
-import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.microledgers.Utils;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
+import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
@@ -19,12 +19,20 @@ import static com.sirius.sdk.agent.aries_rfc.Utils.verifySigned;
 
 public class BaseInitLedgerMessage extends SimpleConsensusMessage {
 
+    static {
+        Message.registerMessageClass(BaseInitLedgerMessage.class, SimpleConsensusMessage.PROTOCOL, "initialize");
+    }
+
     public BaseInitLedgerMessage(String msg) {
         super(msg);
     }
 
     public JSONObject ledgerHash() {
         return getMessageObj().optJSONObject("ledger~hash");
+    }
+
+    public JSONObject getLedger() {
+        return getMessageObj().optJSONObject("ledger");
     }
 
     public JSONArray signatures() {
