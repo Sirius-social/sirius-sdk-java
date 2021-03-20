@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.consensus.simple;
+package com.sirius.sdk.agent.consensus.simple.messages;
 
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.microledgers.Utils;

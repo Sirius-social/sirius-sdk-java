@@ -1,9 +1,7 @@
-package com.sirius.sdk.agent.consensus.simple;
+package com.sirius.sdk.agent.consensus.simple.messages;
 
 import com.sirius.sdk.messaging.Message;
 import org.json.JSONObject;
-
-import java.util.List;
 
 public class InitResponseLedgerMessage extends InitRequestLedgerMessage {
 

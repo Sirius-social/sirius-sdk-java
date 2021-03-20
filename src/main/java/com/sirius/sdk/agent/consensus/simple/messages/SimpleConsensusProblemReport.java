@@ -1,4 +1,4 @@
-package com.sirius.sdk.agent.consensus.simple;
+package com.sirius.sdk.agent.consensus.simple.messages;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProblemReport;
 import com.sirius.sdk.messaging.Message;
