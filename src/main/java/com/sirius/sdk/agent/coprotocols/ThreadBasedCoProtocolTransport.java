@@ -99,6 +99,12 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
     }
 
     @Override
+    public void start(int timeToLiveSec) {
+        super.start(timeToLiveSec);
+        this.rpc.startProtocolWithThreading(thid, timeToLiveSec);
+    }
+
+    @Override
     public void start() {
         super.start(protocols);
         this.rpc.startProtocolWithThreading(thid, timeToLiveSec);

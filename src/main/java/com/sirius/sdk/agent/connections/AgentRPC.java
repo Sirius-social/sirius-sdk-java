@@ -2,8 +2,6 @@ package com.sirius.sdk.agent.connections;
 
 import com.neovisionaries.ws.client.WebSocket;
 import com.sirius.sdk.agent.RemoteParams;
-import com.sirius.sdk.agent.connections.BaseAgentConnection;
-import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
@@ -249,6 +247,10 @@ public class AgentRPC extends BaseAgentConnection {
             }
         }
 
+        return null;
+    }
+
+    public List<Object> sendMessageBatched(Message message, List<RoutingBatch> batches) {
         return null;
     }
 

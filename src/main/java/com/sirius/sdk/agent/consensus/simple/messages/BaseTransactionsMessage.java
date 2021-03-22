@@ -5,6 +5,7 @@ import com.sirius.sdk.messaging.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BaseTransactionsMessage extends SimpleConsensusMessage {
@@ -17,7 +18,32 @@ public class BaseTransactionsMessage extends SimpleConsensusMessage {
         super(msg);
     }
 
-    public static abstract class Builder<B extends BaseInitLedgerMessage.Builder<B>> extends SimpleConsensusMessage.Builder<B> {
+    public List<Transaction> transactions() {
+        JSONArray trArr = getMessageObj().optJSONArray("transactions");
+        if (trArr != null) {
+            List<Transaction> res = new ArrayList<>();
+            for (Object o : trArr) {
+                res.add(new Transaction((JSONObject) o));
+            }
+        }
+        return null;
+    }
+
+    public MicroLedgerState getState() {
+        JSONObject jsonState = getMessageObj().optJSONObject("state");
+        if (jsonState != null) {
+            MicroLedgerState state = new MicroLedgerState(jsonState);
+            if (state.isFilled())
+                return state;
+        }
+        return null;
+    }
+
+    public String getHash() {
+        return getMessageObj().optString("hash", null);
+    }
+
+    public static abstract class Builder<B extends Builder<B>> extends SimpleConsensusMessage.Builder<B> {
         List<Transaction> transactions = null;
         MicroLedgerState state = null;
 

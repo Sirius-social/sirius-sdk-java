@@ -28,6 +28,12 @@ public class PairwiseCoProtocolTransport extends AbstractCoProtocolTransport {
     }
 
     @Override
+    public void start(int timeToLiveSec) {
+        super.start(timeToLiveSec);
+        this.rpc.startProtocolForP2P(myVerkey, pairwise.getTheir().getVerkey(), protocols, timeToLiveSec);
+    }
+
+    @Override
     public void start() {
         super.start(protocols);
         this.rpc.startProtocolForP2P(myVerkey, pairwise.getTheir().getVerkey(), protocols, timeToLiveSec);

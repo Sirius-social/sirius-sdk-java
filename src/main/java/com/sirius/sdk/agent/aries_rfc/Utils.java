@@ -23,7 +23,7 @@ public class Utils {
         return "";
     }
 
-    public static JSONObject sign(AbstractCrypto crypto, JSONObject value, String verkey, boolean excludeSigData) {
+    public static JSONObject sign(AbstractCrypto crypto, Object value, String verkey, boolean excludeSigData) {
         byte[] timestampBytes = ByteBuffer.allocate(8).putLong(System.currentTimeMillis() / 1000).array();
         byte[] sigDataBytes = ArrayUtils.addAll(timestampBytes, value.toString().getBytes(StandardCharsets.US_ASCII));
         String sigSata = new String(Base64.getUrlEncoder().encode((sigDataBytes)), StandardCharsets.US_ASCII);
@@ -43,7 +43,7 @@ public class Utils {
         return data;
     }
 
-    public static JSONObject sign(AbstractCrypto crypto, JSONObject value, String verkey) {
+    public static JSONObject sign(AbstractCrypto crypto, Object value, String verkey) {
         return sign(crypto, value, verkey, false);
     }
 

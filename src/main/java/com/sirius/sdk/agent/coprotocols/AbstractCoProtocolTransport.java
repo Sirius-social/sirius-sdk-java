@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.coprotocols;
 
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.RoutingBatch;
+import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
@@ -78,6 +80,13 @@ public abstract class AbstractCoProtocolTransport {
         this.protocols = protocols;
         if (protocols.isEmpty())
             this.checkProtocols = false;
+        started = true;
+    }
+
+    public void start(int timeToLiveSec) {
+        this.protocols = new ArrayList<>();
+        this.timeToLiveSec = timeToLiveSec;
+        this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
         started = true;
     }
 
@@ -210,5 +219,20 @@ public abstract class AbstractCoProtocolTransport {
         } finally {
             cleanupContext();
         }
+    }
+
+    public List<Object> sendMany(Message message, List<Pairwise> to) throws SiriusPendingOperation {
+        List<RoutingBatch> batches = new ArrayList<>();
+        for (Pairwise p : to) {
+            batches.add(new RoutingBatch(Collections.singletonList(p.getTheir().getVerkey()), p.getTheir().getEndpoint(), p.getMe().getVerkey(), p.getTheir().getRoutingKeys()));
+        }
+        if (!isSetup) {
+            throw new SiriusPendingOperation("You must Setup protocol instance at first");
+        }
+        rpc.setTimeout(timeToLiveSec);
+        setupContext(message);
+       // rpc.sendMessage();
+        return null;
+
     }
 }
