@@ -331,18 +331,18 @@ public class Agent extends TransportLayer {
      * @param enterTimeoutSec timeout to wait resources are released
      * @return
      */
-    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec, double enterTimeoutSec) {
+    public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
         checkIsOpen();
         return new RemoteCallWrapper<Pair<Boolean, List<String>>>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/acquire",
                         RemoteParams.RemoteParamsBuilder.create()
                                 .add("names", resources)
-                                .add("enter_timeout", (int) enterTimeoutSec)
-                                .add("lock_timeout", (int) lockTimeoutSec));
+                                .add("enter_timeout", enterTimeoutSec)
+                                .add("lock_timeout", lockTimeoutSec));
     }
 
     public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec) {
-        return acquire(resources, lockTimeoutSec, 3);
+        return acquire(resources, lockTimeoutSec, 3.0);
     }
 
     public void release() {

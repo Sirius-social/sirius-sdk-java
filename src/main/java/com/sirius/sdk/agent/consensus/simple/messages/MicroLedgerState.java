@@ -85,7 +85,7 @@ public class MicroLedgerState {
     public String getHash() {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(JSONUtils.JSONObjectToString(payload).getBytes());
+            md.update(JSONUtils.JSONObjectToString(payload, true).getBytes());
             byte[] digest = md.digest();
             return LazySodium.toHex(digest);
         } catch (NoSuchAlgorithmException e) {

@@ -15,6 +15,27 @@ import org.json.JSONObject;
 import java.util.*;
 
 public class Parsing {
+    public static final Map<String, Class> CLS_MAP = new HashMap<String, Class>() {
+        {
+            put("application/cache-options", CacheOptions.class);
+            put("application/purge-options", PurgeOptions.class);
+            put("application/retrieve-record-options", RetrieveRecordOptions.class);
+            put("application/nym-role", NYMRole.class);
+            put("application/pool-action", PoolAction.class);
+            put("application/key-derivation-method", KeyDerivationMethod.class);
+        }
+    };
+    public static final Map<Class, String> CLS_MAP_REVERT = new HashMap<Class, String>() {
+        {
+            put(CacheOptions.class, "application/cache-options");
+            put(PurgeOptions.class, "application/purge-options");
+            put(RetrieveRecordOptions.class, "application/retrieve-record-options");
+            put(NYMRole.class, "application/nym-role");
+            put(PoolAction.class, "application/pool-action");
+            put(KeyDerivationMethod.class, "application/key-derivation-method");
+        }
+    };
+
     /**
      * @param msgType Aries RFCs attribute
      *                https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0020-message-types
@@ -40,30 +61,7 @@ public class Parsing {
         return new Message(jsonObject.toString());
     }
 
-
-    public static final Map<String, Class> CLS_MAP = new HashMap<String, Class>() {
-        {
-            put("application/cache-options", CacheOptions.class);
-            put("application/purge-options", PurgeOptions.class);
-            put("application/retrieve-record-options", RetrieveRecordOptions.class);
-            put("application/nym-role", NYMRole.class);
-            put("application/pool-action", PoolAction.class);
-            put("application/key-derivation-method", KeyDerivationMethod.class);
-        }
-    };
-    public static final Map<Class, String> CLS_MAP_REVERT = new HashMap<Class, String>() {
-        {
-            put(CacheOptions.class, "application/cache-options");
-            put(PurgeOptions.class, "application/purge-options");
-            put(RetrieveRecordOptions.class, "application/retrieve-record-options");
-            put(NYMRole.class, "application/nym-role");
-            put(PoolAction.class, "application/pool-action");
-            put(KeyDerivationMethod.class, "application/key-derivation-method");
-        }
-    };
-
     //  CLS_MAP_REVERT = {v: k for k, v in CLS_MAP.items()}
-
 
     public static JSONObject incapsulateParam(RemoteParams params) {
         JSONObject paramsObject = new JSONObject();
@@ -96,7 +94,7 @@ public class Parsing {
         String mimeType = CLS_MAP_REVERT.get(param.getClass());
         if (mimeType != null && param instanceof JsonSerializable) {
             varParam = ((JsonSerializable) param).serialize();
-        }else if (param instanceof Collection) {
+        } else if (param instanceof Collection) {
             JSONArray jsonArray = new JSONArray();
             for (Object oneParam : (Collection) param) {
                 Object oneParamObject = serializeObject(oneParam);
@@ -108,24 +106,13 @@ public class Parsing {
             varParam = custom.bytesToB64((byte[]) param, false);
         } else if (param instanceof JsonSerializable) {
             varParam = ((JsonSerializable) param).serializeToJSONObject();
-        }else if(param instanceof  JSONObject){
+        } else if (param instanceof JSONObject) {
             varParam = param;
-        } else if(param instanceof  Integer){
+        } else if (param instanceof Number) {
             varParam = param;
-        } else if (param instanceof  String){
-           /* if(((String) param).startsWith("{") && ((String) param).endsWith("}")){
-                varParam = new JSONObject(param);
-             //   System.out.println("param="+param);
-               // System.out.println("addWalletRecor2="+varParam);
-            }else if(((String) param).startsWith("[") && ((String) param).endsWith("]")){
-                varParam = new JSONArray(param);
-                System.out.println("addWalletRecor3="+varParam);
-            }else{
-                varParam = param.toString();
-                System.out.println("addWalletRecor4="+varParam);
-            }*/
+        } else if (param instanceof String) {
             varParam = param.toString();
-        }else{
+        } else {
             varParam = param.toString();
         }
 
