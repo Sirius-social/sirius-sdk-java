@@ -250,7 +250,24 @@ public class AgentRPC extends BaseAgentConnection {
         return null;
     }
 
-    public List<Object> sendMessageBatched(Message message, List<RoutingBatch> batches) {
+    public List<Object> sendMessageBatched(Message message, List<RoutingBatch> batches) throws SiriusConnectionClosed {
+        if (!connector.isOpen()) {
+            throw new SiriusConnectionClosed("Open agent connection at first");
+        }
+
+        RemoteParams params = RemoteParams.RemoteParamsBuilder.create().
+                add("message", message).
+                add("timeout", this.timeout).
+                add("batches", batches).
+                build();
+
+        try {
+            Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message_batched", params);
+            return (List<Object>) response;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 

@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.coprotocols;
 
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.RoutingBatch;
+import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
@@ -196,8 +197,37 @@ public abstract class AbstractCoProtocolTransport {
         }
     }
 
-    public Message getOne() throws SiriusInvalidPayloadStructure {
-        return rpc.readProtocolMessage();
+    public static class GetOneResult {
+        public Message message;
+        public String senderVerkey;
+        public  String recipientVerkey;
+
+        public GetOneResult(Message message, String senderVerkey, String recipientVerkey) {
+            this.message = message;
+            this.senderVerkey = senderVerkey;
+            this.recipientVerkey = recipientVerkey;
+        }
+    }
+
+    public GetOneResult getOne() throws SiriusInvalidPayloadStructure {
+        Message event = rpc.readProtocolMessage();
+        Message message = null;
+        if (event.messageObjectHasKey("message")) {
+            try {
+                Pair<Boolean, Message> okMessage = Message.restoreMessageInstance(event.getMessageObj().getString("message"));
+                if (okMessage.first) {
+                    message = okMessage.second;
+                } else {
+                    message = new Message(event.getMessageObj().getJSONObject("message"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        String senderVerkey = event.getMessageObj().optString("sender_verkey", null);
+        String recipientVerkey = event.getMessageObj().optString("recipient_verkey", null);
+        return new GetOneResult(message, senderVerkey, recipientVerkey);
     }
 
     public void send(Message message) throws SiriusPendingOperation {
@@ -231,8 +261,11 @@ public abstract class AbstractCoProtocolTransport {
         }
         rpc.setTimeout(timeToLiveSec);
         setupContext(message);
-       // rpc.sendMessage();
+        try {
+            return rpc.sendMessageBatched(message, batches);
+        } catch (SiriusConnectionClosed siriusConnectionClosed) {
+            siriusConnectionClosed.printStackTrace();
+        }
         return null;
-
     }
 }

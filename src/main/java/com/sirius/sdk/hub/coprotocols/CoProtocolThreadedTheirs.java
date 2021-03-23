@@ -4,8 +4,11 @@ import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +41,13 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
     public static class SendResult {
         public Pairwise pairwise;
         public Boolean success;
-        public String endpoint;
+        public String body;
+
+        public SendResult(Pairwise pairwise, Boolean success, String body) {
+            this.pairwise = pairwise;
+            this.success = success;
+            this.body = body;
+        }
     }
 
     /**
@@ -48,9 +57,59 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
      */
     public List<SendResult> send(Message message) {
         List<SendResult> res = new ArrayList<>();
-        //getTransportLazy().sendMany();
-
+        try {
+            List<Object> responces = getTransportLazy().sendMany(message, this.theirs);
+            for (int i = 0; i < responces.size(); i++) {
+                Pair<Boolean, String> responce = (Pair<Boolean, String>) responces.get(i);
+                res.add(new SendResult(this.theirs.get(i), responce.first, responce.second));
+            }
+        } catch (SiriusPendingOperation siriusPendingOperation) {
+            siriusPendingOperation.printStackTrace();
+        }
         return res;
+    }
+
+    public static class GetOneResult {
+        public Pairwise pairwise = null;
+        public Message message = null;
+
+        public GetOneResult(Pairwise pairwise, Message message) {
+            this.pairwise = pairwise;
+            this.message = message;
+        }
+    }
+
+    /**
+     * Read event from any of participants at given timeout
+     * @return
+     */
+    public GetOneResult getOne() {
+        try {
+            AbstractCoProtocolTransport.GetOneResult getOneResult = getTransportLazy().getOne();
+            Pairwise p2p = loadP2PFromVerkey(getOneResult.senderVerkey);
+            return new GetOneResult(p2p, getOneResult.message);
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
+        }
+        return new GetOneResult(null, null);
+    }
+
+    /**
+     * Switch state while participants at given timeout give responses
+     * @return
+     */
+    public List<SendResult> sendAndWait(Message message) {
+        List<SendResult> statuses = send(message);
+        List<Pairwise> results = new ArrayList<>();
+        return null;
+    }
+
+    private Pairwise loadP2PFromVerkey(String verkey) {
+        for (Pairwise p2p : this.theirs) {
+            if (p2p.getTheir().getVerkey().equals(verkey))
+                return p2p;
+        }
+        return null;
     }
 
     private AbstractCoProtocolTransport getTransportLazy() {
