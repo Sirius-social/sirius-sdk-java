@@ -94,13 +94,39 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
         return new GetOneResult(null, null);
     }
 
+    public static class SendAndWaitResult {
+        public Pairwise pairwise;
+        public Boolean success;
+        public Message message;
+
+        public SendAndWaitResult(Pairwise pairwise, Boolean success, Message message) {
+            this.pairwise = pairwise;
+            this.success = success;
+            this.message = message;
+        }
+    }
+
     /**
      * Switch state while participants at given timeout give responses
      * @return
      */
-    public List<SendResult> sendAndWait(Message message) {
+    public List<SendAndWaitResult> sendAndWait(Message message) {
         List<SendResult> statuses = send(message);
-        List<Pairwise> results = new ArrayList<>();
+        int resSize = 0;
+        for (SendResult sr : statuses) {
+            resSize++;
+        }
+        int accum = 0;
+        List<SendAndWaitResult> results = new ArrayList<>();
+        while (accum < results.size()) {
+            GetOneResult getOneResult = this.getOne();
+            if (getOneResult.pairwise == null)
+                break;
+            if (dids.contains(getOneResult.pairwise.getTheir().getDid())) {
+                results.add(new SendAndWaitResult(getOneResult.pairwise, true, getOneResult.message));
+            }
+        }
+
         return null;
     }
 

@@ -156,10 +156,10 @@ public abstract class AbstractCoProtocolTransport {
         if (checkVerkeys) {
             String recipientVerkey = event.getStringFromJSON("recipient_verkey");
             String senderVerkey = event.getStringFromJSON("sender_verkey");
-            if (recipientVerkey != myVerkey) {
+            if (!recipientVerkey.equals(myVerkey)) {
                 throw new SiriusInvalidPayloadStructure("Unexpected recipient_verkey: " + recipientVerkey);
             }
-            if (senderVerkey != theirVK) {
+            if (!senderVerkey.equals(theirVK)) {
                 throw new SiriusInvalidPayloadStructure("Unexpected sender_verkey: " + senderVerkey);
             }
         }
