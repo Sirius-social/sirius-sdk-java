@@ -78,6 +78,10 @@ public class Pairwise {
             return did;
         }
 
+        public void setDid(String did) {
+            this.did = did;
+        }
+
         public String getVerkey() {
             return verkey;
         }

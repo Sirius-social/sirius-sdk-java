@@ -36,7 +36,8 @@ public class BaseInitLedgerMessage extends SimpleConsensusMessage {
     }
 
     public JSONArray signatures() {
-        return getMessageObj().optJSONArray("signatures");
+        JSONArray res = getMessageObj().optJSONArray("signatures");
+        return res != null ? res : new JSONArray();
     }
 
     public JSONObject checkSignatures(AbstractCrypto api, String participant) throws SiriusContextError, SiriusValidationError {
@@ -68,12 +69,16 @@ public class BaseInitLedgerMessage extends SimpleConsensusMessage {
             if (!regSignRes.second) {
                 throw new SiriusValidationError("Invalid Sign for participant: " + item.optString("participant"));
             }
-            if (!signedLedgerHash.equals(this.ledgerHash())) {
+            if (!signedLedgerHash.similar(this.ledgerHash())) {
                 throw new SiriusValidationError("NonConsistent Ledger hash for participant: " + item.optString("participant"));
             }
             response.put(item.optString("participant"), signedLedgerHash);
         }
         return response;
+    }
+
+    public JSONObject checkSignatures(AbstractCrypto api) throws SiriusContextError, SiriusValidationError {
+        return checkSignatures(api, "");
     }
 
     public static abstract class Builder<B extends Builder<B>> extends SimpleConsensusMessage.Builder<B> {
