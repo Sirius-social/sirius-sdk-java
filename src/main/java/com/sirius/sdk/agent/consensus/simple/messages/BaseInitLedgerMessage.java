@@ -118,7 +118,7 @@ public class BaseInitLedgerMessage extends SimpleConsensusMessage {
             if (genesis != null) {
                 JSONArray gArr = new JSONArray();
                 for (Transaction tr : genesis) {
-                    gArr.put(tr.getJSONObject());
+                    gArr.put(tr);
                 }
                 ledger.put("genesis", gArr);
             }

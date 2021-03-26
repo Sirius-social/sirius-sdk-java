@@ -86,4 +86,33 @@ public class TestSimpleConsensus {
             agentB.close();
         }
     }
+
+    @Test
+    public void testTransactionMessaging() {
+        Agent agentA = confTest.getAgent("agent1");
+        Agent agentB = confTest.getAgent("agent2");
+        String ledgerName = confTest.ledgerName();
+
+        agentA.open();
+        agentB.open();
+
+        try {
+            Pairwise a2b = confTest.getPairwise(agentA, agentB);
+            Pairwise b2a = confTest.getPairwise(agentB, agentA);
+            a2b.getMe().setDid("did:peer:" + a2b.getMe().getDid());
+            b2a.getMe().setDid("did:peer:" + b2a.getMe().getDid());
+
+            List<Transaction> genesisTxns = new ArrayList<>();
+            genesisTxns.add(new Transaction(new JSONObject().
+                    put("reqId", 1).
+                    put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                    put("op", "op1")));
+
+            //agentA.getMicroledgers()
+
+        } finally {
+            agentA.close();
+            agentB.close();
+        }
+    }
 }

@@ -66,7 +66,7 @@ public class BaseTransactionsMessage extends SimpleConsensusMessage {
             if (this.transactions != null) {
                 JSONArray trArr = new JSONArray();
                 for (Transaction tr : transactions) {
-                    trArr.put(tr.getJSONObject());
+                    trArr.put(tr);
                 }
                 jsonObject.put("transactions", trArr);
             }
