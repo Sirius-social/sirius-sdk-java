@@ -1,8 +1,6 @@
 package com.sirius.sdk.errors.sirius_exceptions;
 
-import com.sirius.sdk.errors.BaseSiriusException;
-
-public class SiriusContextError extends BaseSiriusException  {
+public class SiriusContextError extends RuntimeException  {
 
     public SiriusContextError(String message) {
         super(message);

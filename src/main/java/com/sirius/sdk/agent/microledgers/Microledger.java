@@ -1,9 +1,14 @@
 package com.sirius.sdk.agent.microledgers;
 
+import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.RemoteCallWrapper;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
+import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Microledger extends AbstractMicroledger {
@@ -35,46 +40,79 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public int size() {
-        return 0;
+        checkStateIsExists();
+        return state.getInt("size");
     }
 
     @Override
     public int uncommittedSize() {
-        return 0;
+        checkStateIsExists();
+        return state.getInt("uncommitted_size");
     }
 
     @Override
     public String rootHash() {
-        return null;
+        checkStateIsExists();
+        return state.getString("root_hash");
     }
 
     @Override
     public String uncommittedRootHash() {
-        return null;
+        checkStateIsExists();
+        return state.getString("uncommitted_root_hash");
     }
 
     @Override
     public int seqNo() {
-        return 0;
+        checkStateIsExists();
+        return state.getInt("seqNo");
     }
 
     @Override
     public void reload() {
-
+        JSONObject state = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/state",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        this.state = state;
     }
 
     @Override
     public void rename(String newName) {
-
+        new RemoteCallWrapper<Void>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/rename",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("new_name", newName));
     }
 
     @Override
     public List<Transaction> init(List<Transaction> genesis) {
-        return null;
+        Pair<JSONObject, List<JSONObject>> res = new RemoteCallWrapper<Pair<JSONObject, List<JSONObject>>>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/rename",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("genesis_txns", genesis));
+        List<Transaction> txns = null;
+        if (res != null) {
+            txns = new ArrayList<>();
+            state = res.first;
+            for (JSONObject txn : res.second) {
+                txns.add(new Transaction(txn));
+            }
+        }
+        return txns;
     }
 
     @Override
     public Triple<Integer, Integer, List<Transaction>> append(List<Transaction> transactions, String txnTime) {
+        Object transactionsWithMeta = new RemoteCallWrapper<Object>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/append_txns_metadata",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("txns", transactions).
+                                add("txn_time", txnTime));
+
         return null;
     }
 
@@ -131,5 +169,11 @@ public class Microledger extends AbstractMicroledger {
     @Override
     public List<Transaction> getUncommittedTransactions() {
         return null;
+    }
+
+    private void checkStateIsExists() {
+        if (state == null) {
+            throw new SiriusContextError("Load state of Microledger at First!");
+        }
     }
 }

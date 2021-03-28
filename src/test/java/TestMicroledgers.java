@@ -1,5 +1,7 @@
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
+import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -20,7 +22,7 @@ public class TestMicroledgers {
         confTest = ConfTest.newInstance();
     }
 
-    @Test
+    //@Test
     public void testInitLedger() {
         Agent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
@@ -41,7 +43,11 @@ public class TestMicroledgers {
                             put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
                             put("op", "op3"))
                     );
-            //agent4.getMicroledgers()
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+            List<Transaction> txns = createRes.second;
+
+            Assert.assertEquals("3u8ZCezSXJq72H5CdEryyTuwAKzeZnCZyfftJVFr7y8U", ledger.rootHash());
         } finally {
             agent4.close();
         }
