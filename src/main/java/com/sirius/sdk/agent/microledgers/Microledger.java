@@ -6,6 +6,7 @@ import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -113,62 +114,147 @@ public class Microledger extends AbstractMicroledger {
                                 add("txns", transactions).
                                 add("txn_time", txnTime));
 
-        return null;
+        JSONArray appendTxns = new RemoteCallWrapper<JSONArray>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/append_txns",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("txns", transactionsWithMeta));
+
+        this.state = appendTxns.getJSONObject(0);
+        List<Transaction> appendedTxns = new ArrayList<>();
+        JSONArray appendedTxnsJson = appendTxns.getJSONArray(3);
+        for (Object o : appendedTxnsJson) {
+            appendedTxns.add(new Transaction((JSONObject) o));
+        }
+        return new Triple<>(appendTxns.getInt(1), appendTxns.getInt(2), appendedTxns);
     }
 
     @Override
     public Triple<Integer, Integer, List<Transaction>> commit(int count) {
-        return null;
+        JSONArray commitTxns = new RemoteCallWrapper<JSONArray>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/commit_txns",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("count", count));
+
+        this.state = commitTxns.getJSONObject(0);
+        List<Transaction> appendedTxns = new ArrayList<>();
+        JSONArray commitTxnsJson = commitTxns.getJSONArray(3);
+        for (Object o : commitTxnsJson) {
+            appendedTxns.add(new Transaction((JSONObject) o));
+        }
+        return new Triple<>(commitTxns.getInt(1), commitTxns.getInt(2), appendedTxns);
     }
 
     @Override
     public void discard(int count) {
-
+        new RemoteCallWrapper<Void>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/discard_txns",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("count", count));
     }
 
     @Override
     public MerkleInfo getMerkleInfo(int seqNo) {
-        return null;
+        JSONObject merkleInfoJson = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/merkle_info",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("seqNo", seqNo));
+        JSONArray auditPathJson = merkleInfoJson.getJSONArray("auditPath");
+        List<String> auditPath = new ArrayList<>();
+        for (Object o : auditPathJson) {
+            auditPath.add((String) o);
+        }
+        return new MerkleInfo(merkleInfoJson.getString("rootHash"), auditPath);
     }
 
     @Override
     public AuditProof getAuditProof(int seqNo) {
-        return null;
+        JSONObject merkleInfoJson = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/audit_proof",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("seqNo", seqNo));
+        JSONArray auditPathJson = merkleInfoJson.getJSONArray("auditPath");
+        List<String> auditPath = new ArrayList<>();
+        for (Object o : auditPathJson) {
+            auditPath.add((String) o);
+        }
+        return new AuditProof(merkleInfoJson.getString("rootHash"), auditPath, merkleInfoJson.getInt("ledgerSize"));
     }
 
     @Override
     public void resetUncommitted() {
-
+        new RemoteCallWrapper<Void>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/reset_uncommitted",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
     }
 
     @Override
     public Transaction getTransaction(int seqNo) {
-        return null;
+        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_by_seq_no",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("seqNo", seqNo));
+        return new Transaction(txn);
     }
 
     @Override
     public Transaction getUncommittedTransaction(int seqNo) {
-        return null;
+        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_by_seq_no_uncommitted",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name).
+                                add("seqNo", seqNo));
+        return new Transaction(txn);
     }
 
     @Override
     public Transaction getLastTransaction() {
-        return null;
+        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_last_txn",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        return new Transaction(txn);
     }
 
     @Override
     public Transaction getLastCommittedTransaction() {
-        return null;
+        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_last_committed_txn",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        return new Transaction(txn);
     }
 
     @Override
     public List<Transaction> getAllTransactions() {
-        return null;
+        JSONArray txns = new RemoteCallWrapper<JSONArray>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_all_txns",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        List<Transaction> res = new ArrayList<>();
+        for (Object o : txns) {
+            res.add(new Transaction(((JSONArray) o).getJSONObject(1)));
+        }
+        return res;
     }
 
     @Override
     public List<Transaction> getUncommittedTransactions() {
-        return null;
+        JSONArray txns = new RemoteCallWrapper<JSONArray>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_uncommitted_txns",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        List<Transaction> res = new ArrayList<>();
+        for (Object o : txns) {
+            res.add(new Transaction((JSONObject) o));
+        }
+        return res;
     }
 
     private void checkStateIsExists() {
