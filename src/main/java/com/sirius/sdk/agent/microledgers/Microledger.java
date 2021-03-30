@@ -89,17 +89,17 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public List<Transaction> init(List<Transaction> genesis) {
-        Pair<JSONObject, List<JSONObject>> res = new RemoteCallWrapper<Pair<JSONObject, List<JSONObject>>>(api){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/rename",
+        Pair<String, List<String>> res = new RemoteCallWrapper<Pair<String, List<String>>>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/initialize",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
                                 add("genesis_txns", genesis));
         List<Transaction> txns = null;
         if (res != null) {
             txns = new ArrayList<>();
-            state = res.first;
-            for (JSONObject txn : res.second) {
-                txns.add(new Transaction(txn));
+            state = new JSONObject(res.first);
+            for (String txn : res.second) {
+                txns.add(new Transaction(new JSONObject(txn)));
             }
         }
         return txns;
@@ -107,26 +107,31 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public Triple<Integer, Integer, List<Transaction>> append(List<Transaction> transactions, String txnTime) {
-        Object transactionsWithMeta = new RemoteCallWrapper<Object>(api){}.
+        List<String> transactionsWithMetaStr = new RemoteCallWrapper<List<String>>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/append_txns_metadata",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
                                 add("txns", transactions).
                                 add("txn_time", txnTime));
 
-        JSONArray appendTxns = new RemoteCallWrapper<JSONArray>(api){}.
+        List<JSONObject> transactionsWithMeta = new ArrayList<>();
+        for (String s : transactionsWithMetaStr) {
+            transactionsWithMeta.add(new JSONObject(s));
+        }
+
+        List<Object> appendTxnsRes = new RemoteCallWrapper<List<Object>>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/append_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
                                 add("txns", transactionsWithMeta));
 
-        this.state = appendTxns.getJSONObject(0);
+        this.state = new JSONObject(appendTxnsRes.get(0));
         List<Transaction> appendedTxns = new ArrayList<>();
-        JSONArray appendedTxnsJson = appendTxns.getJSONArray(3);
-        for (Object o : appendedTxnsJson) {
-            appendedTxns.add(new Transaction((JSONObject) o));
+        List<String> appendedTxnsStr = (List<String>) appendTxnsRes.get(3);
+        for (String s : appendedTxnsStr) {
+            appendedTxns.add(new Transaction(new JSONObject(s)));
         }
-        return new Triple<>(appendTxns.getInt(1), appendTxns.getInt(2), appendedTxns);
+        return new Triple<>((int)appendTxnsRes.get(1), (int)appendTxnsRes.get(2), appendedTxns);
     }
 
     @Override
@@ -157,11 +162,11 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public MerkleInfo getMerkleInfo(int seqNo) {
-        JSONObject merkleInfoJson = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject merkleInfoJson = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/merkle_info",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
-                                add("seqNo", seqNo));
+                                add("seqNo", seqNo)));
         JSONArray auditPathJson = merkleInfoJson.getJSONArray("auditPath");
         List<String> auditPath = new ArrayList<>();
         for (Object o : auditPathJson) {

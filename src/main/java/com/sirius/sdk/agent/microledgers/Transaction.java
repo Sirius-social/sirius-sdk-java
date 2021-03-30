@@ -8,6 +8,8 @@ public class Transaction extends JSONObject {
 
     public Transaction(JSONObject obj) {
         super(obj.toString());
+        if (!has(METADATA_ATTR))
+            put(METADATA_ATTR, new JSONObject());
     }
 
     public boolean hasMetadata() {
