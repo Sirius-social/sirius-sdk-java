@@ -179,4 +179,97 @@ public class TestMicroledgers {
         }
     }
 
+    @Test
+    public void testResetUncommitted() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")));
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2"))),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3")));
+            ledger.append(txns);
+            int uncommittedSizeBefore = ledger.uncommittedSize();
+            ledger.resetUncommitted();
+            int uncommittedSizeAfter = ledger.uncommittedSize();
+            Assert.assertNotEquals(uncommittedSizeAfter, uncommittedSizeBefore);
+            Assert.assertEquals(1, uncommittedSizeAfter);
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testGetOperations() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 4).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op4")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 5).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op5"))
+            );
+            ledger.append(txns);
+
+            // 1 get_last_committed_txn
+            Transaction txn = ledger.getLastCommittedTransaction();
+            Assert.assertEquals(txn.optString("op"), "op3");
+
+            // 2 get_last_txn
+            txn = ledger.getLastTransaction();
+            Assert.assertEquals(txn.optString("op"), "op5");
+
+            //3 get_uncommitted_txns
+            txns = ledger.getUncommittedTransactions();
+            Assert.assertEquals(2, txns.size());
+            //assert all(op in str(txns) for op in ['op4', 'op5']) is True
+            //assert any(op in str(txns) for op in ['op1', 'op2', 'op3']) is False
+
+            // 4 get_by_seq_no
+            txn = ledger.getTransaction(1);
+            Assert.assertEquals(txn.optString("op"), "op1");
+
+            // 5 get_by_seq_no_uncommitted
+            txn = ledger.getUncommittedTransaction(4);
+            Assert.assertEquals(txn.optString("op"), "op4");
+        } finally {
+            agent4.close();
+        }
+    }
 }

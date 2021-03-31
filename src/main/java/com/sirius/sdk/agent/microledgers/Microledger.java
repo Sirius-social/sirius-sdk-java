@@ -192,47 +192,47 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public void resetUncommitted() {
-        new RemoteCallWrapper<Void>(api){}.
+        state = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/reset_uncommitted",
                         RemoteParams.RemoteParamsBuilder.create().
-                                add("name", name));
+                                add("name", name)));
     }
 
     @Override
     public Transaction getTransaction(int seqNo) {
-        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject txn = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_by_seq_no",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
-                                add("seqNo", seqNo));
+                                add("seqNo", seqNo)));
         return new Transaction(txn);
     }
 
     @Override
     public Transaction getUncommittedTransaction(int seqNo) {
-        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject txn = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_by_seq_no_uncommitted",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
-                                add("seqNo", seqNo));
+                                add("seqNo", seqNo)));
         return new Transaction(txn);
     }
 
     @Override
     public Transaction getLastTransaction() {
-        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject txn = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_last_txn",
                         RemoteParams.RemoteParamsBuilder.create().
-                                add("name", name));
+                                add("name", name)));
         return new Transaction(txn);
     }
 
     @Override
     public Transaction getLastCommittedTransaction() {
-        JSONObject txn = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject txn = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_last_committed_txn",
                         RemoteParams.RemoteParamsBuilder.create().
-                                add("name", name));
+                                add("name", name)));
         return new Transaction(txn);
     }
 
@@ -251,13 +251,13 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public List<Transaction> getUncommittedTransactions() {
-        JSONArray txns = new RemoteCallWrapper<JSONArray>(api){}.
+        List<String> txns = new RemoteCallWrapper<List<String>>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_uncommitted_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name));
         List<Transaction> res = new ArrayList<>();
-        for (Object o : txns) {
-            res.add(new Transaction((JSONObject) o));
+        for (String s : txns) {
+            res.add(new Transaction(new JSONObject(s)));
         }
         return res;
     }

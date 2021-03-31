@@ -26,6 +26,10 @@ public abstract class AbstractMicroledger {
 
     public abstract Triple<Integer, Integer, List<Transaction>> append(List<Transaction> transactions, String txnTime);
 
+    public Triple<Integer, Integer, List<Transaction>> append(List<Transaction> transactions) {
+        return append(transactions, null);
+    }
+
     public abstract Triple<Integer, Integer, List<Transaction>> commit(int count);
 
     public abstract void discard(int count);
