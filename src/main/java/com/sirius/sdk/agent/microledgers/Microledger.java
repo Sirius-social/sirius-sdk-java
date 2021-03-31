@@ -125,7 +125,7 @@ public class Microledger extends AbstractMicroledger {
                                 add("name", name).
                                 add("txns", transactionsWithMeta));
 
-        this.state = new JSONObject(appendTxnsRes.get(0));
+        this.state = new JSONObject(appendTxnsRes.get(0).toString());
         List<Transaction> appendedTxns = new ArrayList<>();
         List<String> appendedTxnsStr = (List<String>) appendTxnsRes.get(3);
         for (String s : appendedTxnsStr) {
@@ -136,28 +136,28 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public Triple<Integer, Integer, List<Transaction>> commit(int count) {
-        JSONArray commitTxns = new RemoteCallWrapper<JSONArray>(api){}.
+        List<Object> commitTxns = new RemoteCallWrapper<List<Object>>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/commit_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
                                 add("count", count));
 
-        this.state = commitTxns.getJSONObject(0);
-        List<Transaction> appendedTxns = new ArrayList<>();
-        JSONArray commitTxnsJson = commitTxns.getJSONArray(3);
-        for (Object o : commitTxnsJson) {
-            appendedTxns.add(new Transaction((JSONObject) o));
+        this.state = new JSONObject(commitTxns.get(0).toString());
+        List<Transaction> committedTxns = new ArrayList<>();
+        List<String> committedTxnsStr = (List<String>) commitTxns.get(3);
+        for (String s : committedTxnsStr) {
+            committedTxns.add(new Transaction(new JSONObject(s)));
         }
-        return new Triple<>(commitTxns.getInt(1), commitTxns.getInt(2), appendedTxns);
+        return new Triple<>((int)commitTxns.get(1), (int)commitTxns.get(2), committedTxns);
     }
 
     @Override
     public void discard(int count) {
-        new RemoteCallWrapper<Void>(api){}.
+        this.state = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/discard_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
-                                add("count", count));
+                                add("count", count)));
     }
 
     @Override

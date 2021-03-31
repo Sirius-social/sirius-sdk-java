@@ -132,4 +132,51 @@ public class TestMicroledgers {
         }
     }
 
+    @Test
+    public void testCommitDiscard() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")));
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2"))),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3")));
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            String txnTime = df.format(new Date(System.currentTimeMillis()));
+
+            Assert.assertEquals(ledger.uncommittedRootHash(), ledger.rootHash());
+            ledger.append(txns, txnTime);
+            Assert.assertNotEquals(ledger.uncommittedRootHash(), ledger.rootHash());
+            Assert.assertEquals(1, ledger.size());
+            Assert.assertEquals(3, ledger.uncommittedSize());
+
+            //commit
+            ledger.commit(1);
+            Assert.assertEquals(2, ledger.size());
+            Assert.assertEquals(3, ledger.uncommittedSize());
+            Assert.assertNotEquals(ledger.uncommittedRootHash(), ledger.rootHash());
+
+            // discard
+            ledger.discard(1);
+            Assert.assertEquals(2, ledger.size());
+            Assert.assertEquals(2, ledger.uncommittedSize());
+            Assert.assertEquals(ledger.uncommittedRootHash(), ledger.rootHash());
+        } finally {
+            agent4.close();
+        }
+    }
+
 }
