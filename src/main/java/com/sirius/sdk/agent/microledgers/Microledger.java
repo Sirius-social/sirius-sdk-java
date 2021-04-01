@@ -238,13 +238,13 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public List<Transaction> getAllTransactions() {
-        JSONArray txns = new RemoteCallWrapper<JSONArray>(api){}.
+        List<List<String>> txns = new RemoteCallWrapper<List<List<String>>>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/get_all_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name));
         List<Transaction> res = new ArrayList<>();
-        for (Object o : txns) {
-            res.add(new Transaction(((JSONArray) o).getJSONObject(1)));
+        for (List<String> s : txns) {
+            res.add(new Transaction(new JSONObject(s.get(1))));
         }
         return res;
     }

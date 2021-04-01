@@ -1,8 +1,16 @@
 package com.sirius.sdk.agent.microledgers;
 
+import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.RemoteCallWrapper;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
+import com.sirius.sdk.utils.JSONUtils;
 import com.sirius.sdk.utils.Pair;
+import org.checkerframework.checker.units.qual.A;
+import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,28 +29,56 @@ public class MicroledgerList extends AbstractMicroledgerList {
     }
 
     @Override
-    public AbstractMicroledger getLegder(String name) {
-        return null;
+    public AbstractMicroledger getLedger(String name) {
+        if (!this.instances.containsKey(name)) {
+            checkIsExists(name);
+            Microledger instance = new Microledger(name, api);
+            this.instances.put(name, instance);
+        }
+        return this.instances.get(name);
     }
 
     @Override
     public void reset(String name) {
+        checkIsExists(name);
+        new RemoteCallWrapper<Void>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/reset",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
+        if (this.instances.containsKey(name))
+            this.instances.remove(name);
 
     }
 
     @Override
     public boolean isExists(String name) {
-        return false;
+        return new RemoteCallWrapper<Boolean>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/is_exists",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", name));
     }
 
     @Override
     public byte[] leafHash(Transaction txn) {
-        return new byte[0];
+        byte[] data = JSONUtils.JSONObjectToString(txn, true).getBytes(StandardCharsets.UTF_8);
+        String leafHash = new RemoteCallWrapper<String>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/leaf_hash",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("data", data));
+        return leafHash.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
     public List<LedgerMeta> getList() {
-        return null;
+        List<String> collection = new RemoteCallWrapper<List<String>>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/list",
+                        RemoteParams.RemoteParamsBuilder.create().
+                                add("name", "*"));
+        List<LedgerMeta> res = new ArrayList<>();
+        for (String s : collection) {
+            res.add(new LedgerMeta(new JSONObject(s)));
+        }
+        return res;
     }
 
     @Override
@@ -53,5 +89,13 @@ public class MicroledgerList extends AbstractMicroledgerList {
     public MicroledgerList(AgentRPC api) {
         this.api = api;
         this.batchedAPI = new BatchedAPI(api, this.instances);
+    }
+
+    private void checkIsExists(String name) {
+        if (!this.instances.containsKey(name)) {
+            boolean isExists = isExists(name);
+            if (!isExists)
+                throw new SiriusContextError("MicroLedger with name " + name + " does not exists");
+        }
     }
 }

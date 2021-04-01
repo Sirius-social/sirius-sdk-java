@@ -4,6 +4,10 @@ import org.json.JSONObject;
 
 public class LedgerMeta extends JSONObject {
 
+    public LedgerMeta(JSONObject obj) {
+        super(obj.toString());
+    }
+
     public LedgerMeta(String name, String uid, String created) {
         super();
         put("name", name);

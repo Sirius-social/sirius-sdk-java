@@ -8,7 +8,7 @@ public abstract class AbstractMicroledgerList {
 
     public abstract Pair<AbstractMicroledger, List<Transaction>> create(String name, List<Transaction> genesis);
 
-    public abstract AbstractMicroledger getLegder(String name);
+    public abstract AbstractMicroledger getLedger(String name);
 
     public abstract void reset(String name);
 

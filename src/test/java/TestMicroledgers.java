@@ -1,5 +1,6 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
+import com.sirius.sdk.agent.microledgers.LedgerMeta;
 import com.sirius.sdk.agent.microledgers.MerkleInfo;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.utils.Pair;
@@ -268,6 +269,141 @@ public class TestMicroledgers {
             // 5 get_by_seq_no_uncommitted
             txn = ledger.getUncommittedTransaction(4);
             Assert.assertEquals(txn.optString("op"), "op4");
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testReset() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 4).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op4")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 5).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op5"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            Assert.assertEquals(5, ledger.size());
+            Assert.assertTrue(agent4.getMicroledgers().isExists(ledgerName));
+
+            agent4.getMicroledgers().reset(ledgerName);
+            Assert.assertFalse(agent4.getMicroledgers().isExists(ledgerName));
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testList() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            List<LedgerMeta> collection = agent4.getMicroledgers().getList();
+            boolean contains = false;
+            for (LedgerMeta meta : collection) {
+                if (meta.getName().equals(ledgerName)) {
+                    contains = true;
+                    break;
+                }
+            }
+            Assert.assertTrue(contains);
+
+            Assert.assertTrue(agent4.getMicroledgers().isExists(ledgerName));
+
+            agent4.getMicroledgers().reset(ledgerName);
+
+            collection = agent4.getMicroledgers().getList();
+            contains = false;
+            for (LedgerMeta meta : collection) {
+                if (meta.getName().equals(ledgerName)) {
+                    contains = true;
+                    break;
+                }
+            }
+            Assert.assertFalse(contains);
+
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testGetAllTxns() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 4).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op4")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 5).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op5"))
+            );
+            ledger.append(txns);
+
+            txns = ledger.getAllTransactions();
+            Assert.assertEquals(3, txns.size());
         } finally {
             agent4.close();
         }

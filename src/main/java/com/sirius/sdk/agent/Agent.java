@@ -5,6 +5,7 @@ import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
+import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
@@ -213,7 +214,7 @@ public class Agent extends TransportLayer {
     }
 
 
-    public MicroledgerList getMicroledgers() {
+    public AbstractMicroledgerList getMicroledgers() {
         checkIsOpen();
         return microledgers;
     }
