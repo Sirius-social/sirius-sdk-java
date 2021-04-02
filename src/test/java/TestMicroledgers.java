@@ -1,8 +1,6 @@
+import com.goterl.lazycode.lazysodium.LazySodium;
 import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
-import com.sirius.sdk.agent.microledgers.LedgerMeta;
-import com.sirius.sdk.agent.microledgers.MerkleInfo;
-import com.sirius.sdk.agent.microledgers.Transaction;
+import com.sirius.sdk.agent.microledgers.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import helpers.ConfTest;
@@ -13,10 +11,7 @@ import org.junit.Test;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 public class TestMicroledgers {
@@ -404,6 +399,128 @@ public class TestMicroledgers {
 
             txns = ledger.getAllTransactions();
             Assert.assertEquals(3, txns.size());
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testAuditProof() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op3")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 4).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op4")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 5).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op5")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 6).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op6"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 7).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op7")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 8).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op8")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 9).
+                            put("identifier", "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt").
+                            put("op", "op9"))
+            );
+            ledger.append(txns);
+
+            List<List<String>> auditPaths = new ArrayList<>();
+            for (int seqNo : Arrays.asList(1, 2, 3, 4, 5, 6)) {
+                AuditProof auditProof = ledger.getAuditProof(seqNo);
+                Assert.assertEquals("3eDS4j8HgpAyRnuvfFG624KKvQBuNXKBenhqHmHtUgeq", auditProof.getRootHash());
+                Assert.assertEquals(6, auditProof.getLedgerSize());
+                Assert.assertFalse(auditPaths.contains(auditProof.getAuditPath()));
+                auditPaths.add(auditProof.getAuditPath());
+            }
+
+            for (int seqNo : Arrays.asList(7, 8, 9)) {
+                AuditProof auditProof = ledger.getAuditProof(seqNo);
+                Assert.assertEquals("3eDS4j8HgpAyRnuvfFG624KKvQBuNXKBenhqHmHtUgeq", auditProof.getRootHash());
+                Assert.assertEquals(6, auditProof.getLedgerSize());
+                auditPaths.add(auditProof.getAuditPath());
+            }
+
+            Assert.assertEquals("Dkoca8Af15uMLBHAqbddwqmpiqsaDEtKDoFVfNRXt44g", ledger.uncommittedRootHash());
+        }
+        finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testLeafHash() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+            Transaction txn = createRes.second.get(0);
+            byte[] leafHash = agent4.getMicroledgers().leafHash(txn);
+            String leafHashHex = LazySodium.toHex(leafHash);
+            Assert.assertEquals("79D9929FD1E7F16F099C26B6F44850DA044AD0FE51E92E582D9CA372F2B8B930", leafHashHex);
+        } finally {
+            agent4.close();
+        }
+    }
+
+    @Test
+    public void testRename() {
+        Agent agent4 = confTest.getAgent("agent4");
+        String ledgerName = confTest.ledgerName();
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1"))
+            );
+            Pair<AbstractMicroledger, List<Transaction>> createRes = agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            AbstractMicroledger ledger = createRes.first;
+
+            String newName = "new_name_" + UUID.randomUUID();
+            ledger.rename(newName);
+
+            Assert.assertFalse(agent4.getMicroledgers().isExists(ledgerName));
+            Assert.assertTrue(agent4.getMicroledgers().isExists(newName));
         } finally {
             agent4.close();
         }

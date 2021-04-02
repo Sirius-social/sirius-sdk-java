@@ -61,11 +61,10 @@ public class MicroledgerList extends AbstractMicroledgerList {
     @Override
     public byte[] leafHash(Transaction txn) {
         byte[] data = JSONUtils.JSONObjectToString(txn, true).getBytes(StandardCharsets.UTF_8);
-        String leafHash = new RemoteCallWrapper<String>(api){}.
+        return new RemoteCallWrapper<byte[]>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/leaf_hash",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("data", data));
-        return leafHash.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

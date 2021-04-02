@@ -85,6 +85,7 @@ public class Microledger extends AbstractMicroledger {
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
                                 add("new_name", newName));
+        this.name = newName;
     }
 
     @Override
@@ -177,11 +178,11 @@ public class Microledger extends AbstractMicroledger {
 
     @Override
     public AuditProof getAuditProof(int seqNo) {
-        JSONObject merkleInfoJson = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject merkleInfoJson = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers/1.0/audit_proof",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("name", name).
-                                add("seqNo", seqNo));
+                                add("seqNo", seqNo)));
         JSONArray auditPathJson = merkleInfoJson.getJSONArray("auditPath");
         List<String> auditPath = new ArrayList<>();
         for (Object o : auditPathJson) {
