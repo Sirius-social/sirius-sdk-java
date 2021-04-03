@@ -13,10 +13,7 @@ import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * RPC service.
@@ -81,7 +78,7 @@ public class AgentRPC extends BaseAgentConnection {
         Message request = Parsing.buildRequest(msgType, future, params);
         String payload = request.serialize();
         Type msgTyp = Type.fromStr(msgType);
-        boolean isEncryptes = !"admin".equals(msgTyp.getProtocol()) && !"microledgers".equals(msgTyp.getProtocol());
+        boolean isEncryptes = !Arrays.asList("admin", "microledgers", "microledgers-batched").contains(msgTyp.getProtocol());
 
         boolean isPosted = tunnelRpc.post(request, isEncryptes);
         if (!isPosted) {

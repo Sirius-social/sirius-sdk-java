@@ -1,5 +1,6 @@
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.microledgers.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -521,6 +522,117 @@ public class TestMicroledgers {
 
             Assert.assertFalse(agent4.getMicroledgers().isExists(ledgerName));
             Assert.assertTrue(agent4.getMicroledgers().isExists(newName));
+        } finally {
+            agent4.close();
+        }
+    }
+
+    private static JSONObject getState(AbstractMicroledger ledger) {
+        return new JSONObject().
+                put("name", ledger.name()).
+                put("seq_no", ledger.seqNo()).
+                put("size", ledger.size()).
+                put("uncommitted_size", ledger.uncommittedSize()).
+                put("root_hash", ledger.rootHash()).
+                put("uncommitted_root_hash", ledger.uncommittedRootHash());
+    }
+
+    @Test
+    public void testBatchedOps() {
+        Agent agent4 = confTest.getAgent("agent4");
+        List<String> ledgerNames = Arrays.asList("Ledger-" + UUID.randomUUID(), "Ledger-" + UUID.randomUUID());
+        agent4.open();
+        try {
+            List<Transaction> genesisTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1"))
+            );
+            List<Transaction> resetTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op2"))
+            );
+            List<Transaction> commitTxns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op3"))
+            );
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            String txnTime = df.format(new Date(System.currentTimeMillis()));
+
+            for (String ledgerName : ledgerNames) {
+                agent4.getMicroledgers().create(ledgerName, genesisTxns);
+            }
+
+            AbstractBatchedAPI batched = agent4.getMicroledgers().getBatched();
+            List<AbstractMicroledger> ledgers = batched.openByLedgerNames(ledgerNames);
+            try {
+                Set<String> s1 = new HashSet<>();
+                for (AbstractMicroledger l : ledgers) {
+                    s1.add(l.name());
+                }
+                Assert.assertEquals(s1, new HashSet<>(ledgerNames));
+
+                // Fetch states
+                ledgers = batched.getStates();
+                Map<String, JSONObject> statesBefore = new HashMap<>();
+                for (AbstractMicroledger ledger : ledgers) {
+                    statesBefore.put(ledger.name(), getState(ledger));
+                }
+                Assert.assertEquals(statesBefore.keySet(), new HashSet<>(ledgerNames));
+
+                // Append
+                ledgers = batched.append(resetTxns);
+                Map<String, JSONObject> statesAfterAppend = new HashMap<>();
+                for (AbstractMicroledger ledger : ledgers) {
+                    statesAfterAppend.put(ledger.name(), getState(ledger));
+                }
+                Assert.assertEquals(statesAfterAppend.keySet(), new HashSet<>(ledgerNames));
+                for (Map.Entry<String, JSONObject> e : statesAfterAppend.entrySet()) {
+                    Assert.assertEquals(2,  e.getValue().optInt("uncommitted_size"));
+                }
+
+                // Reset uncommitted
+                ledgers = batched.resetUncommitted();
+                Map<String, JSONObject> statesAfterResetUncommitted = new HashMap<>();
+                for (AbstractMicroledger ledger : ledgers) {
+                    statesAfterResetUncommitted.put(ledger.name(), getState(ledger));
+                }
+                Assert.assertEquals(statesAfterResetUncommitted.keySet(), new HashSet<>(ledgerNames));
+                for (Map.Entry<String, JSONObject> e : statesAfterResetUncommitted.entrySet()) {
+                    Assert.assertEquals(1,  e.getValue().optInt("uncommitted_size"));
+                }
+
+                // Append + Commit
+                batched.append(commitTxns, txnTime);
+                ledgers = batched.commit();
+                Map<String, JSONObject> statesAfterCommit = new HashMap<>();
+                for (AbstractMicroledger ledger : ledgers) {
+                    statesAfterCommit.put(ledger.name(), getState(ledger));
+                }
+
+                for (Map.Entry<String, JSONObject> e : statesAfterCommit.entrySet()) {
+                    Assert.assertEquals(2,  e.getValue().optInt("uncommitted_size"));
+                    Assert.assertEquals(2,  e.getValue().optInt("size"));
+                }
+
+                // Check all txns
+                for (String ledgerName : ledgerNames) {
+                    AbstractMicroledger ledger = agent4.getMicroledgers().getLedger(ledgerName);
+                    List<Transaction> txns = ledger.getAllTransactions();
+                    Assert.assertEquals(2, txns.size());
+                    Assert.assertEquals("op1", txns.get(0).optString("op"));
+                    Assert.assertEquals("op3", txns.get(1).optString("op"));
+                    Assert.assertEquals(txnTime, txns.get(1).getTime());
+                }
+            } finally {
+                batched.close();
+            }
+
         } finally {
             agent4.close();
         }

@@ -46,7 +46,7 @@ public class Parsing {
     public static Message buildRequest(String msgType, Future future, RemoteParams params) {
         try {
             Type type = Type.fromStr(msgType);
-            if (!"sirius_rpc".equals(type.getProtocol()) && !"admin".equals(type.getProtocol()) && !"microledgers".equals(type.getProtocol())) {
+            if (!Arrays.asList("sirius_rpc", "admin", "microledgers", "microledgers-batched").contains(type.getProtocol())) {
                 throw new SiriusInvalidType("Expect sirius_rpc protocol");
             }
         } catch (SiriusInvalidType siriusInvalidType) {

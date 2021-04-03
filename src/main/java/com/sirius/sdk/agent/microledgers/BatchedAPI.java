@@ -18,22 +18,17 @@ public class BatchedAPI extends AbstractBatchedAPI {
     }
 
     @Override
-    public List<AbstractMicroledger> open(List<AbstractMicroledger> ledgers) {
-        Set<String> namesToOpen = new HashSet<>();
-        for (AbstractMicroledger ledger : ledgers) {
-            namesToOpen.add(ledger.name());
-        }
-
+    public List<AbstractMicroledger> openByLedgerNames(List<String> ledgerNames) {
         try {
             api.remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/open",
                     RemoteParams.RemoteParamsBuilder.create().
-                            add("names", new ArrayList<>(namesToOpen)).
+                            add("names", ledgerNames).
                             build());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        this.names = new ArrayList<>(namesToOpen);
+        this.names = ledgerNames;
         return getStates();
     }
 
@@ -48,33 +43,33 @@ public class BatchedAPI extends AbstractBatchedAPI {
 
     @Override
     public List<AbstractMicroledger> getStates() {
-        JSONObject states = new RemoteCallWrapper<JSONObject>(api){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/states");
+        JSONObject states = new JSONObject(new RemoteCallWrapper<String>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/states"));
         return returnLadgers(states);
 
     }
 
     @Override
     public List<AbstractMicroledger> append(List<Transaction> transactions, String txnTime) {
-        JSONObject states = new RemoteCallWrapper<JSONObject>(api){}.
+        JSONObject states = new JSONObject(new RemoteCallWrapper<String>(api){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/append_txns",
                         RemoteParams.RemoteParamsBuilder.create().
                                 add("txns", transactions).
-                                add("txn_time", txnTime));
+                                add("txn_time", txnTime)));
         return returnLadgers(states);
     }
 
     @Override
     public List<AbstractMicroledger> commit() {
-        JSONObject states = new RemoteCallWrapper<JSONObject>(api){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/commit_txns");
+        JSONObject states = new JSONObject(new RemoteCallWrapper<String>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/commit_txns"));
         return returnLadgers(states);
     }
 
     @Override
     public List<AbstractMicroledger> resetUncommitted() {
-        JSONObject states = new RemoteCallWrapper<JSONObject>(api){}.
-                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/reset_uncommitted");
+        JSONObject states = new JSONObject(new RemoteCallWrapper<String>(api){}.
+                remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/microledgers-batched/1.0/reset_uncommitted"));
         return returnLadgers(states);
     }
 
