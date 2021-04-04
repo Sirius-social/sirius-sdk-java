@@ -4,6 +4,7 @@ import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.Custom;
@@ -218,5 +219,15 @@ public class ConfTest {
         }
 
         return me.getPairwiseList().loadForDid(theirEntity.getDid());
+    }
+
+    public static JSONObject getState(AbstractMicroledger ledger) {
+        return new JSONObject().
+                put("name", ledger.name()).
+                put("seq_no", ledger.seqNo()).
+                put("size", ledger.size()).
+                put("uncommitted_size", ledger.uncommittedSize()).
+                put("root_hash", ledger.rootHash()).
+                put("uncommitted_root_hash", ledger.uncommittedRootHash());
     }
 }

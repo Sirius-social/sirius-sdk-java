@@ -66,8 +66,8 @@ public class ProposeTransactionsMessage extends BaseTransactionsMessage {
             return jsonObject;
         }
 
-        public InitResponseLedgerMessage build() {
-            return new InitResponseLedgerMessage(generateJSON().toString());
+        public ProposeTransactionsMessage build() {
+            return new ProposeTransactionsMessage(generateJSON().toString());
         }
     }
 

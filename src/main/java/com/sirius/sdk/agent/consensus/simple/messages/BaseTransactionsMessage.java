@@ -25,6 +25,7 @@ public class BaseTransactionsMessage extends SimpleConsensusMessage {
             for (Object o : trArr) {
                 res.add(new Transaction((JSONObject) o));
             }
+            return res;
         }
         return null;
     }
@@ -72,7 +73,7 @@ public class BaseTransactionsMessage extends SimpleConsensusMessage {
             }
 
             if (this.state != null) {
-                jsonObject.put("state", state.getJSONObject());
+                jsonObject.put("state", state);
                 jsonObject.put("hash", state.getHash());
             }
 

@@ -26,7 +26,7 @@ public class InitRequestLedgerMessage extends BaseInitLedgerMessage {
             throw new SiriusContextError("Signer must be a participant");
         }
         if (this.ledgerHash() != null) {
-            JSONObject hashSignature = Utils.sign(api, this.ledgerHash(), me.getVerkey());
+            JSONObject hashSignature = Utils.sign(api, this.ledgerHash().toString(), me.getVerkey());
             JSONArray signatures = this.signatures();
             for (int i = signatures.length()-1; i >=0; i--) {
                 if (signatures.getJSONObject(i).optString("participant").equals(me.getDid())) {

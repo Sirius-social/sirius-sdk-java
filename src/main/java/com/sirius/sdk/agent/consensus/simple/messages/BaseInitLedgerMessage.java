@@ -64,8 +64,8 @@ public class BaseInitLedgerMessage extends SimpleConsensusMessage {
         JSONObject response = new JSONObject();
         for (Object o : signatures) {
             JSONObject item = (JSONObject) o;
-            Pair<JSONObject, Boolean> regSignRes = verifySigned(api, item.optJSONObject("signature"));
-            JSONObject signedLedgerHash = regSignRes.first;
+            Pair<String, Boolean> regSignRes = verifySigned(api, item.optJSONObject("signature"));
+            JSONObject signedLedgerHash = new JSONObject(regSignRes.first);
             if (!regSignRes.second) {
                 throw new SiriusValidationError("Invalid Sign for participant: " + item.optString("participant"));
             }

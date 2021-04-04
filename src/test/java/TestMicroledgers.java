@@ -14,6 +14,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static helpers.ConfTest.getState;
+
 
 public class TestMicroledgers {
 
@@ -525,16 +527,6 @@ public class TestMicroledgers {
         } finally {
             agent4.close();
         }
-    }
-
-    private static JSONObject getState(AbstractMicroledger ledger) {
-        return new JSONObject().
-                put("name", ledger.name()).
-                put("seq_no", ledger.seqNo()).
-                put("size", ledger.size()).
-                put("uncommitted_size", ledger.uncommittedSize()).
-                put("root_hash", ledger.rootHash()).
-                put("uncommitted_root_hash", ledger.uncommittedRootHash());
     }
 
     @Test

@@ -17,13 +17,13 @@ public class ConnResponse extends ConnProtocolMessage {
     }
 
     static JSONObject signField(AbstractCrypto crypto, JSONObject fieldValue, String myVerkey) {
-        return Utils.sign(crypto, fieldValue, myVerkey);
+        return Utils.sign(crypto, fieldValue.toString(), myVerkey);
     }
 
     static JSONObject verifySignedField(AbstractCrypto crypto, JSONObject signedField) {
-        Pair<JSONObject, Boolean> res = Utils.verifySigned(crypto, signedField);
+        Pair<String, Boolean> res = Utils.verifySigned(crypto, signedField);
         if (res.second) {
-            return res.first;
+            return new JSONObject(res.first);
         } else {
             return null;
         }

@@ -26,7 +26,7 @@ public class PreCommitTransactionsMessage extends BaseTransactionsMessage {
         JSONObject hashSigned = getMessageObj().optJSONObject("hash~sig");
         if (hashSigned != null) {
             if(hashSigned.optString("signer").equals(expectedVerkey)) {
-                Pair<JSONObject, Boolean> verSigRes = Utils.verifySigned(api, hashSigned);
+                Pair<String, Boolean> verSigRes = Utils.verifySigned(api, hashSigned);
                 return new Pair<>(verSigRes.second, verSigRes.first.toString());
             }
         }

@@ -47,13 +47,12 @@ public class Utils {
         return sign(crypto, value, verkey, false);
     }
 
-    public static Pair<JSONObject, Boolean> verifySigned(AbstractCrypto crypto, JSONObject signed) {
+    public static Pair<String, Boolean> verifySigned(AbstractCrypto crypto, JSONObject signed) {
         byte[] signatureBytes = Base64.getUrlDecoder().decode(signed.optString("signature").getBytes(StandardCharsets.US_ASCII));
         byte[] sigDataBytes = Base64.getUrlDecoder().decode(signed.optString("sig_data").getBytes(StandardCharsets.US_ASCII));
         boolean sigVerified = crypto.cryptoVerify(signed.optString("signer"), sigDataBytes, signatureBytes);
         byte[] dataBytes = Base64.getUrlDecoder().decode(signed.optString("sig_data"));
-        JSONObject fieldJson = new JSONObject(
-                new String(Arrays.copyOfRange(dataBytes, 8, dataBytes.length), StandardCharsets.US_ASCII));
-        return new Pair<>(fieldJson, sigVerified);
+        String field = new String(Arrays.copyOfRange(dataBytes, 8, dataBytes.length), StandardCharsets.US_ASCII);
+        return new Pair<>(field, sigVerified);
     }
 }

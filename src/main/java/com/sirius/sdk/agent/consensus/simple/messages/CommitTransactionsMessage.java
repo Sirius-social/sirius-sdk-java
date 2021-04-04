@@ -52,14 +52,14 @@ public class CommitTransactionsMessage extends BaseTransactionsMessage {
         JSONObject preCommits = this.getPreCommits();
         for (String participant : preCommits.keySet()) {
             JSONObject signed = preCommits.optJSONObject(participant);
-            Pair<JSONObject, Boolean> verSignRes = Utils.verifySigned(api, signed);
+            Pair<String, Boolean> verSignRes = Utils.verifySigned(api, signed);
             if (!verSignRes.second) {
                 throw new SiriusValidationError("Error verifying pre_commit for participant: " + participant);
             }
-            if (verSignRes.first.toString().equals(expectedState.getHash())) {
+            if (!verSignRes.first.equals(expectedState.getHash())) {
                 throw new SiriusValidationError("Ledger state for participant " + participant + "is not consistent");
             }
-            states.put(participant, new JSONArray().put(expectedState.getJSONObject()).put(signed));
+            states.put(participant, new JSONArray().put(expectedState).put(signed));
         }
         return states;
     }
