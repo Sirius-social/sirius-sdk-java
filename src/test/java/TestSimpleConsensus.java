@@ -3,8 +3,10 @@ import com.sirius.sdk.agent.consensus.simple.messages.*;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
+import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import helpers.ConfTest;
@@ -167,6 +169,60 @@ public class TestSimpleConsensus {
         } finally {
             agentA.close();
             agentB.close();
+        }
+    }
+
+    private Runnable routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
+                                            List<String> participants, String ledgerName, List<JSONObject> genesis) {
+        try (Context c = Context.builder().build()) {
+
+        }
+        return null;
+    }
+
+    @Test
+    public void testSimpleConsensusInitLedger() {
+        Agent agentA = confTest.getAgent("agent1");
+        Agent agentB = confTest.getAgent("agent2");
+        Agent agentC = confTest.getAgent("agent3");
+        String ledgerName = confTest.ledgerName();
+
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
+        AgentParams aParams = testSuite.getAgentParams("agent1");
+        AgentParams bParams = testSuite.getAgentParams("agent2");
+        AgentParams cParams = testSuite.getAgentParams("agent3");
+
+        agentA.open();
+        agentB.open();
+        agentC.open();
+        try {
+            Pairwise a2b = confTest.getPairwise(agentA, agentB);
+            Pairwise a2c = confTest.getPairwise(agentA, agentC);
+            Assert.assertEquals(a2b.getMe(), a2c.getMe());
+            Pairwise b2a = confTest.getPairwise(agentB, agentA);
+            Pairwise b2c = confTest.getPairwise(agentB, agentC);
+            Assert.assertEquals(b2a.getMe(), b2c.getMe());
+            Pairwise c2a = confTest.getPairwise(agentC, agentA);
+            Pairwise c2b = confTest.getPairwise(agentC, agentB);
+            Assert.assertEquals(c2a.getMe(), c2b.getMe());
+
+            List<String> participants = Arrays.asList(a2b.getMe().getDid(), a2b.getTheir().getDid(), a2c.getTheir().getDid());
+            List<Transaction> genesis = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2"))
+            );
+
+
+        } finally {
+            agentA.close();
+            agentB.close();
+            agentC.close();
         }
     }
 }

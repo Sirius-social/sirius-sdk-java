@@ -105,5 +105,13 @@ public class Pairwise {
             this.didDoc = didDoc;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Me) {
+                Me o = (Me)obj;
+                return this.did.equals(o.did) && this.verkey.equals(o.verkey) && this.didDoc.similar(o.didDoc);
+            }
+            return false;
+        }
     }
 }
