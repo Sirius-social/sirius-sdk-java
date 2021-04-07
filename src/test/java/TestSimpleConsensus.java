@@ -1,5 +1,8 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.consensus.simple.messages.*;
+import com.sirius.sdk.agent.consensus.simple.state_machines.MicroLedgerSimpleConsensus;
+import com.sirius.sdk.agent.listener.Event;
+import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
@@ -7,6 +10,7 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
 import helpers.ConfTest;
@@ -20,6 +24,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 
 public class TestSimpleConsensus {
@@ -172,12 +178,42 @@ public class TestSimpleConsensus {
         }
     }
 
-    private Runnable routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
+    private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
                                             List<String> participants, String ledgerName, List<JSONObject> genesis) {
-        try (Context c = Context.builder().build()) {
+        return unused -> {
+            try (Context c = Context.builder().
+                    setServerUri(uri).
+                    setCredentials(credentials).
+                    setP2p(p2p).
+                    build()) {
+                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+                List<Transaction> trGen = new ArrayList<>();
+                for (JSONObject o : genesis) {
+                    trGen.add(new Transaction(o));
+                }
+                return machine.initMicroledger(ledgerName, participants, trGen);
+            }
+        };
+    }
 
-        }
-        return null;
+    private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreationAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
+        return unused -> {
+            try (Context c = Context.builder().
+                    setServerUri(uri).
+                    setCredentials(credentials).
+                    setP2p(p2p).
+                    build()) {
+                Listener listener = c.subscribe();
+                Event event = listener.getOne().get();
+                Message propose = event.message();
+                Assert.assertTrue(propose instanceof InitRequestLedgerMessage);
+                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+                return machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) propose);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+            return null;
+        };
     }
 
     @Test

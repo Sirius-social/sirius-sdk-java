@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.consensus.simple.state_machines;
 
+import com.sirius.sdk.agent.consensus.simple.messages.InitRequestLedgerMessage;
 import com.sirius.sdk.agent.consensus.simple.messages.SimpleConsensusProblemReport;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
@@ -73,6 +74,10 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                 }
             }
         }
+    }
+
+    public Pair<Boolean, AbstractMicroledger> acceptMicroledger(Pairwise leader, InitRequestLedgerMessage propose) {
+        return null;
     }
 
     @Override

@@ -32,4 +32,8 @@ public class Event extends Message {
     public String getRecipientVerkey() {
         return getMessageObj().optString("recipient_verkey");
     }
+
+    public Pairwise getPairwise() {
+        return pairwise;
+    }
 }

@@ -109,7 +109,10 @@ public class Pairwise {
         public boolean equals(Object obj) {
             if (obj instanceof Me) {
                 Me o = (Me)obj;
-                return this.did.equals(o.did) && this.verkey.equals(o.verkey) && this.didDoc.similar(o.didDoc);
+                return this.did.equals(o.did) &&
+                        this.verkey.equals(o.verkey) &&
+                        ((this.didDoc == null && o.didDoc == null) || (
+                                this.didDoc != null && o.didDoc != null && this.didDoc.similar(o.didDoc)));
             }
             return false;
         }
