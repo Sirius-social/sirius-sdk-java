@@ -36,8 +36,9 @@ public class BaseInitLedgerMessage extends SimpleConsensusMessage {
     }
 
     public JSONArray signatures() {
-        JSONArray res = getMessageObj().optJSONArray("signatures");
-        return res != null ? res : new JSONArray();
+        if (!getMessageObj().has("signatures"))
+            getMessageObj().put("signatures", new JSONArray());
+        return getMessageObj().optJSONArray("signatures");
     }
 
     public JSONObject checkSignatures(AbstractCrypto api, String participant) throws SiriusContextError, SiriusValidationError {

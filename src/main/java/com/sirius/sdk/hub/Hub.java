@@ -127,6 +127,14 @@ public class Hub implements Closeable {
         return config.storage;
     }
 
+    public AbstractMicroledgerList getMicroledgers() {
+        if (config.microledgers != null) {
+            return config.microledgers;
+        } else {
+            return getAgentConnectionLazy().getMicroledgers();
+        }
+    }
+
     public Hub setStorage(AbstractImmutableCollection storage) {
         this.config.storage = storage;
         return this;

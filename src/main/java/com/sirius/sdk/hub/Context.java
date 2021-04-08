@@ -1,5 +1,8 @@
 package com.sirius.sdk.hub;
 
+import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
+import com.sirius.sdk.agent.microledgers.LedgerMeta;
+import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -480,6 +483,44 @@ public class Context implements Closeable {
         }
     };
 
+    AbstractMicroledgerList microlegders = new AbstractMicroledgerList() {
+        @Override
+        public Pair<AbstractMicroledger, List<Transaction>> create(String name, List<Transaction> genesis) {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            return service.create(name, genesis);
+        }
+
+        @Override
+        public AbstractMicroledger getLedger(String name) {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            return service.getLedger(name);
+        }
+
+        @Override
+        public void reset(String name) {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            service.reset(name);
+        }
+
+        @Override
+        public boolean isExists(String name) {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            return service.isExists(name);
+        }
+
+        @Override
+        public byte[] leafHash(Transaction txn) {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            return service.leafHash(txn);
+        }
+
+        @Override
+        public List<LedgerMeta> getList() {
+            AbstractMicroledgerList service = currentHub.getMicroledgers();
+            return service.getList();
+        }
+    };
+
     public static class Builder {
         Hub.Config config = new Hub.Config();
 
@@ -570,6 +611,10 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().getLedgers();
     }
 
+    public AbstractMicroledgerList getMicrolegders() {
+        return microlegders;
+    }
+
     public String generateQrCode(String value) {
         return currentHub.getAgentConnectionLazy().generateQrCode(value);
     }
@@ -605,6 +650,14 @@ public class Context implements Closeable {
         } catch (SiriusRPCError siriusRPCError) {
             siriusRPCError.printStackTrace();
         }
+    }
+
+    public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
+        return currentHub.getAgentConnectionLazy().acquire(resources, lockTimeoutSec, enterTimeoutSec);
+    }
+
+    public void release() {
+        currentHub.getAgentConnectionLazy().release();
     }
 
     @Override

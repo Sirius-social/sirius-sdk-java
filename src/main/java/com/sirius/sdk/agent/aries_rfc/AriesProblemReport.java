@@ -12,6 +12,14 @@ public class AriesProblemReport extends AriesProtocolMessage {
         super(message);
     }
 
+    public String getProblemCode() {
+        return getMessageObj().optString("problem-code");
+    }
+
+    public String getExplain() {
+        return getMessageObj().optString("explain");
+    }
+
     public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
         String problemCode = null;
         String explain = null;
