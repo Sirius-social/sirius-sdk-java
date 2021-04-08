@@ -49,6 +49,10 @@ public class InitRequestLedgerMessage extends BaseInitLedgerMessage {
             throw new SiriusContextError("Ledger body is empty");
     }
 
+    public int getTimeoutSec() {
+        return getMessageObj().optInt("timeout_sec");
+    }
+
     @Override
     public void validate() throws SiriusValidationError {
         super.validate();

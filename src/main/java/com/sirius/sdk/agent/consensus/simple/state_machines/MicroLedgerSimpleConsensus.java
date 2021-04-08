@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.consensus.simple.state_machines;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
+import com.sirius.sdk.agent.consensus.simple.messages.CommitTransactionsMessage;
 import com.sirius.sdk.agent.consensus.simple.messages.InitRequestLedgerMessage;
 import com.sirius.sdk.agent.consensus.simple.messages.InitResponseLedgerMessage;
 import com.sirius.sdk.agent.consensus.simple.messages.SimpleConsensusProblemReport;
@@ -9,6 +11,7 @@ import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.base.AbstractStateMachine;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractCoProtocol;
@@ -58,6 +61,10 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
         return co;
     }
 
+//    private CoProtocolThreadedTheirs leader(Pairwise their, String threadId, int timeToLiveSec) {
+//        CoProtocolThreadedTheirs co = new CommitTransactionsMessage(this.context, )
+//    }
+
     /**
      *
      * @param ledgerName name of new microledger
@@ -77,14 +84,47 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                 log.info("Ledger creation terminated successfully");
                 try {
                     initMicroledgerInternal(co, ledger, participants, genesis);
+                    log.info("100% - All participants accepted ledger creation");
+                    return new Pair<>(true, ledger);
+                } catch (StateMachineTerminatedWithError ex) {
+                    log.info("100% - Terminated with error");
+                    this.problemReport = SimpleConsensusProblemReport.builder().
+                            setProblemCode(ex.getProblemCode()).
+                            setExplain(ex.getExplain()).
+                            build();
+                    if (ex.isNotify()) {
+                        co.send(this.problemReport);
+                    }
+                    return new Pair<>(false, null);
                 } catch (Exception ex) {
-
+                    log.info("100% - Terminated with error");
+                    ex.printStackTrace();
                 }
-
             }
         } catch (SiriusValidationError siriusValidationError) {
+            log.info("100% - Terminated with error");
             siriusValidationError.printStackTrace();
         }
+        return null;
+    }
+
+    public Pair<Boolean, AbstractMicroledger> acceptMicroledger(Pairwise leader, InitRequestLedgerMessage propose) {
+        if (!propose.getParticipants().contains(this.me.getDid()))
+            throw new SiriusContextError("Invalid state machine initialization");
+        int timeToLive = this.timeToLiveSec;
+        if (propose.getTimeoutSec() > 0)
+            timeToLive = propose.getTimeoutSec();
+        try {
+            bootstrap(propose.getParticipants());
+        } catch (SiriusValidationError siriusValidationError) {
+            log.info("100% - Terminated with error");
+            siriusValidationError.printStackTrace();
+            return new Pair<>(false, null);
+        }
+
+
+
+
         return null;
     }
 
@@ -192,16 +232,17 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                 }
             }
 
-
+            // ============== STAGE 3: POST-COMMIT ============
+            Ack ack = Ack.builder().
+                    setStatus(Ack.Status.OK).
+                    build();
+            log.info("90% - All checks OK. Send Ack to acceptors");
+            co.send(ack);
         } catch (SiriusValidationError siriusValidationError) {
             siriusValidationError.printStackTrace();
         } finally {
             release();
         }
-    }
-
-    public Pair<Boolean, AbstractMicroledger> acceptMicroledger(Pairwise leader, InitRequestLedgerMessage propose) {
-        return null;
     }
 
     @Override
