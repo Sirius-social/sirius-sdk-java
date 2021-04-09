@@ -150,9 +150,4 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
         }
         return transport;
     }
-
-    @Override
-    public void close() {
-
-    }
 }

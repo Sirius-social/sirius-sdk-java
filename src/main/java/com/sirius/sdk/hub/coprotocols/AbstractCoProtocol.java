@@ -5,6 +5,7 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.Hub;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 public abstract class AbstractCoProtocol implements Closeable {
 
@@ -19,4 +20,12 @@ public abstract class AbstractCoProtocol implements Closeable {
         this.context = context;
     }
 
+    @Override
+    public void close() {
+        if (started) {
+            transport.stop();
+            started = false;
+            transport = null;
+        }
+    }
 }

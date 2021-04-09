@@ -24,6 +24,12 @@ public class CoProtocolThreadedP2P extends AbstractP2PCoProtocol {
         this.timeToLiveSec = timeToLiveSec;
     }
 
+    public CoProtocolThreadedP2P(Context context, String thid, Pairwise to) {
+        super(context);
+        this.thid = thid;
+        this.to = to;
+    }
+
     public String getThid() {
         return thid;
     }
@@ -34,17 +40,12 @@ public class CoProtocolThreadedP2P extends AbstractP2PCoProtocol {
 
     @Override
     public void send(Message message) throws SiriusPendingOperation {
-
+        getTransportLazy().send(message);
     }
 
     @Override
-    public Pair<Boolean, Message> sendAndWait(Message message) throws SiriusInvalidPayloadStructure, SiriusInvalidMessage, SiriusPendingOperation {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-
+    public Pair<Boolean, Message> sendAndWait(Message message) throws SiriusInvalidPayloadStructure, SiriusInvalidMessage {
+        return getTransportLazy().sendAndWait(message);
     }
 
     private AbstractCoProtocolTransport getTransportLazy() {

@@ -49,15 +49,6 @@ public class CoProtocolP2P extends AbstractP2PCoProtocol {
         return res;
     }
 
-    @Override
-    public void close() {
-        if (started) {
-            transport.stop();
-            started = false;
-            transport = null;
-        }
-    }
-
     private AbstractCoProtocolTransport getTransportLazy() {
         if (transport == null) {
             transport = context.getCurrentHub().getAgentConnectionLazy().spawn(pairwise);

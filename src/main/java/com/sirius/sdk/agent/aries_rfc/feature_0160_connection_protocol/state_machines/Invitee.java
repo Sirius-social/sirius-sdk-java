@@ -132,7 +132,7 @@ public class Invitee extends BaseConnectionStateMachine {
                 }
             }
 
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | IOException | StateMachineTerminatedWithError siriusPendingOperation) {
+        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | StateMachineTerminatedWithError siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
             log.info("100% - Terminated with error");
             return null;

@@ -111,7 +111,7 @@ public class Inviter extends BaseConnectionStateMachine {
                     return null;
                 }
             }
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | IOException siriusPendingOperation) {
+        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();
             log.info("100% - Terminated with error");
             return null;

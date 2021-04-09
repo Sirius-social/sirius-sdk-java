@@ -82,13 +82,4 @@ public class CoProtocolP2PAnon extends AbstractP2PCoProtocol {
         }
         return transport;
     }
-
-    @Override
-    public void close() {
-        if (started) {
-            transport.stop();
-            started = false;
-            transport = null;
-        }
-    }
 }

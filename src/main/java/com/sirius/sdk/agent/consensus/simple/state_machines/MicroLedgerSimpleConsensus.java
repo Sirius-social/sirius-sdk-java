@@ -12,11 +12,16 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.base.AbstractStateMachine;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedP2P;
 import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedTheirs;
+import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -61,9 +66,10 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
         return co;
     }
 
-//    private CoProtocolThreadedTheirs leader(Pairwise their, String threadId, int timeToLiveSec) {
-//        CoProtocolThreadedTheirs co = new CommitTransactionsMessage(this.context, )
-//    }
+    private CoProtocolThreadedP2P leader(Pairwise their, String threadId, int timeToLiveSec) {
+        CoProtocolThreadedP2P co = new CoProtocolThreadedP2P(context, threadId, their, null, timeToLiveSec);
+        return co;
+    }
 
     /**
      *
@@ -122,7 +128,34 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
             return new Pair<>(false, null);
         }
 
+        try (CoProtocolThreadedP2P co = leader(leader, propose.getThreadId(), timeToLive)) {
+            String ledgerName = propose.getLedger().optString("name", null);
+            try {
+                if (ledgerName == null) {
+                    throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR, "Ledger name is Empty!");
+                }
+                for (String theirDid : propose.getParticipants()) {
+                    if (!theirDid.equals(this.me.getDid())) {
+                        if (!this.cachedP2P.containsKey(theirDid)) {
+                            throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                                    "Pairwise for DID: " + theirDid +" does not exists!");
+                        }
+                    }
+                }
+                log.info("0% - Start ledger " + ledgerName + " creation process");
 
+            } catch (StateMachineTerminatedWithError ex) {
+                this.problemReport = SimpleConsensusProblemReport.builder().
+                        setProblemCode(ex.getProblemCode()).
+                        setExplain(ex.getExplain()).
+                        build();
+                log.info("100% - Terminated with error");
+                if (ex.isNotify()) {
+                    co.send(this.problemReport);
+                    return new Pair<>(false, null);
+                }
+            }
+        }
 
 
         return null;
@@ -142,13 +175,13 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
         }
     }
 
-    private Pair<Boolean, List<String>> acquire(List<String> names, Double lockTimeoutSec, Double enterTimeoutSec) {
+    private Pair<Boolean, List<String>> acquire(List<String> names, Double lockTimeoutSec) {
         String NAMESPACE = "ledgers";
         names = new ArrayList<>(new HashSet<String>(names));
         for (int i = 0; i < names.size(); i++) {
             names.set(i, NAMESPACE + "/" + names.get(i));
         }
-        Pair<Boolean, List<String>> t1 = this.context.acquire(names, lockTimeoutSec, enterTimeoutSec);
+        Pair<Boolean, List<String>> t1 = this.context.acquire(names, lockTimeoutSec, null);
         List<String> lockedLedgers = new ArrayList<>();
         for (String s : t1.second) {
             lockedLedgers.add(s.split("/")[1]);
@@ -161,7 +194,7 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
     }
 
     private void initMicroledgerInternal(CoProtocolThreadedTheirs co, AbstractMicroledger ledger, List<String> participants, List<Transaction> genesis) throws StateMachineTerminatedWithError {
-        Pair<Boolean, List<String>> t1 = acquire(Arrays.asList(ledger.name()), (double) this.timeToLiveSec, null);
+        Pair<Boolean, List<String>> t1 = acquire(Arrays.asList(ledger.name()), (double) this.timeToLiveSec);
         boolean success = t1.first;
         List<String> busy = t1.second;
         if (!success) {
@@ -243,6 +276,78 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
         } finally {
             release();
         }
+    }
+
+    private AbstractMicroledger acceptMicroledgerInternal(CoProtocolThreadedP2P co, Pairwise leader, InitRequestLedgerMessage propose,
+                                                          int timeout) throws StateMachineTerminatedWithError {
+        Pair<Boolean, List<String>> t1 = acquire(Arrays.asList(propose.getLedger().getString("name")), (double)this.timeToLiveSec);
+        if (!t1.first) {
+            throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, "Preparing: Ledgers are locked by other state-machine");
+        }
+        try {
+            // =============== STAGE 1: PROPOSE ===============
+            try {
+                propose.validate();
+                propose.checkSignatures(context.getCrypto(), leader.getTheir().getDid());
+                if (propose.getParticipants().size() < 2) {
+                    throw new SiriusValidationError("Stage-1: participants less than 2");
+                }
+            } catch (SiriusValidationError ex) {
+                throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, ex.getMessage());
+            }
+            List<Transaction> genesis = new ArrayList<>();
+            JSONArray genJsonArr = propose.getLedger().getJSONArray("genesis");
+            for (Object o : genJsonArr) {
+                genesis.add(new Transaction((JSONObject) o));
+            }
+            log.info("10% - Initialize ledger");
+            Pair<AbstractMicroledger, List<Transaction>> t2 = context.getMicrolegders().create(propose.getLedger().getString("name"), genesis);
+            AbstractMicroledger ledger = t2.first;
+            List<Transaction> txns = t2.second;
+            log.info("20% - Ledger initialized successfully");
+            if (!propose.getLedger().optString("root_hash").equals(ledger.rootHash())) {
+                context.getMicrolegders().reset(ledger.name());
+                throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR, "Stage-1: Non-consistent Root Hash");
+            }
+            InitResponseLedgerMessage response = InitResponseLedgerMessage.builder().
+                    setTimeoutSec(timeout).
+                    build();
+            response.assignFrom(propose);
+            JSONObject commitLedgerHash = response.ledgerHash();
+            response.addSignature(context.getCrypto(), this.me);
+
+            // =============== STAGE 2: COMMIT ===============
+            log.info("30% - Send propose response");
+            Pair<Boolean, Message> t3 = co.sendAndWait(response);
+            if (t3.first) {
+                log.info("50% - Validate request commit");
+                if (t3.second instanceof InitResponseLedgerMessage) {
+                    InitResponseLedgerMessage requestCommit = (InitResponseLedgerMessage) t3.second;
+                    try {
+                        requestCommit.validate();
+                        JSONObject hashes = requestCommit.checkSignatures(context.getCrypto());
+                        for (String theirDid : hashes.keySet()) {
+                            JSONObject decoded = hashes.getJSONObject(theirDid);
+                            if (!decoded.similar(commitLedgerHash)) {
+                                throw new SiriusValidationError("Stage-2: NonEqual Ledger hash with participant " + theirDid);
+                            }
+                        }
+                    } catch (SiriusValidationError ex) {
+                        throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, ex.getMessage());
+                    }
+                }
+            }
+
+
+        } catch (SiriusInvalidMessage siriusInvalidMessage) {
+            siriusInvalidMessage.printStackTrace();
+        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
+            siriusInvalidPayloadStructure.printStackTrace();
+        } finally {
+            release();
+        }
+
+        return null;
     }
 
     @Override

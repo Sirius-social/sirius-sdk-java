@@ -15,5 +15,5 @@ public abstract class AbstractP2PCoProtocol extends AbstractCoProtocol{
 
     public abstract void send(Message message) throws SiriusPendingOperation;
 
-    public abstract Pair<Boolean, Message> sendAndWait(Message message) throws SiriusInvalidPayloadStructure, SiriusInvalidMessage, SiriusPendingOperation;
+    public abstract Pair<Boolean, Message> sendAndWait(Message message) throws SiriusInvalidPayloadStructure, SiriusInvalidMessage;
 }

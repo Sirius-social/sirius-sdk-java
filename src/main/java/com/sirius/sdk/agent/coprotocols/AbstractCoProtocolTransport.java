@@ -86,6 +86,7 @@ public abstract class AbstractCoProtocolTransport {
 
     public void start(int timeToLiveSec) {
         this.protocols = new ArrayList<>();
+        this.checkProtocols = false;
         this.timeToLiveSec = timeToLiveSec;
         this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
         started = true;
@@ -93,6 +94,8 @@ public abstract class AbstractCoProtocolTransport {
 
     public void start(List<String> protocols, int timeToLiveSec) {
         this.protocols = protocols;
+        if (protocols.isEmpty())
+            this.checkProtocols = false;
         this.timeToLiveSec = timeToLiveSec;
         this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
         started = true;
