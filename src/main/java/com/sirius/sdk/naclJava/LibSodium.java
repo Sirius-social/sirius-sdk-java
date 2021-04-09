@@ -1,8 +1,12 @@
 package com.sirius.sdk.naclJava;
 
+import com.goterl.lazycode.lazysodium.LazySodium;
+import com.goterl.lazycode.lazysodium.LazySodiumAndroid;
 import com.goterl.lazycode.lazysodium.LazySodiumJava;
+import com.goterl.lazycode.lazysodium.SodiumAndroid;
 import com.goterl.lazycode.lazysodium.SodiumJava;
 import com.goterl.lazycode.lazysodium.interfaces.*;
+import com.sun.jna.Platform;
 
 import java.nio.charset.StandardCharsets;
 
@@ -10,7 +14,7 @@ public class LibSodium {
 
     private static volatile LibSodium mInstance;
 
-    public LazySodiumJava getLazySodium() {
+    public LazySodium getLazySodium() {
         return lazySodium;
     }
 
@@ -80,10 +84,15 @@ public class LibSodium {
     public KeyDerivation.Lazy getLazyKeyDerivation() {
         return (KeyDerivation.Lazy) getLazySodium();
     }
-    private LazySodiumJava lazySodium;
+
+    private LazySodium lazySodium;
 
     private LibSodium() {
-        lazySodium = new LazySodiumJava(new SodiumJava(), StandardCharsets.US_ASCII);
+        if (Platform.isAndroid()) {
+            lazySodium = new LazySodiumAndroid(new SodiumAndroid(), StandardCharsets.US_ASCII);
+        } else {
+            lazySodium = new LazySodiumJava(new SodiumJava(), StandardCharsets.US_ASCII);
+        }
     }
 
     public static LibSodium getInstance() {
