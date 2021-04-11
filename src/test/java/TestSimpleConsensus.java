@@ -216,7 +216,7 @@ public class TestSimpleConsensus {
         };
     }
 
-    //@Test
+    @Test
     public void testSimpleConsensusInitLedger() throws InterruptedException, ExecutionException, TimeoutException {
         Agent agentA = confTest.getAgent("agent1");
         Agent agentB = confTest.getAgent("agent2");

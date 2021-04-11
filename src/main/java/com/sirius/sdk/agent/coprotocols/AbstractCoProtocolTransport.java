@@ -218,7 +218,7 @@ public abstract class AbstractCoProtocolTransport {
         Message message = null;
         if (event.messageObjectHasKey("message")) {
             try {
-                Pair<Boolean, Message> okMessage = Message.restoreMessageInstance(event.getMessageObj().getString("message"));
+                Pair<Boolean, Message> okMessage = Message.restoreMessageInstance(event.getMessageObj().get("message").toString());
                 if (okMessage.first) {
                     message = okMessage.second;
                 } else {

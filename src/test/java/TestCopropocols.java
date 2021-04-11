@@ -1,5 +1,7 @@
 import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
+import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
@@ -409,6 +411,88 @@ public class TestCopropocols {
         reader2.get(30, TimeUnit.SECONDS);
 
         Assert.assertEquals(2, rcvMessages.size());
+    }
+
+    @Test
+    public void testCoprotocolThreadedTheirsSwitch() throws InterruptedException, ExecutionException, TimeoutException {
+        Agent agent1 = confTest.getAgent("agent1");
+        Agent agent2 = confTest.getAgent("agent2");
+        Agent agent3 = confTest.getAgent("agent3");
+
+        AgentParams agent1params = testSuite.getAgentParams("agent1");
+        AgentParams agent2params = testSuite.getAgentParams("agent2");
+        AgentParams agent3params = testSuite.getAgentParams("agent3");
+
+        agent1.open();
+        agent2.open();
+        agent3.open();
+
+        Pairwise pw1 = confTest.getPairwise(agent1, agent2);
+        Pairwise pw2 = confTest.getPairwise(agent1, agent3);
+
+        String threadId = "thread-id-" + UUID.randomUUID();
+        List<CoProtocolThreadedTheirs.SendAndWaitResult> statuses = new ArrayList<>();
+
+        CompletableFuture<Void> actor = CompletableFuture.supplyAsync(() -> {
+            try (Context context = Context.builder().
+                    setServerUri(agent1params.getServerAddress()).
+                    setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8))
+                    .setP2p(agent1params.getConnection()).build()) {
+                Ping msg = Ping.builder().
+                        setComment("Test Ping").
+                        build();
+                CoProtocolThreadedTheirs co = new CoProtocolThreadedTheirs(context, threadId, Arrays.asList(pw1, pw2), null, 60);
+                statuses.addAll(co.sendAndWait(msg));
+
+            }
+            return null;
+        }, r -> new Thread(r).start());
+
+        CompletableFuture<Void> responder1 = CompletableFuture.supplyAsync(() -> {
+            try (Context context = Context.builder().
+                    setServerUri(agent2params.getServerAddress()).
+                    setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
+                    .setP2p(agent2params.getConnection()).build()) {
+                Event event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
+                String threadId_ = event.message().getJSONOBJECTFromJSON("~thread").optString("thid");
+                Pong pong = Pong.builder().
+                        setPingId(threadId_).
+                        setComment("PONG").
+                        build();
+                context.sendTo(pong, event.getPairwise());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }, r -> new Thread(r).start());
+
+        CompletableFuture<Void> responder2 = CompletableFuture.supplyAsync(() -> {
+            try (Context context = Context.builder().
+                    setServerUri(agent3params.getServerAddress()).
+                    setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
+                    .setP2p(agent3params.getConnection()).build()) {
+                Event event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
+                String threadId_ = event.message().getJSONOBJECTFromJSON("~thread").optString("thid");
+                Pong pong = Pong.builder().
+                        setPingId(threadId_).
+                        setComment("PONG").
+                        build();
+                context.sendTo(pong, event.getPairwise());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }, r -> new Thread(r).start());
+
+        actor.get(30, TimeUnit.SECONDS);
+        responder1.get(30, TimeUnit.SECONDS);
+        responder2.get(30, TimeUnit.SECONDS);
+
+        Assert.assertFalse(statuses.isEmpty());
+        for (CoProtocolThreadedTheirs.SendAndWaitResult s : statuses) {
+            Assert.assertTrue(s.success);
+            Assert.assertEquals("PONG", s.message.getMessageObj().optString("comment"));
+        }
     }
 
 }

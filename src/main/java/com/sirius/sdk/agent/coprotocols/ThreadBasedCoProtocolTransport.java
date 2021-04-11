@@ -72,6 +72,12 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
         super.send(message);
     }
 
+    @Override
+    public List<Pair<Boolean, String>> sendMany(Message message, List<Pairwise> to) throws SiriusPendingOperation {
+        prepareMessage(message);
+        return super.sendMany(message, to);
+    }
+
     private void prepareMessage(Message msg) {
         if (!msg.messageObjectHasKey(THREAD_DECORATOR)) {
             JSONObject threadDecorator = new JSONObject().

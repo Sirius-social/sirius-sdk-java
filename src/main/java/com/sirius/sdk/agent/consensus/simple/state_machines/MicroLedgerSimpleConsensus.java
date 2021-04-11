@@ -246,7 +246,7 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
 
             // ============= STAGE 2: COMMIT ============
             log.info("60% - Send commit request");
-            results = co.sendAndWait(propose);
+            results = co.sendAndWait(requestCommit);
             log.info("70% - Received commit responses");
             erroredAcceptorsDid = new ArrayList<>();
             for (CoProtocolThreadedTheirs.SendAndWaitResult r : results) {
