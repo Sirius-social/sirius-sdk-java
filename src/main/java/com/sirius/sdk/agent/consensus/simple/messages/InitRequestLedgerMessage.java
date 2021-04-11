@@ -56,7 +56,7 @@ public class InitRequestLedgerMessage extends BaseInitLedgerMessage {
     @Override
     public void validate() throws SiriusValidationError {
         super.validate();
-        if (this.getLedger() != null)
+        if (this.getLedger() == null)
             throw new SiriusValidationError("Ledger body is empty");
         if (!this.getLedger().keySet().containsAll(Arrays.asList("root_hash", "name", "genesis")))
             throw new SiriusValidationError("Expected field does not exists in Ledger container");

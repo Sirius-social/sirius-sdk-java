@@ -31,11 +31,15 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
         super(rpc);
         this.thid = thid;
         this.pairwise = pairwise;
-        this.their = pairwise.getTheir();
         this.pthid = pthid;
         senderOrder = 0;
         receivedOrders = new JSONObject();
-        setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpoint(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
+        if (pairwise != null) {
+            this.their = pairwise.getTheir();
+            setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpoint(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
+        } else {
+            setup(null, null, null, null);
+        }
     }
 
     @Override

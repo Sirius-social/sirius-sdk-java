@@ -58,9 +58,9 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
     public List<SendResult> send(Message message) {
         List<SendResult> res = new ArrayList<>();
         try {
-            List<Object> responces = getTransportLazy().sendMany(message, this.theirs);
+            List<Pair<Boolean, String>> responces = getTransportLazy().sendMany(message, this.theirs);
             for (int i = 0; i < responces.size(); i++) {
-                Pair<Boolean, String> responce = (Pair<Boolean, String>) responces.get(i);
+                Pair<Boolean, String> responce = responces.get(i);
                 res.add(new SendResult(this.theirs.get(i), responce.first, responce.second));
             }
         } catch (SiriusPendingOperation siriusPendingOperation) {
@@ -114,20 +114,22 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
         List<SendResult> statuses = send(message);
         int resSize = 0;
         for (SendResult sr : statuses) {
-            resSize++;
+            if (sr.success)
+                resSize++;
         }
         int accum = 0;
         List<SendAndWaitResult> results = new ArrayList<>();
-        while (accum < results.size()) {
+        while (accum < resSize) {
             GetOneResult getOneResult = this.getOne();
             if (getOneResult.pairwise == null)
                 break;
             if (dids.contains(getOneResult.pairwise.getTheir().getDid())) {
                 results.add(new SendAndWaitResult(getOneResult.pairwise, true, getOneResult.message));
+                accum++;
             }
         }
 
-        return null;
+        return results;
     }
 
     private Pairwise loadP2PFromVerkey(String verkey) {

@@ -247,7 +247,7 @@ public class AgentRPC extends BaseAgentConnection {
         return null;
     }
 
-    public List<Object> sendMessageBatched(Message message, List<RoutingBatch> batches) throws SiriusConnectionClosed {
+    public List<Pair<Boolean, String>> sendMessageBatched(Message message, List<RoutingBatch> batches) throws SiriusConnectionClosed {
         if (!connector.isOpen()) {
             throw new SiriusConnectionClosed("Open agent connection at first");
         }
@@ -260,7 +260,13 @@ public class AgentRPC extends BaseAgentConnection {
 
         try {
             Object response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message_batched", params);
-            return (List<Object>) response;
+            JSONArray jsonArr = (JSONArray) response;
+            List<Pair<Boolean, String>> res = new ArrayList<>();
+            for (Object o : jsonArr) {
+                JSONArray internalArr = (JSONArray) o;
+                res.add(new Pair<>(internalArr.getBoolean(0), internalArr.get(1).toString()));
+            }
+            return res;
         } catch (Exception e) {
             e.printStackTrace();
         }

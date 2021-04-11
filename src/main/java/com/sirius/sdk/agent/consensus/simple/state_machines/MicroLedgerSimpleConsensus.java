@@ -93,7 +93,7 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                     log.info("100% - All participants accepted ledger creation");
                     return new Pair<>(true, ledger);
                 } catch (StateMachineTerminatedWithError ex) {
-                    log.info("100% - Terminated with error");
+                    log.info("100% - Terminated with error. Problem code: " + ex.getProblemCode() + " Explain: " + ex.getExplain());
                     this.problemReport = SimpleConsensusProblemReport.builder().
                             setProblemCode(ex.getProblemCode()).
                             setExplain(ex.getExplain()).
@@ -143,13 +143,15 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                     }
                 }
                 log.info("0% - Start ledger " + ledgerName + " creation process");
-
+                AbstractMicroledger ledger = acceptMicroledgerInternal(co, leader, propose, timeToLive);
+                log.info("100% - Ledger creation terminated successfully");
+                return new Pair<>(true, ledger);
             } catch (StateMachineTerminatedWithError ex) {
                 this.problemReport = SimpleConsensusProblemReport.builder().
                         setProblemCode(ex.getProblemCode()).
                         setExplain(ex.getExplain()).
                         build();
-                log.info("100% - Terminated with error");
+                log.info("100% - Terminated with error. Problem code: " + ex.getProblemCode() + " Explain: " + ex.getExplain());
                 if (ex.isNotify()) {
                     co.send(this.problemReport);
                     return new Pair<>(false, null);
@@ -157,8 +159,7 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
             }
         }
 
-
-        return null;
+        return new Pair<>(false, null);
     }
 
     private void bootstrap(List<String> patricipants) throws SiriusValidationError {
@@ -335,10 +336,54 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                     } catch (SiriusValidationError ex) {
                         throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, ex.getMessage());
                     }
+
+                    Set<String> commitParticipantsSet = new HashSet<>(requestCommit.getParticipants());
+                    Set<String> proposeParticipantsSet = new HashSet<>(propose.getParticipants());
+                    Set<Object> signersSet = new HashSet<>();
+                    JSONArray signs = requestCommit.signatures();
+                    for (Object sign : signs) {
+                        signersSet.add(((JSONObject)sign).getString("participant"));
+                    }
+
+                    String errorExplain = null;
+                    if (!proposeParticipantsSet.equals(signersSet)) {
+                        errorExplain = "Stage-2: Set of signers differs from proposed participants set";
+                    } else if (!commitParticipantsSet.equals(signersSet)) {
+                        errorExplain = "Stage-2: Set of signers differs from commit participants set";
+                    }
+
+                    if (errorExplain != null) {
+                        throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, errorExplain);
+                    }
+
+                    // Accept commit
+                    log.info("70% - Send Ack");
+                    Ack ack = Ack.builder().
+                            setStatus(Ack.Status.OK).
+                            build();
+                    Pair<Boolean, Message> t4 = co.sendAndWait(ack);
+                    // =========== STAGE-3: POST-COMMIT ===============
+                    if (t4.first) {
+                        log.info("90% - Response to Ack received");
+                        if (t4.second instanceof Ack) {
+                            return ledger;
+                        } else if (t4.second instanceof SimpleConsensusProblemReport) {
+                            this.problemReport = (SimpleConsensusProblemReport) t4.second;
+                            log.info("Code: " + this.problemReport.getProblemCode() + "; Explain: " + this.problemReport.getExplain());
+                            throw new StateMachineTerminatedWithError(this.problemReport.getProblemCode(), this.problemReport.getExplain());
+                        }
+                    } else {
+                        throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                                "Stage-3: Commit accepting was terminated by timeout for actor: " + leader.getTheir().getDid());
+                    }
+                } else if (t3.second instanceof SimpleConsensusProblemReport) {
+                    this.problemReport = (SimpleConsensusProblemReport) t3.second;
+                    throw new StateMachineTerminatedWithError(this.problemReport.getProblemCode(), this.problemReport.getExplain());
                 }
+            } else {
+                throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                        "Stage-2: Commit response awaiting was terminated by timeout for actor: " + leader.getTheir().getDid());
             }
-
-
         } catch (SiriusInvalidMessage siriusInvalidMessage) {
             siriusInvalidMessage.printStackTrace();
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
