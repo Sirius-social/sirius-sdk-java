@@ -8,6 +8,7 @@ import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.messaging.Type;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -217,7 +218,7 @@ public abstract class AbstractCoProtocolTransport {
         Message message = null;
         if (event.messageObjectHasKey("message")) {
             try {
-                Pair<Boolean, Message> okMessage = Message.restoreMessageInstance(event.getMessageObj().getString("message"));
+                Pair<Boolean, Message> okMessage = Message.restoreMessageInstance(event.getMessageObj().get("message").toString());
                 if (okMessage.first) {
                     message = okMessage.second;
                 } else {
@@ -254,7 +255,7 @@ public abstract class AbstractCoProtocolTransport {
         }
     }
 
-    public List<Object> sendMany(Message message, List<Pairwise> to) throws SiriusPendingOperation {
+    public List<Pair<Boolean, String>> sendMany(Message message, List<Pairwise> to) throws SiriusPendingOperation {
         List<RoutingBatch> batches = new ArrayList<>();
         for (Pairwise p : to) {
             batches.add(new RoutingBatch(Collections.singletonList(p.getTheir().getVerkey()), p.getTheir().getEndpoint(), p.getMe().getVerkey(), p.getTheir().getRoutingKeys()));

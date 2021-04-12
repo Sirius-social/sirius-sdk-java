@@ -21,10 +21,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 
@@ -179,7 +183,7 @@ public class TestSimpleConsensus {
     }
 
     private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
-                                            List<String> participants, String ledgerName, List<JSONObject> genesis) {
+                                            List<String> participants, String ledgerName, List<Transaction> genesis) {
         return unused -> {
             try (Context c = Context.builder().
                     setServerUri(uri).
@@ -187,11 +191,7 @@ public class TestSimpleConsensus {
                     setP2p(p2p).
                     build()) {
                 MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
-                List<Transaction> trGen = new ArrayList<>();
-                for (JSONObject o : genesis) {
-                    trGen.add(new Transaction(o));
-                }
-                return machine.initMicroledger(ledgerName, participants, trGen);
+                return machine.initMicroledger(ledgerName, participants, genesis);
             }
         };
     }
@@ -204,12 +204,12 @@ public class TestSimpleConsensus {
                     setP2p(p2p).
                     build()) {
                 Listener listener = c.subscribe();
-                Event event = listener.getOne().get();
+                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
                 Message propose = event.message();
                 Assert.assertTrue(propose instanceof InitRequestLedgerMessage);
                 MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
                 return machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) propose);
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 e.printStackTrace();
             }
             return null;
@@ -217,7 +217,7 @@ public class TestSimpleConsensus {
     }
 
     @Test
-    public void testSimpleConsensusInitLedger() {
+    public void testSimpleConsensusInitLedger() throws InterruptedException, ExecutionException, TimeoutException {
         Agent agentA = confTest.getAgent("agent1");
         Agent agentB = confTest.getAgent("agent2");
         Agent agentC = confTest.getAgent("agent3");
@@ -254,6 +254,43 @@ public class TestSimpleConsensus {
                             put("op", "op2"))
             );
 
+            Function<Void, Pair<Boolean, AbstractMicroledger>> creatorRoutine = routineOfLedgerCreator(
+                    aParams.getServerAddress(), aParams.getCredentials().getBytes(StandardCharsets.UTF_8),
+                    aParams.getConnection(), a2b.getMe(), participants, ledgerName, genesis);
+
+            Function<Void, Pair<Boolean, AbstractMicroledger>> acceptorRoutine1 = routineOfLedgerCreationAcceptor(bParams.getServerAddress(),
+                    bParams.getCredentials().getBytes(StandardCharsets.UTF_8), bParams.getConnection());
+
+            Function<Void, Pair<Boolean, AbstractMicroledger>> acceptorRoutine2 = routineOfLedgerCreationAcceptor(cParams.getServerAddress(),
+                    cParams.getCredentials().getBytes(StandardCharsets.UTF_8), cParams.getConnection());
+
+            long stamp1 = System.currentTimeMillis();
+            System.out.println("> begin");
+            CompletableFuture<Pair<Boolean, AbstractMicroledger>> cf1 = CompletableFuture.supplyAsync(() -> {
+                return creatorRoutine.apply(null);
+            }, r -> new Thread(r).start());
+            CompletableFuture<Pair<Boolean, AbstractMicroledger>> cf2 = CompletableFuture.supplyAsync(() -> {
+                return acceptorRoutine1.apply(null);
+            }, r -> new Thread(r).start());
+            CompletableFuture<Pair<Boolean, AbstractMicroledger>> cf3 = CompletableFuture.supplyAsync(() -> {
+                return acceptorRoutine2.apply(null);
+            }, r -> new Thread(r).start());
+            cf1.get(30, TimeUnit.SECONDS);
+            cf2.get(30, TimeUnit.SECONDS);
+            cf3.get(30, TimeUnit.SECONDS);
+            System.out.println("> end");
+            long stamp2 = System.currentTimeMillis();
+            System.out.println("***** Consensus timeout: " + (stamp2 - stamp1) / 1000 + " sec");
+
+            Assert.assertTrue(agentA.getMicroledgers().isExists(ledgerName));
+            Assert.assertTrue(agentB.getMicroledgers().isExists(ledgerName));
+            Assert.assertTrue(agentC.getMicroledgers().isExists(ledgerName));
+
+            for (Agent agent : Arrays.asList(agentA, agentB, agentC)) {
+                AbstractMicroledger ledger = agent.getMicroledgers().getLedger(ledgerName);
+                List<Transaction> txns = ledger.getAllTransactions();
+                Assert.assertEquals(2, txns.size());
+            }
 
         } finally {
             agentA.close();
