@@ -73,7 +73,7 @@ public abstract class BaseAgentConnection {
             e.printStackTrace();
         }
         String msgString = new String(payload, StandardCharsets.UTF_8);
-        log.log(Level.INFO, "Received message: " + msgString);
+        //log.log(Level.INFO, "Received message: " + msgString);
         Message context = new Message(msgString);
         if (context.getType()==null){
             throw new SiriusFieldValueError("message @type is empty");

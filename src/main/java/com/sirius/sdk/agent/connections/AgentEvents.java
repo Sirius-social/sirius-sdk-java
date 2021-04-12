@@ -64,10 +64,10 @@ public class AgentEvents extends BaseAgentConnection {
                 JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
                 if (payload.has("protected")) {
                     String message = p2p.unpack(payload.toString());
-                    log.log(Level.INFO, "Received protected message. Unpacked: " + message);
+                    //log.log(Level.INFO, "Received protected message. Unpacked: " + message);
                     return new Message(message);
                 } else {
-                    log.log(Level.INFO, "Received message: " + payload);
+                    //log.log(Level.INFO, "Received message: " + payload);
                     return new Message(payload.toString());
                 }
             } catch (Exception e) {

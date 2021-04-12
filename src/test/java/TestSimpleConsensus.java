@@ -298,4 +298,143 @@ public class TestSimpleConsensus {
             agentC.close();
         }
     }
+
+    private Function<Void, Pair<Boolean, List<Transaction>>> routineOfTxnCommitter(String uri, byte[] credentials, P2PConnection p2p,
+                                                                                     Pairwise.Me me, List<String> participants,
+                                                                                     AbstractMicroledger ledger, List<Transaction> txns) {
+        return unused -> {
+            try (Context c = Context.builder().
+                    setServerUri(uri).
+                    setCredentials(credentials).
+                    setP2p(p2p).
+                    build()) {
+                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+                return machine.commit(ledger, participants, txns);
+            }
+        };
+    }
+
+    private Function<Void, Boolean> routineOfTxnAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
+        return unused -> {
+            try (Context c = Context.builder().
+                    setServerUri(uri).
+                    setCredentials(credentials).
+                    setP2p(p2p).
+                    build()) {
+                Listener listener = c.subscribe();
+                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                Assert.assertNotNull(event.getPairwise());
+                if (event.message() instanceof ProposeTransactionsMessage) {
+                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+                    return machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Assert.fail();
+            }
+            return false;
+        };
+    }
+
+    //@Test
+    public void testSimpleConsensusCommit() throws InterruptedException, ExecutionException, TimeoutException {
+        Agent agentA = confTest.getAgent("agent1");
+        Agent agentB = confTest.getAgent("agent2");
+        Agent agentC = confTest.getAgent("agent3");
+        String ledgerName = confTest.ledgerName();
+
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
+        AgentParams aParams = testSuite.getAgentParams("agent1");
+        AgentParams bParams = testSuite.getAgentParams("agent2");
+        AgentParams cParams = testSuite.getAgentParams("agent3");
+
+        agentA.open();
+        agentB.open();
+        agentC.open();
+        try {
+            Pairwise a2b = confTest.getPairwise(agentA, agentB);
+            Pairwise a2c = confTest.getPairwise(agentA, agentC);
+            Assert.assertEquals(a2b.getMe(), a2c.getMe());
+            Pairwise b2a = confTest.getPairwise(agentB, agentA);
+            Pairwise b2c = confTest.getPairwise(agentB, agentC);
+            Assert.assertEquals(b2a.getMe(), b2c.getMe());
+            Pairwise c2a = confTest.getPairwise(agentC, agentA);
+            Pairwise c2b = confTest.getPairwise(agentC, agentB);
+            Assert.assertEquals(c2a.getMe(), c2b.getMe());
+
+            List<String> participants = Arrays.asList(a2b.getMe().getDid(), a2b.getTheir().getDid(), a2c.getTheir().getDid());
+            List<Transaction> genesis = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 1).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op1")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 2).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op2"))
+            );
+
+            Pair<AbstractMicroledger, List<Transaction>> t1 = agentA.getMicroledgers().create(ledgerName, genesis);
+            AbstractMicroledger ledgerForA = t1.first;
+            agentB.getMicroledgers().create(ledgerName, genesis);
+            agentC.getMicroledgers().create(ledgerName, genesis);
+
+            List<Transaction> txns = Arrays.asList(
+                    new Transaction(new JSONObject().
+                            put("reqId", 3).
+                            put("identifier", "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC").
+                            put("op", "op3")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 4).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op4")),
+                    new Transaction(new JSONObject().
+                            put("reqId", 5).
+                            put("identifier", "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h").
+                            put("op", "op5"))
+            );
+
+            Function<Void, Pair<Boolean, List<Transaction>>> committer = routineOfTxnCommitter(
+                    aParams.getServerAddress(), aParams.getCredentials().getBytes(StandardCharsets.UTF_8),
+                    aParams.getConnection(), a2b.getMe(), participants, ledgerForA, genesis);
+
+            Function<Void, Boolean> acceptor1 = routineOfTxnAcceptor(bParams.getServerAddress(),
+                    bParams.getCredentials().getBytes(StandardCharsets.UTF_8), bParams.getConnection());
+
+            Function<Void, Boolean> acceptor2 = routineOfTxnAcceptor(cParams.getServerAddress(),
+                    cParams.getCredentials().getBytes(StandardCharsets.UTF_8), cParams.getConnection());
+
+            long stamp1 = System.currentTimeMillis();
+            System.out.println("> begin");
+            CompletableFuture<Pair<Boolean, List<Transaction>>> cf1 = CompletableFuture.supplyAsync(() -> {
+                return committer.apply(null);
+            }, r -> new Thread(r).start());
+            CompletableFuture<Boolean> cf2 = CompletableFuture.supplyAsync(() -> {
+                return acceptor1.apply(null);
+            }, r -> new Thread(r).start());
+            CompletableFuture<Boolean> cf3 = CompletableFuture.supplyAsync(() -> {
+                return acceptor2.apply(null);
+            }, r -> new Thread(r).start());
+            cf1.get(30, TimeUnit.SECONDS);
+            cf2.get(30, TimeUnit.SECONDS);
+            cf3.get(30, TimeUnit.SECONDS);
+            System.out.println("> end");
+            long stamp2 = System.currentTimeMillis();
+            System.out.println("***** Consensus timeout: " + (stamp2 - stamp1) / 1000 + " sec");
+
+            ledgerForA = agentA.getMicroledgers().getLedger(ledgerName);
+            AbstractMicroledger ledgerForB = agentB.getMicroledgers().getLedger(ledgerName);
+            AbstractMicroledger ledgerForC = agentC.getMicroledgers().getLedger(ledgerName);
+
+            List<AbstractMicroledger> ledgers = Arrays.asList(ledgerForA, ledgerForB, ledgerForC);
+            for (AbstractMicroledger ledger : ledgers) {
+                List<Transaction> allTxns = ledger.getAllTransactions();
+                Assert.assertEquals(5, allTxns.size());
+            }
+        } finally {
+            agentA.close();
+            agentB.close();
+            agentC.close();
+        }
+    }
 }
