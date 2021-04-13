@@ -336,7 +336,7 @@ public class TestSimpleConsensus {
         };
     }
 
-    //@Test
+    @Test
     public void testSimpleConsensusCommit() throws InterruptedException, ExecutionException, TimeoutException {
         Agent agentA = confTest.getAgent("agent1");
         Agent agentB = confTest.getAgent("agent2");
@@ -396,7 +396,7 @@ public class TestSimpleConsensus {
 
             Function<Void, Pair<Boolean, List<Transaction>>> committer = routineOfTxnCommitter(
                     aParams.getServerAddress(), aParams.getCredentials().getBytes(StandardCharsets.UTF_8),
-                    aParams.getConnection(), a2b.getMe(), participants, ledgerForA, genesis);
+                    aParams.getConnection(), a2b.getMe(), participants, ledgerForA, txns);
 
             Function<Void, Boolean> acceptor1 = routineOfTxnAcceptor(bParams.getServerAddress(),
                     bParams.getCredentials().getBytes(StandardCharsets.UTF_8), bParams.getConnection());
@@ -430,6 +430,9 @@ public class TestSimpleConsensus {
             for (AbstractMicroledger ledger : ledgers) {
                 List<Transaction> allTxns = ledger.getAllTransactions();
                 Assert.assertEquals(5, allTxns.size());
+                Assert.assertTrue(allTxns.toString().contains("op3"));
+                Assert.assertTrue(allTxns.toString().contains("op4"));
+                Assert.assertTrue(allTxns.toString().contains("op5"));
             }
         } finally {
             agentA.close();

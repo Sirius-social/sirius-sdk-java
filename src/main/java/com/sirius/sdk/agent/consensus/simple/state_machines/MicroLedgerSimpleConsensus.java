@@ -329,9 +329,24 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
             try {
                 log.info("0% - Start acception " + propose.transactions().size() + " transactions");
                 ledger = loadLedger(propose);
-
-            } catch (StateMachineTerminatedWithError stateMachineTerminatedWithError) {
-                stateMachineTerminatedWithError.printStackTrace();
+                acceptCommitInternal(co, ledger, leader, propose);
+                log.info("100% - Acception terminated successfully");
+                return true;
+            } catch (StateMachineTerminatedWithError ex) {
+                if (ledger != null)
+                    ledger.resetUncommitted();
+                this.problemReport = SimpleConsensusProblemReport.builder().
+                        setProblemCode(ex.getProblemCode()).
+                        setExplain(ex.getExplain()).
+                        build();
+                log.info("100% - Terminated with error " + ex.getProblemCode() + " " + ex.getExplain());
+                if (ex.isNotify()) {
+                    co.send(this.problemReport);
+                }
+            } catch (Exception ex) {
+                if (ledger != null)
+                    ledger.resetUncommitted();
+                ex.printStackTrace();
             }
         }
 
@@ -372,7 +387,7 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
         return context.getMicrolegders().getLedger(propose.getState().getName());
     }
 
-    private void acceptCommitInternal(CoProtocolThreadedP2P co, AbstractMicroledger ledger, Pairwise leader, ProposeTransactionsMessage propose) throws StateMachineTerminatedWithError {
+    private void acceptCommitInternal(CoProtocolThreadedP2P co, AbstractMicroledger ledger, Pairwise leader, ProposeTransactionsMessage propose) throws StateMachineTerminatedWithError, SiriusInvalidMessage, SiriusInvalidPayloadStructure {
         Pair<Boolean, List<String>> t1 = acquire(Arrays.asList(ledger.name()), (double) this.timeToLiveSec);
         if (!t1.first) {
             throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, "Preparing: Ledgers are locked by other state-machine");
@@ -399,17 +414,60 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                         if (!new HashSet<String>(commit.getParticipants()).equals(new HashSet<String>(propose.getParticipants()))) {
                             throw new SiriusValidationError("Non-consistent participants");
                         }
-                    } catch (SiriusValidationError siriusValidationError) {
-                        siriusValidationError.printStackTrace();
+                        commit.validate();
+                        commit.verifyPreCommits(context.getCrypto(), ledgerState);
+
+                        // ===== STAGE-3: Process post-commit, verify participants operations
+                        PostCommitTransactionsMessage postCommit = PostCommitTransactionsMessage.builder().
+                                build();
+                        postCommit.addCommitSign(context.getCrypto(), commit, this.me);
+
+                        log.info("50% - Send Post-Commit");
+                        Pair<Boolean, Message> t3 = co.sendAndWait(postCommit);
+                        if (t3.first) {
+                            log.info("60% - Received Post-Commit response");
+                            if (t3.second instanceof PostCommitTransactionsMessage) {
+                                try {
+                                    log.info("80% - Validate response");
+                                    PostCommitTransactionsMessage postCommitAll = (PostCommitTransactionsMessage) t3.second;
+                                    postCommitAll.validate();
+                                    List<String> verkeys = new ArrayList<>();
+                                    for (Pairwise p : this.cachedP2P.values()) {
+                                        verkeys.add(p.getTheir().getVerkey());
+                                    }
+                                    postCommitAll.verifyCommits(context.getCrypto(), commit, verkeys);
+
+                                    int uncommitted_size = ledgerState.getUncommittedSize() - ledgerState.getSize();
+                                    log.info("90% - Flush transactions to Ledger storage");
+                                    ledger.commit(uncommitted_size);
+                                } catch (SiriusValidationError ex) {
+                                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED,
+                                            "Stage-3: error for leader " + leader.getTheir().getDid() + " " + ex.getMessage());
+                                }
+                            } else if (t3.second instanceof SimpleConsensusProblemReport) {
+                                this.problemReport = (SimpleConsensusProblemReport) t3.second;
+                                throw new StateMachineTerminatedWithError(this.problemReport.getProblemCode(),
+                                        "Stage-3: Problem report from leader" + leader.getTheir().getDid() + " " + this.problemReport.getExplain());
+                            }
+                        } else {
+                            throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                                    "Stage-3: Post-Commit awaiting terminated by timeout for leader: " + leader.getTheir().getDid());
+                        }
+                    } catch (SiriusValidationError ex) {
+                        throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED,
+                                "Stage-2: error for actor " + leader.getTheir().getDid()  + " " + ex.getMessage());
                     }
+                } else if (t2.second instanceof SimpleConsensusProblemReport) {
+                    this.problemReport = (SimpleConsensusProblemReport) t2.second;
+                    String explain = "Stage-1: Problem report from leader" +  leader.getTheir().getDid() + " " + this.problemReport.getExplain();
+                    throw new StateMachineTerminatedWithError(this.problemReport.getProblemCode(), this.problemReport.getExplain());
+                } else {
+                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, "Unexpected message @type: " + t2.second.getType());
                 }
+            } else {
+                throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                        "Stage-1: Commit awaiting terminated by timeout for leader: " + leader.getTheir().getDid());
             }
-
-
-        } catch (SiriusInvalidMessage siriusInvalidMessage) {
-            siriusInvalidMessage.printStackTrace();
-        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
-            siriusInvalidPayloadStructure.printStackTrace();
         } finally {
             release();
         }
