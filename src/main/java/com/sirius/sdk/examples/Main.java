@@ -1,4 +1,4 @@
-package com.sirius.sdk;
+package com.sirius.sdk.examples;
 
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
