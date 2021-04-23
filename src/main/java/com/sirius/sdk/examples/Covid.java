@@ -1,5 +1,6 @@
 package com.sirius.sdk.examples;
 
+import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.ProposedAttrib;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Issuer;
@@ -14,16 +15,42 @@ import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.Hub;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class Covid {
+
+    static final String DKMS_NAME = "test_network";
+
+    static Hub.Config steward = new Hub.Config();
+    static Hub.Config laboratory = new Hub.Config();
+
+    static final String LAB_DID = "X1YdguoHBaY1udFQMbbKKG";
+
+    static {
+        steward.serverUri = "https://demo.socialsirius.com";
+        steward.credentials = "ez8ucxfrTiV1hPX99MHt/C/MUJCo8OmN4AMVmddE/sew8gBzsOg040FWBSXzHd9hDoj5B5KN4aaLiyzTqkrbD3uaeSwmvxVsqkC0xl5dtIc=".getBytes(StandardCharsets.UTF_8);
+        steward.p2p = new P2PConnection(
+                "6QvQ3Y5pPMGNgzvs86N3AQo98pF5WrzM1h6WkKH3dL7f",
+                "28Au6YoU7oPt6YLpbWkzFryhaQbfAcca9KxZEmz22jJaZoKqABc4UJ9vDjNTtmKSn2Axfu8sT52f5Stmt7JD4zzh",
+                "6oczQNLU7bSBzVojkGsfAv3CbXagx7QLUL7Yj1Nba9iw");
+
+        laboratory.serverUri = "https://demo.socialsirius.com";
+        laboratory.credentials = "BXXwMmUlw7MTtVWhcVvbSVWbC1GopGXDuo+oY3jHkP/4jN3eTlPDwSwJATJbzwuPAAaULe6HFEP5V57H6HWNqYL4YtzWCkW2w+H7fLgrfTLaBtnD7/P6c5TDbBvGucOV".getBytes(StandardCharsets.UTF_8);
+        laboratory.p2p = new P2PConnection(
+                "EzJKT2Q6Cw8pwy34xPa9m2qPCSvrMmCutaq1pPGBQNCn",
+                "273BEpAM8chzfMBDSZXKhRMPPoaPRWRDtdMmNoKLmJUU6jvm8Nu8caa7dEdcsvKpCTHmipieSsatR4aMb1E8hQAa",
+                "342Bm3Eq9ruYfvHVtLxiBLLFj54Tq6p8Msggt7HiWxBt");
+    }
 
     static class MedSchema extends JSONObject {
 
@@ -67,22 +94,66 @@ public class Covid {
         }
     }
 
-    class CredInfo {
+    static class BoardingPass extends JSONObject {
+
+        public BoardingPass() {
+            super();
+        }
+
+        public BoardingPass setFlight(String flight) {
+            put("flight", flight);
+            return this;
+        }
+
+        public BoardingPass setDeparture(String departure) {
+            put("departure", departure);
+            return this;
+        }
+
+        public BoardingPass setArrival(String arrival) {
+            put("arrival", arrival);
+            return this;
+        }
+
+        public BoardingPass setDate(String date) {
+            put("date", date);
+            return this;
+        }
+
+        public BoardingPass setClass(String cls) {
+            put("class", cls);
+            return this;
+        }
+
+        public BoardingPass setSeat(String seat) {
+            put("seat", seat);
+            return this;
+        }
+    }
+
+    static class CredInfo {
         public CredentialDefinition credentialDefinition;
         public Schema schema;
     }
 
-    private CredInfo createMedCreds(Context issuer) {
-        Pair<String, String> didVk = issuer.getDid().createAndStoreMyDid();
+    private static CredInfo createMedCreds(Context issuer, String did) {
         String schemaName = "Covid test result";
-        Pair<String, AnonCredSchema> schemaPair = issuer.getAnonCreds().issuerCreateSchema(didVk.first, schemaName, "1.0",
+        Pair<String, AnonCredSchema> schemaPair = issuer.getAnonCreds().issuerCreateSchema(did, schemaName, "1.0",
                 "approved", "timestamp", "bio_location", "location", "full_name", "sars_cov_2_igm", "sars_cov_2_igg");
         AnonCredSchema anoncredSchema = schemaPair.second;
-        Ledger ledger = issuer.getLedgers().get("default");
-        Pair<Boolean, Schema> okSchema = ledger.registerSchema(anoncredSchema, didVk.first);
+        Ledger ledger = issuer.getLedgers().get(DKMS_NAME);
+        Pair<Boolean, Schema> okSchema = ledger.registerSchema(anoncredSchema, did);
+
+        if (okSchema.first) {
+            System.out.println("Covid test result registered successfully");
+        } else {
+            System.out.println("Covid test result was not registered");
+            return null;
+        }
+
         Schema schema = okSchema.second;
 
-        Pair<Boolean, CredentialDefinition> okCredDef = ledger.registerCredDef(new CredentialDefinition("TAG", schema), didVk.first);
+        Pair<Boolean, CredentialDefinition> okCredDef = ledger.registerCredDef(new CredentialDefinition("TAG", schema), did);
         CredentialDefinition credDef = okCredDef.second;
 
         CredInfo res = new CredInfo();
@@ -146,7 +217,29 @@ public class Covid {
         return false;
     }
 
+    private boolean processAvia(Context context, CredInfo credInfo, BoardingPass boardingPass) throws ExecutionException, InterruptedException {
+
+
+        return false;
+    }
+
     public static void main(String[] args) {
+        try (Context c = new Context(steward)) {
+            if (!c.ping()) {
+                System.out.println("Steward agent unreachable");
+            }
+        }
+
+        try (Context c = new Context(laboratory)) {
+            if (createMedCreds(c, LAB_DID) != null) {
+                System.out.println("Covid test credentials registered successfully");
+            } else {
+                System.out.println("Covid test credentials was not registered");
+                return;
+            }
+        }
+
+
         Scanner in = new Scanner(System.in);
         System.out.println("Enter your Name");
         String fullName = in.nextLine();
