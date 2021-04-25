@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.ProposedAttrib;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Issuer;
+import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
@@ -83,13 +84,13 @@ public class Covid {
             return this;
         }
 
-        public MedSchema setSarsCov2Igm(boolean has) {
-            put("sars_cov_2_igm", has);
+        public MedSchema setSarsCov2Igm(Boolean has) {
+            put("sars_cov_2_igm", has.toString());
             return this;
         }
 
-        public MedSchema setSarsCov2Igg(boolean has) {
-            put("sars_cov_2_igg", has);
+        public MedSchema setSarsCov2Igg(Boolean has) {
+            put("sars_cov_2_igg", has.toString());
             return this;
         }
     }
@@ -142,16 +143,21 @@ public class Covid {
                 "approved", "timestamp", "bio_location", "location", "full_name", "sars_cov_2_igm", "sars_cov_2_igg");
         AnonCredSchema anoncredSchema = schemaPair.second;
         Ledger ledger = issuer.getLedgers().get(DKMS_NAME);
-        Pair<Boolean, Schema> okSchema = ledger.registerSchema(anoncredSchema, did);
 
-        if (okSchema.first) {
-            System.out.println("Covid test result registered successfully");
+        Schema schema = ledger.ensureSchemaExists(anoncredSchema, did);
+
+        if (schema == null) {
+            Pair<Boolean, Schema> okSchema = ledger.registerSchema(anoncredSchema, did);
+            if (okSchema.first) {
+                System.out.println("Covid test result registered successfully");
+                schema = okSchema.second;
+            } else {
+                System.out.println("Covid test result was not registered");
+                return null;
+            }
         } else {
-            System.out.println("Covid test result was not registered");
-            return null;
+            System.out.println("Med schema is exists in the ledger");
         }
-
-        Schema schema = okSchema.second;
 
         Pair<Boolean, CredentialDefinition> okCredDef = ledger.registerCredDef(new CredentialDefinition("TAG", schema), did);
         CredentialDefinition credDef = okCredDef.second;
@@ -162,7 +168,7 @@ public class Covid {
         return res;
     }
 
-    private boolean processMedical(Context context, CredInfo credInfo, MedSchema testResults) throws ExecutionException, InterruptedException {
+    private static boolean processMedical(Context context, CredInfo credInfo, MedSchema testResults) throws ExecutionException, InterruptedException {
         String connectionKey = context.getCrypto().createKey();
         Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
         if (myEndpoint == null)
@@ -191,6 +197,13 @@ public class Covid {
             Inviter sm = new Inviter(context, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
             Pairwise p2p = sm.createConnection(request);
             if (p2p != null) {
+
+                Message hello = Message.builder().
+                        setContext("Hello!!!" + (new Date()).toString()).
+                        setLocale("en").
+                        build();
+                context.sendTo(hello, p2p);
+
                 Issuer issuerMachine = new Issuer(context, p2p, 60);
                 String credId = "cred-id-" + UUID.randomUUID().toString();
                 List<AttribTranslation> translations = Arrays.asList(
@@ -223,15 +236,17 @@ public class Covid {
         return false;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         try (Context c = new Context(steward)) {
             if (!c.ping()) {
                 System.out.println("Steward agent unreachable");
             }
         }
 
+        CredInfo medCredInfo = null;
         try (Context c = new Context(laboratory)) {
-            if (createMedCreds(c, LAB_DID) != null) {
+            medCredInfo = createMedCreds(c, LAB_DID);
+            if (medCredInfo != null) {
                 System.out.println("Covid test credentials registered successfully");
             } else {
                 System.out.println("Covid test credentials was not registered");
@@ -252,8 +267,13 @@ public class Covid {
                 setSarsCov2Igg(hasCovid).
                 setSarsCov2Igm(hasCovid).
                 setLocation("Nur-Sultan").
+                setBioLocation("Nur-Sultan").
                 setApproved("House M.D.").
                 setTimestamp(timestamp);
+
+        try (Context c = new Context(laboratory)) {
+            processMedical(c, medCredInfo, testRes);
+        }
 
     }
 }

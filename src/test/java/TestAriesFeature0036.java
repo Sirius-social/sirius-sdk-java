@@ -11,6 +11,7 @@ import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
+import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
@@ -117,8 +118,17 @@ public class TestAriesFeature0036 {
                         Message offer = event.message();
                         Assert.assertTrue(offer instanceof OfferCredentialMessage);
                         Holder holderMachine = new Holder(context, h2i);
-                        return holderMachine.accept((OfferCredentialMessage) offer, holderSecretId, "Hello, Iam holder", "en");
+                        Pair<Boolean, String> okCredId = holderMachine.accept((OfferCredentialMessage) offer, holderSecretId, "Hello, Iam holder", "en");
+                        if (okCredId.first) {
+                            String cred = context.getAnonCreds().proverGetCredential(okCredId.second);
+                            System.out.println(cred);
+                        }
+                        return okCredId;
+                    } catch (WalletItemNotFoundException e) {
+                        e.printStackTrace();
+                        Assert.fail();
                     }
+                    return null;
                 }
         );
 

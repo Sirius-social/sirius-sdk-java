@@ -38,6 +38,7 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
 
         @Override
         protected JSONObject generateJSON() {
+            setVersion("1.1");
             JSONObject jsonObject = super.generateJSON();
             JSONObject l10n = new JSONObject();
             l10n.put("locale", locale);

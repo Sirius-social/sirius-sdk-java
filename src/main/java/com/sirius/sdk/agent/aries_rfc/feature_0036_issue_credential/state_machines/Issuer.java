@@ -48,13 +48,11 @@ public class Issuer extends BaseIssuingStateMachine {
                     setPreview(preview).
                     setIssuerSchema(schema.getBody()).
                     setTranslation(translation).
-                    setExpiresTime(expiresTime).
+                    //setExpiresTime(expiresTime).
                     build();
 
             log.log(Level.INFO, "20% - Send offer");
             // Switch to await participant action
-
-            log.log(Level.INFO, offerMsg.getMessageObj().toString());
 
             Pair<Boolean, Message> okResp = coprotocol.sendAndWait(offerMsg);
 
