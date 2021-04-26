@@ -280,6 +280,20 @@ public class Covid {
         boolean ok = machine.verify(params);
         if (ok) {
             System.out.println(machine.getRequestedProof().toString());
+            String val = machine.getRequestedProof().getJSONObject("revealed_attrs").getJSONObject("attr1_referent").optString("raw");
+            if (val.equals("true")) {
+                Message hello = Message.builder().
+                        setContext("Sorry, but we can't issue the boarding pass. Please, get rid of covid first!" + (new Date()).toString()).
+                        setLocale("en").
+                        build();
+                context.sendTo(hello, v2p);
+                return false;
+            }
+            Message hello = Message.builder().
+                    setContext("Welcome on board!" + (new Date()).toString()).
+                    setLocale("en").
+                    build();
+            context.sendTo(hello, v2p);
         } else {
             System.out.println("verification failed");
         }
