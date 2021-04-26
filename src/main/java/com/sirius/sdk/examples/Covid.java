@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.Agent;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.ProposedAttrib;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Issuer;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.Verifier;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
@@ -34,6 +35,8 @@ public class Covid {
 
     static Hub.Config steward = new Hub.Config();
     static Hub.Config laboratory = new Hub.Config();
+    static Hub.Config airport = new Hub.Config();
+
 
     static final String LAB_DID = "X1YdguoHBaY1udFQMbbKKG";
 
@@ -51,6 +54,13 @@ public class Covid {
                 "EzJKT2Q6Cw8pwy34xPa9m2qPCSvrMmCutaq1pPGBQNCn",
                 "273BEpAM8chzfMBDSZXKhRMPPoaPRWRDtdMmNoKLmJUU6jvm8Nu8caa7dEdcsvKpCTHmipieSsatR4aMb1E8hQAa",
                 "342Bm3Eq9ruYfvHVtLxiBLLFj54Tq6p8Msggt7HiWxBt");
+
+        airport.serverUri = "https://demo.socialsirius.com";
+        airport.credentials = "/MYok4BSllG8scfwXVVRK3NATRRtESRnhUHOU3nJxxZ+gg81/srwEPNWfZ+3+6GaEHcqghOJvRoV7taA/vCd2+q2hIEpDO/yCPfMr4x2K0vC/pom1gFRJwJAKI3LpMy3".getBytes(StandardCharsets.UTF_8);
+        airport.p2p = new P2PConnection(
+                "HBEe9KkPCK4D1zs6UBzLqWp6j2Gj88zy3miqybvYx42p",
+                "23jutNJBbgn8bbX53Qr36JSeS2VtZHvY4DMqazXHq6mDEPNkuA3FkKVGAMJdjPznfizLg9nh448DXZ7e1724qk1a",
+                "BNxpmTgs9B3yMURa1ta7avKuBA5wcBp5ZmXfqPFPYGAP");
     }
 
     static class MedSchema extends JSONObject {
@@ -168,13 +178,13 @@ public class Covid {
         return res;
     }
 
-    private static boolean processMedical(Context context, CredInfo credInfo, MedSchema testResults) throws ExecutionException, InterruptedException {
+    private static Pairwise establishConnectionByQr(Context context, String inviteLabel) {
         String connectionKey = context.getCrypto().createKey();
         Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
         if (myEndpoint == null)
-            return false;
+            return null;
         Invitation invitation = Invitation.builder().
-                setLabel("Invitation to connect with medical organization").
+                setLabel(inviteLabel).
                 setRecipientKeys(Collections.singletonList(connectionKey)).
                 setEndpoint(myEndpoint.getAddress()).
                 build();
@@ -183,12 +193,18 @@ public class Covid {
 
         String qrUrl = context.generateQrCode(qrContent);
         if (qrUrl == null)
-            return false;
+            return null;
 
         System.out.println("Scan this QR by Sirius App for receiving the Covid test result " + qrUrl);
 
         Listener listener = context.subscribe();
-        Event event = listener.getOne().get();
+        Event event = null;
+        try {
+            event = listener.getOne().get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return null;
+        }
         if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ConnRequest) {
             ConnRequest request = (ConnRequest) event.message();
 
@@ -196,44 +212,78 @@ public class Covid {
 
             Inviter sm = new Inviter(context, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
             Pairwise p2p = sm.createConnection(request);
-            if (p2p != null) {
+            return p2p;
+        }
+        return null;
+    }
 
-                Message hello = Message.builder().
-                        setContext("Hello!!!" + (new Date()).toString()).
-                        setLocale("en").
-                        build();
-                context.sendTo(hello, p2p);
+    private static boolean processMedical(Context context, CredInfo credInfo, MedSchema testResults) throws ExecutionException, InterruptedException {
+        Pairwise p2p = establishConnectionByQr(context, "Invitation to connect with medical organization");
+        if (p2p != null) {
 
-                Issuer issuerMachine = new Issuer(context, p2p, 60);
-                String credId = "cred-id-" + UUID.randomUUID().toString();
-                List<AttribTranslation> translations = Arrays.asList(
-                        new AttribTranslation("full_name", "Patient Full Name"),
-                        new AttribTranslation("location", "Patient location"),
-                        new AttribTranslation("bio_location", "Biomaterial sampling point"),
-                        new AttribTranslation("timestamp", "Timestamp"),
-                        new AttribTranslation("approved", "Laboratory specialist"),
-                        new AttribTranslation("sars_cov_2_igm", "SARS-CoV-2 IgM"),
-                        new AttribTranslation("sars_cov_2_igg", "SARS-CoV-2 IgG")
-                );
-                boolean ok = issuerMachine.issue(
-                        testResults, credInfo.schema, credInfo.credentialDefinition, "Here is your covid test results", "en",
-                        new ArrayList<ProposedAttrib>(), translations, credId);
-                if (ok) {
-                    System.out.println("Covid test confirmation was successfully issued");
-                } else {
-                    System.out.println("ERROR while issuing");
-                }
+            Message hello = Message.builder().
+                    setContext("Hello!!!" + (new Date()).toString()).
+                    setLocale("en").
+                    build();
+            context.sendTo(hello, p2p);
 
-                return ok;
+            Issuer issuerMachine = new Issuer(context, p2p, 60);
+            String credId = "cred-id-" + UUID.randomUUID().toString();
+            List<AttribTranslation> translations = Arrays.asList(
+                    new AttribTranslation("full_name", "Patient Full Name"),
+                    new AttribTranslation("location", "Patient location"),
+                    new AttribTranslation("bio_location", "Biomaterial sampling point"),
+                    new AttribTranslation("timestamp", "Timestamp"),
+                    new AttribTranslation("approved", "Laboratory specialist"),
+                    new AttribTranslation("sars_cov_2_igm", "SARS-CoV-2 IgM"),
+                    new AttribTranslation("sars_cov_2_igg", "SARS-CoV-2 IgG")
+            );
+            List<ProposedAttrib> preview = new ArrayList<ProposedAttrib>();
+            for (String key : testResults.keySet()) {
+                preview.add(new ProposedAttrib(key, testResults.get(key).toString()));
             }
+            boolean ok = issuerMachine.issue(
+                    testResults, credInfo.schema, credInfo.credentialDefinition, "Here is your covid test results", "en",
+                    preview, translations, credId);
+            if (ok) {
+                System.out.println("Covid test confirmation was successfully issued");
+            } else {
+                System.out.println("ERROR while issuing");
+            }
+
+            return ok;
         }
         return false;
     }
 
-    private boolean processAvia(Context context, CredInfo credInfo, BoardingPass boardingPass) throws ExecutionException, InterruptedException {
+    private static boolean processAviaRegistration(Context context) throws ExecutionException, InterruptedException {
+        Pairwise v2p = establishConnectionByQr(context, "Connect with airport");
+        if (v2p == null)
+            return false;
 
+        JSONObject proofRequest = (new JSONObject()).
+                put("nonce", context.getAnonCreds().generateNonce()).
+                put("name", "Verify false covid test").
+                put("version", "1.0").
+                put("requested_attributes", (new JSONObject()).
+                        put("attr1_referent", (new JSONObject()).
+                                put("name", "sars_cov_2_igm").
+                                put("restrictions", (new JSONObject()).
+                                        put("issuer_did", LAB_DID))));
 
-        return false;
+        Ledger verLedger = context.getLedgers().get(DKMS_NAME);
+        Verifier machine = new Verifier(context, v2p, verLedger);
+        Verifier.VerifyParams params = new Verifier.VerifyParams();
+        params.proofRequest = proofRequest;
+        params.comment = "I am Verifier";
+        params.protoVersion = "1.0";
+        boolean ok = machine.verify(params);
+        if (ok) {
+            System.out.println(machine.getRequestedProof().toString());
+        } else {
+            System.out.println("verification failed");
+        }
+        return ok;
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
@@ -273,6 +323,10 @@ public class Covid {
 
         try (Context c = new Context(laboratory)) {
             processMedical(c, medCredInfo, testRes);
+        }
+
+        try (Context c = new Context(airport)) {
+            processAviaRegistration(c);
         }
 
     }

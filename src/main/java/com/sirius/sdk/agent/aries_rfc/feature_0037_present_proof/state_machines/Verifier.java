@@ -86,7 +86,7 @@ public class Verifier extends BaseVerifyStateMachine {
                     setTranslation(params.translation).
                     setComment(params.comment).
                     setLocale(params.locale).
-                    setExpiresTime(expiresTime).
+                    //setExpiresTime(expiresTime).
                     setVersion(params.protoVersion).
                     build();
             requestPresentationMessage.setPleaseAck(true);
@@ -156,5 +156,9 @@ public class Verifier extends BaseVerifyStateMachine {
         }
 
         return false;
+    }
+
+    public JSONObject getRequestedProof() {
+        return requestedProof;
     }
 }
