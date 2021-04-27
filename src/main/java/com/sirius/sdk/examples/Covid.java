@@ -10,11 +10,15 @@ import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
 import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.consensus.simple.messages.InitRequestLedgerMessage;
+import com.sirius.sdk.agent.consensus.simple.messages.ProposeTransactionsMessage;
+import com.sirius.sdk.agent.consensus.simple.state_machines.MicroLedgerSimpleConsensus;
 import com.sirius.sdk.agent.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
+import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.encryption.P2PConnection;
@@ -28,10 +32,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class Covid {
 
     static final String DKMS_NAME = "test_network";
+    static final String COVID_MICROLEDGER_NAME = "covid_ledger";
 
     static Hub.Config steward = new Hub.Config();
     static Hub.Config laboratory = new Hub.Config();
@@ -39,6 +46,8 @@ public class Covid {
 
 
     static final String LAB_DID = "X1YdguoHBaY1udFQMbbKKG";
+    static final String AVIACOMPANY_DID = "XwVCkzM6sMxk87M2GKtya6";
+    static final String AIRPORT_DID = "Ap29nQ3Kf2bGJdWEV3m4AG";
 
     static {
         steward.serverUri = "https://demo.socialsirius.com";
@@ -139,6 +148,39 @@ public class Covid {
         public BoardingPass setSeat(String seat) {
             put("seat", seat);
             return this;
+        }
+    }
+
+    private static void labRoutine(Pairwise.Me me) {
+        try (Context c = new Context(laboratory)) {
+            if (!c.getMicrolegders().isExists(COVID_MICROLEDGER_NAME)) {
+                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+                Pair<Boolean, AbstractMicroledger> initRes = machine.initMicroledger(COVID_MICROLEDGER_NAME, Arrays.asList(LAB_DID, AVIACOMPANY_DID, AIRPORT_DID), new ArrayList<>());
+                if (!initRes.first) {
+                    System.out.println("Consensus initialization failed!");
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void airportRoutine() {
+        try (Context c = new Context(airport)) {
+            Listener listener = c.subscribe();
+            while (true) {
+                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                if (event.message() instanceof InitRequestLedgerMessage) {
+                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+                    machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) event.message());
+                } else if (event.message() instanceof ProposeTransactionsMessage) {
+                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+                    machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
+                } else if (event.message() instanceof ConnRequest) {
+
+                }
+            }
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
         }
     }
 
