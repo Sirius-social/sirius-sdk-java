@@ -102,17 +102,19 @@ public class MicroLedgerSimpleConsensus extends AbstractStateMachine {
                     if (ex.isNotify()) {
                         co.send(this.problemReport);
                     }
+                    context.getMicrolegders().reset(ledgerName);
                     return new Pair<>(false, null);
                 } catch (Exception ex) {
                     log.info("100% - Terminated with error");
                     ex.printStackTrace();
+                    context.getMicrolegders().reset(ledgerName);
                 }
             }
         } catch (SiriusValidationError siriusValidationError) {
             log.info("100% - Terminated with error");
             siriusValidationError.printStackTrace();
         }
-        return null;
+        return new Pair<>(false, null);
     }
 
     public Pair<Boolean, AbstractMicroledger> acceptMicroledger(Pairwise leader, InitRequestLedgerMessage propose) {
