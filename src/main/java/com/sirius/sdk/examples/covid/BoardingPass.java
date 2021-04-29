@@ -8,6 +8,11 @@ class BoardingPass extends JSONObject {
         super();
     }
 
+    public BoardingPass setFullName(String name) {
+        put("full_name", name);
+        return this;
+    }
+
     public BoardingPass setFlight(String flight) {
         put("flight", flight);
         return this;

@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException;
 public class Covid {
 
     static final String DKMS_NAME = "test_network";
-    static final String COVID_MICROLEDGER_NAME = "covid_ledger_test2";
+    static final String COVID_MICROLEDGER_NAME = "covid_ledger_test3";
 
     static Hub.Config steward = new Hub.Config();
     static Hub.Config laboratory = new Hub.Config();
@@ -162,14 +162,15 @@ public class Covid {
     }
 
     static Map<String, MedSchema> testResults = new HashMap<>();
+    static Map<String, BoardingPass> boardingPasses = new HashMap<>();
     static CredInfo medCredInfo = null;
 
-    private static void labRoutine(Pairwise.Me me, String aircompanyDid, String airportDid) {
+    private static void labRoutine(Pairwise.Me me, String aircompanyDid) {
         try (Context c = new Context(laboratory)) {
             if (!c.getMicrolegders().isExists(COVID_MICROLEDGER_NAME)) {
                 System.out.println("Initializing microledger consensus");
                 MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
-                Pair<Boolean, AbstractMicroledger> initRes = machine.initMicroledger(COVID_MICROLEDGER_NAME, Arrays.asList(me.getDid(), aircompanyDid, airportDid), new ArrayList<>());
+                Pair<Boolean, AbstractMicroledger> initRes = machine.initMicroledger(COVID_MICROLEDGER_NAME, Arrays.asList(me.getDid(), aircompanyDid), new ArrayList<>());
                 if (initRes.first) {
                     System.out.println("Consensus successfully initialized");
                 } else {
@@ -230,7 +231,7 @@ public class Covid {
         try (Context c = new Context(airport)) {
             Listener listener = c.subscribe();
             while (true) {
-                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                Event event = listener.getOne().get();
                 if (event.message() instanceof InitRequestLedgerMessage) {
                     MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
                     Pair<Boolean, AbstractMicroledger> okMl = machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) event.message());
@@ -246,7 +247,7 @@ public class Covid {
 
                 }
             }
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }
@@ -255,7 +256,7 @@ public class Covid {
         try (Context c = new Context(aircompany)) {
             Listener listener = c.subscribe();
             while (true) {
-                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                Event event = listener.getOne().get();
                 if (event.message() instanceof InitRequestLedgerMessage) {
                     MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
                     Pair<Boolean, AbstractMicroledger> okMl = machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) event.message());
@@ -271,7 +272,7 @@ public class Covid {
 
                 }
             }
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }
@@ -373,48 +374,64 @@ public class Covid {
         return true;
     }
 
-    private static boolean processAviaRegistration(Context context) throws ExecutionException, InterruptedException {
-        Pairwise v2p = establishConnectionByQr(context, "Connect with airport");
-        if (v2p == null)
+    private static boolean processAviaRegistration(Context context, BoardingPass boardingPass) throws ExecutionException, InterruptedException {
+        String connectionKey = context.getCrypto().createKey();
+        Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
+        if (myEndpoint == null)
+            return false;
+        Invitation invitation = Invitation.builder().
+                setLabel("Getting the boarding pass").
+                setRecipientKeys(Collections.singletonList(connectionKey)).
+                setEndpoint(myEndpoint.getAddress()).
+                build();
+
+        String qrContent = invitation.invitationUrl();
+
+        String qrUrl = context.generateQrCode(qrContent);
+        if (qrUrl == null)
             return false;
 
-        JSONObject proofRequest = (new JSONObject()).
-                put("nonce", context.getAnonCreds().generateNonce()).
-                put("name", "Verify false covid test").
-                put("version", "1.0").
-                put("requested_attributes", (new JSONObject()).
-                        put("attr1_referent", (new JSONObject()).
-                                put("name", "sars_cov_2_igm").
-                                put("restrictions", (new JSONObject()).
-                                        put("issuer_did", LAB_DID))));
+        System.out.println("Scan this QR by Sirius App for receiving boarding pass " + qrUrl);
+        boardingPasses.put(connectionKey, boardingPass);
+        return true;
 
-        Ledger verLedger = context.getLedgers().get(DKMS_NAME);
-        Verifier machine = new Verifier(context, v2p, verLedger);
-        Verifier.VerifyParams params = new Verifier.VerifyParams();
-        params.proofRequest = proofRequest;
-        params.comment = "I am Verifier";
-        params.protoVersion = "1.0";
-        boolean ok = machine.verify(params);
-        if (ok) {
-            System.out.println(machine.getRequestedProof().toString());
-            String val = machine.getRequestedProof().getJSONObject("revealed_attrs").getJSONObject("attr1_referent").optString("raw");
-            if (val.equals("true")) {
-                Message hello = Message.builder().
-                        setContext("Sorry, but we can't issue the boarding pass. Please, get rid of covid first!" + (new Date()).toString()).
-                        setLocale("en").
-                        build();
-                context.sendTo(hello, v2p);
-                return false;
-            }
-            Message hello = Message.builder().
-                    setContext("Welcome on board!" + (new Date()).toString()).
-                    setLocale("en").
-                    build();
-            context.sendTo(hello, v2p);
-        } else {
-            System.out.println("verification failed");
-        }
-        return ok;
+//        JSONObject proofRequest = (new JSONObject()).
+//                put("nonce", context.getAnonCreds().generateNonce()).
+//                put("name", "Verify false covid test").
+//                put("version", "1.0").
+//                put("requested_attributes", (new JSONObject()).
+//                        put("attr1_referent", (new JSONObject()).
+//                                put("name", "sars_cov_2_igm").
+//                                put("restrictions", (new JSONObject()).
+//                                        put("issuer_did", LAB_DID))));
+//
+//        Ledger verLedger = context.getLedgers().get(DKMS_NAME);
+//        Verifier machine = new Verifier(context, v2p, verLedger);
+//        Verifier.VerifyParams params = new Verifier.VerifyParams();
+//        params.proofRequest = proofRequest;
+//        params.comment = "I am Verifier";
+//        params.protoVersion = "1.0";
+//        boolean ok = machine.verify(params);
+//        if (ok) {
+//            System.out.println(machine.getRequestedProof().toString());
+//            String val = machine.getRequestedProof().getJSONObject("revealed_attrs").getJSONObject("attr1_referent").optString("raw");
+//            if (val.equals("true")) {
+//                Message hello = Message.builder().
+//                        setContext("Sorry, but we can't issue the boarding pass. Please, get rid of covid first!" + (new Date()).toString()).
+//                        setLocale("en").
+//                        build();
+//                context.sendTo(hello, v2p);
+//                return false;
+//            }
+//            Message hello = Message.builder().
+//                    setContext("Welcome on board!" + (new Date()).toString()).
+//                    setLocale("en").
+//                    build();
+//            context.sendTo(hello, v2p);
+//        } else {
+//            System.out.println("verification failed");
+//        }
+//        return ok;
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
@@ -434,18 +451,18 @@ public class Covid {
             }
         }
 
+        //Pairwise airport2lab = establishConnection(airport, airportEntity, laboratory, labEntity);
         //Pairwise lab2airport = establishConnection(laboratory, labEntity, airport, airportEntity);
-        Pairwise airport2lab = establishConnection(airport, airportEntity, laboratory, labEntity);
 
         Pairwise lab2aircompany = establishConnection(laboratory, labEntity, aircompany, aircompanyEntity);
         Pairwise aircompany2lab = establishConnection(aircompany, aircompanyEntity, laboratory, labEntity);
 
-        Pairwise airport2aircompany = establishConnection(airport, airportEntity, aircompany, aircompanyEntity);
-        Pairwise aircompany2airport = establishConnection(aircompany, aircompanyEntity, airport, airportEntity);
+        //Pairwise airport2aircompany = establishConnection(airport, airportEntity, aircompany, aircompanyEntity);
+        //Pairwise aircompany2airport = establishConnection(aircompany, aircompanyEntity, airport, airportEntity);
 
 
-        //new Thread(() -> labRoutine(lab2airport.getMe(), lab2airport.getTheir().getDid(), lab2aircompany.getTheir().getDid())).start();
-        new Thread(() -> airportRoutine()).start();
+        new Thread(() -> labRoutine(lab2aircompany.getMe(), lab2aircompany.getTheir().getDid())).start();
+        //new Thread(() -> airportRoutine()).start();
         new Thread(() -> aircompanyRoutine()).start();
 
         Scanner in = new Scanner(System.in);
@@ -483,7 +500,17 @@ public class Covid {
                 break;
                 case 2: {
                     try (Context c = new Context(airport)) {
-                        processAviaRegistration(c);
+                        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+                        String timestamp = df.format(new Date(System.currentTimeMillis()));
+                        BoardingPass boardingPass = new BoardingPass().
+                                setFullName(fullName).
+                                setArrival("Nur-Sultan").
+                                setDeparture("New York JFK").
+                                setClass("first").
+                                setDate(timestamp).
+                                setFlight("KC 1234").
+                                setSeat("1A");
+                        processAviaRegistration(c, boardingPass);
                     }
                 }
                 break;
