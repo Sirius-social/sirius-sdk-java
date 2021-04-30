@@ -18,6 +18,7 @@ import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
+import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
@@ -164,6 +165,8 @@ public class Covid {
     static Map<String, MedSchema> testResults = new HashMap<>();
     static Map<String, BoardingPass> boardingPasses = new HashMap<>();
     static CredInfo medCredInfo = null;
+    static CredInfo boardingPassCredInfo = null;
+    static Map<String/*full_name*/, String/*did*/> aircompanyClientDids = new HashMap<>();
 
     private static void labRoutine(Pairwise.Me me, String aircompanyDid) {
         try (Context c = new Context(laboratory)) {
@@ -182,6 +185,12 @@ public class Covid {
             Listener listener = c.subscribe();
             while (true) {
                 Event event = listener.getOne().get();
+
+                if (event.message() instanceof ProposeTransactionsMessage) {
+                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+                    machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
+                }
+
                 if (event.message() instanceof ConnRequest) {
                     ConnRequest request = (ConnRequest) event.message();
                     Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
@@ -217,6 +226,12 @@ public class Covid {
                             preview, translations, credId);
                     if (ok) {
                         System.out.println("Covid test confirmation was successfully issued");
+                        if (testRes.getSarsCov2Igm() || testRes.getSarsCov2Igg()) {
+                            AbstractMicroledger ledger = c.getMicrolegders().getLedger(COVID_MICROLEDGER_NAME);
+                            MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+                            Transaction tr = new Transaction(new JSONObject().put("test_res", testRes));
+                            machine.commit(ledger, Arrays.asList(LAB_DID, AIRCOMPANY_DID), Arrays.asList(tr));
+                        }
                     } else {
                         System.out.println("ERROR while issuing");
                     }
@@ -266,10 +281,64 @@ public class Covid {
                         System.out.println("Microledger for aircompany creation failed");
                     }
                 } else if (event.message() instanceof ProposeTransactionsMessage) {
+                    ProposeTransactionsMessage propose = (ProposeTransactionsMessage) event.message();
                     MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
-                    machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
+                    machine.acceptCommit(event.getPairwise(), propose);
+                    List<Transaction> trs = propose.transactions();
+                    for (Transaction tr : trs) {
+                        MedSchema testRes = new MedSchema(tr.getJSONObject("test_res"));
+                        for (String conn : boardingPasses.keySet()) {
+                            BoardingPass pass = boardingPasses.get(conn);
+                            if (testRes.getFullName().equals(pass.getFullName())) {
+                                Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
+                                Message hello = Message.builder().
+                                        setContext("We have to revoke your boarding pass" + (new Date()).toString()).
+                                        setLocale("en").
+                                        build();
+                                c.sendTo(hello, pw);
+                            }
+                        }
+                    }
                 } else if (event.message() instanceof ConnRequest) {
+                    ConnRequest request = (ConnRequest) event.message();
+                    Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
+                    String connectionKey = event.getRecipientVerkey();
+                    Endpoint myEndpoint = c.getEndpointWithEmptyRoutingKeys();
+                    Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
+                    Pairwise p2p = sm.createConnection(request);
 
+                    Message hello = Message.builder().
+                            setContext("Welcome to the registration!" + (new Date()).toString()).
+                            setLocale("en").
+                            build();
+                    c.sendTo(hello, p2p);
+
+                    Issuer issuerMachine = new Issuer(c, p2p, 60);
+                    String credId = "cred-id-" + UUID.randomUUID().toString();
+                    List<AttribTranslation> translations = Arrays.asList(
+                            new AttribTranslation("full_name", "Full Name"),
+                            new AttribTranslation("flight", "Flight num."),
+                            new AttribTranslation("departure", "Departure"),
+                            new AttribTranslation("arrival", "arrival"),
+                            new AttribTranslation("date", "date"),
+                            new AttribTranslation("class", "class"),
+                            new AttribTranslation("seat", "seat")
+                    );
+                    List<ProposedAttrib> preview = new ArrayList<ProposedAttrib>();
+                    BoardingPass boardingPass = boardingPasses.get(connectionKey);
+                    for (String key : boardingPass.keySet()) {
+                        preview.add(new ProposedAttrib(key, boardingPass.get(key).toString()));
+                    }
+                    boolean ok = issuerMachine.issue(
+                            boardingPass, boardingPassCredInfo.schema, boardingPassCredInfo.credentialDefinition, "Here is your boarding pass", "en",
+                            preview, translations, credId);
+                    if (ok) {
+                        System.out.println("Boarding pass was successfully issued");
+                        c.getPairwiseList().create(p2p);
+                        aircompanyClientDids.put(boardingPass.getFullName(), p2p.getTheir().getDid());
+                    } else {
+                        System.out.println("ERROR while issuing");
+                    }
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -302,6 +371,37 @@ public class Covid {
             }
         } else {
             System.out.println("Med schema is exists in the ledger");
+        }
+
+        Pair<Boolean, CredentialDefinition> okCredDef = ledger.registerCredDef(new CredentialDefinition("TAG", schema), did);
+        CredentialDefinition credDef = okCredDef.second;
+
+        CredInfo res = new CredInfo();
+        res.credentialDefinition = credDef;
+        res.schema = schema;
+        return res;
+    }
+
+    private static CredInfo createBoardingPassCreds(Context issuer, String did) {
+        String schemaName = "Boarding Pass";
+        Pair<String, AnonCredSchema> schemaPair = issuer.getAnonCreds().issuerCreateSchema(did, schemaName, "1.0",
+                "full_name", "flight", "departure", "arrival", "date", "class", "seat");
+        AnonCredSchema anoncredSchema = schemaPair.second;
+        Ledger ledger = issuer.getLedgers().get(DKMS_NAME);
+
+        Schema schema = ledger.ensureSchemaExists(anoncredSchema, did);
+
+        if (schema == null) {
+            Pair<Boolean, Schema> okSchema = ledger.registerSchema(anoncredSchema, did);
+            if (okSchema.first) {
+                System.out.println("Boarding pass schema registered successfully");
+                schema = okSchema.second;
+            } else {
+                System.out.println("Boarding pass schema was not registered");
+                return null;
+            }
+        } else {
+            System.out.println("Boarding pass schema is exists in the ledger");
         }
 
         Pair<Boolean, CredentialDefinition> okCredDef = ledger.registerCredDef(new CredentialDefinition("TAG", schema), did);
@@ -451,6 +551,16 @@ public class Covid {
             }
         }
 
+        try (Context c = new Context(aircompany)) {
+            boardingPassCredInfo = createBoardingPassCreds(c, AIRCOMPANY_DID);
+            if (boardingPassCredInfo != null) {
+                System.out.println("Boarding pass credentials registered successfully");
+            } else {
+                System.out.println("Boarding pass credentials was not registered");
+                return;
+            }
+        }
+
         //Pairwise airport2lab = establishConnection(airport, airportEntity, laboratory, labEntity);
         //Pairwise lab2airport = establishConnection(laboratory, labEntity, airport, airportEntity);
 
@@ -499,7 +609,7 @@ public class Covid {
                 }
                 break;
                 case 2: {
-                    try (Context c = new Context(airport)) {
+                    try (Context c = new Context(aircompany)) {
                         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                         String timestamp = df.format(new Date(System.currentTimeMillis()));
                         BoardingPass boardingPass = new BoardingPass().

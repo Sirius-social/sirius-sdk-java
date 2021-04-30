@@ -8,9 +8,17 @@ public class MedSchema extends JSONObject {
         super();
     }
 
+    public MedSchema(JSONObject json) {
+        super(json.toString());
+    }
+
     public MedSchema setFullName(String name) {
         put("full_name", name);
         return this;
+    }
+
+    public String getFullName() {
+        return optString("full_name");
     }
 
     public MedSchema setLocation(String location) {
@@ -38,8 +46,16 @@ public class MedSchema extends JSONObject {
         return this;
     }
 
+    public boolean getSarsCov2Igm() {
+        return optString("sars_cov_2_igm").equals("true");
+    }
+
     public MedSchema setSarsCov2Igg(Boolean has) {
         put("sars_cov_2_igg", has.toString());
         return this;
+    }
+
+    public boolean getSarsCov2Igg() {
+        return optString("sars_cov_2_igg").equals("true");
     }
 }
