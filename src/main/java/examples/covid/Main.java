@@ -74,7 +74,7 @@ public class Main {
                 "BNxpmTgs9B3yMURa1ta7avKuBA5wcBp5ZmXfqPFPYGAP");
     }
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
+    public static void main(String[] args) {
         CredInfo medCredInfo;
         try (Context c = new Context(labConfig)) {
             medCredInfo = Laboratory.createMedCreds(c, LAB_DID, DKMS_NAME);
@@ -100,13 +100,13 @@ public class Main {
         Pairwise lab2aircompany = Helpers.establishConnection(labConfig, labEntity, airCompanyConfig, aircompanyEntity);
         Pairwise aircompany2lab = Helpers.establishConnection(airCompanyConfig, aircompanyEntity, labConfig, labEntity);
 
-        Laboratory lab = new Laboratory(labConfig, Arrays.asList(lab2aircompany), COVID_MICROLEDGER_NAME, lab2aircompany.getMe(), medCredInfo);
-        AirCompany airCompany = new AirCompany(airCompanyConfig, Arrays.asList(aircompany2lab), COVID_MICROLEDGER_NAME, aircompany2lab.getMe(), boardingPassCredInfo);
+        Laboratory lab = new Laboratory(labConfig, Collections.singletonList(lab2aircompany), COVID_MICROLEDGER_NAME, lab2aircompany.getMe(), medCredInfo);
+        AirCompany airCompany = new AirCompany(airCompanyConfig, Collections.singletonList(aircompany2lab), COVID_MICROLEDGER_NAME, aircompany2lab.getMe(), boardingPassCredInfo);
         Airport airport = new Airport(airportConfig, medCredInfo, LAB_DID, boardingPassCredInfo, AIRCOMPANY_DID, DKMS_NAME);
 
-        lab.start();
         airCompany.start();
         airport.start();
+        lab.start();
 
         Scanner in = new Scanner(System.in);
         System.out.println("Enter your Name");
@@ -127,10 +127,9 @@ public class Main {
                     boolean hasCovid = in.nextBoolean();
                     DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                     String timestamp = df.format(new Date(System.currentTimeMillis()));
-                    MedSchema testRes = new MedSchema().
+                    CovidTest testRes = new CovidTest().
                             setFullName(fullName).
-                            setSarsCov2Igg(hasCovid).
-                            setSarsCov2Igm(hasCovid).
+                            setCovid(hasCovid).
                             setLocation("Nur-Sultan").
                             setBioLocation("Nur-Sultan").
                             setApproved("House M.D.").
@@ -164,5 +163,9 @@ public class Main {
                 } break;
             }
         }
+
+        airCompany.stop();
+        airport.stop();
+        lab.stop();
     }
 }

@@ -36,12 +36,11 @@ public class Laboratory extends BaseParticipant {
             new AttribTranslation("bio_location", "Biomaterial sampling point"),
             new AttribTranslation("timestamp", "Timestamp"),
             new AttribTranslation("approved", "Laboratory specialist"),
-            new AttribTranslation("sars_cov_2_igm", "SARS-CoV-2 IgM"),
-            new AttribTranslation("sars_cov_2_igg", "SARS-CoV-2 IgG")
+            new AttribTranslation("has_covid", "Covid test result")
     );
 
-    CredInfo medCredInfo = null;
-    Map<String, MedSchema> testResults = new ConcurrentHashMap<>();
+    CredInfo medCredInfo;
+    Map<String, CovidTest> testResults = new ConcurrentHashMap<>();
 
     public Laboratory(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo medCredInfo) {
         super(config, pairwises, covidMicroledgerName, me);
@@ -51,7 +50,7 @@ public class Laboratory extends BaseParticipant {
     public static CredInfo createMedCreds(Context issuer, String did, String dkmsName) {
         String schemaName = "Covid test result";
         Pair<String, AnonCredSchema> schemaPair = issuer.getAnonCreds().issuerCreateSchema(did, schemaName, "1.0",
-                "approved", "timestamp", "bio_location", "location", "full_name", "sars_cov_2_igm", "sars_cov_2_igg");
+                "approved", "timestamp", "bio_location", "location", "full_name", "has_covid");
         AnonCredSchema anoncredSchema = schemaPair.second;
         Ledger ledger = issuer.getLedgers().get(dkmsName);
 
@@ -79,74 +78,7 @@ public class Laboratory extends BaseParticipant {
         return res;
     }
 
-    @Override
-    protected void routine() {
-        try (Context c = new Context(config)) {
-            if (!c.getMicrolegders().isExists(covidMicroledgerName)) {
-                System.out.println("Initializing microledger consensus");
-                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
-                Pair<Boolean, AbstractMicroledger> initRes = machine.initMicroledger(covidMicroledgerName, covidMicroledgerParticipants, new ArrayList<>());
-                if (initRes.first) {
-                    System.out.println("Consensus successfully initialized");
-                } else {
-                    System.out.println("Consensus initialization failed!");
-                    return;
-                }
-            }
-
-            Listener listener = c.subscribe();
-            while (loop) {
-                Event event = listener.getOne().get();
-
-                if (event.message() instanceof ProposeTransactionsMessage) {
-                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
-                    machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
-                }
-
-                if (event.message() instanceof ConnRequest) {
-                    ConnRequest request = (ConnRequest) event.message();
-                    Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
-                    String connectionKey = event.getRecipientVerkey();
-                    Endpoint myEndpoint = c.getEndpointWithEmptyRoutingKeys();
-                    Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
-                    Pairwise p2p = sm.createConnection(request);
-
-                    Message hello = Message.builder().
-                            setContext("Welcome to the covid laboratory!").
-                            setLocale("en").
-                            build();
-                    c.sendTo(hello, p2p);
-
-                    Issuer issuerMachine = new Issuer(c, p2p, 60);
-                    String credId = "cred-id-" + UUID.randomUUID().toString();
-
-                    List<ProposedAttrib> preview = new ArrayList<ProposedAttrib>();
-                    MedSchema testRes = testResults.get(connectionKey);
-                    for (String key : testRes.keySet()) {
-                        preview.add(new ProposedAttrib(key, testRes.get(key).toString()));
-                    }
-                    boolean ok = issuerMachine.issue(
-                            testRes, medCredInfo.schema, medCredInfo.credentialDefinition, "Here is your covid test results", "en",
-                            preview, translations, credId);
-                    if (ok) {
-                        System.out.println("Covid test confirmation was successfully issued");
-                        if (testRes.getSarsCov2Igm() || testRes.getSarsCov2Igg()) {
-                            AbstractMicroledger ledger = c.getMicrolegders().getLedger(covidMicroledgerName);
-                            MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
-                            Transaction tr = new Transaction(new JSONObject().put("test_res", testRes));
-                            machine.commit(ledger, covidMicroledgerParticipants, Arrays.asList(tr));
-                        }
-                    } else {
-                        System.out.println("ERROR while issuing");
-                    }
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String issueTestResults(MedSchema testRes) {
+    public String issueTestResults(CovidTest testRes) {
         try (Context context = new Context(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
@@ -166,6 +98,79 @@ public class Laboratory extends BaseParticipant {
 
             testResults.put(connectionKey, testRes);
             return qrUrl;
+        }
+    }
+
+    @Override
+    protected void routine() {
+        try (Context c = new Context(config)) {
+            initMicroledger(c);
+
+            Listener listener = c.subscribe();
+            while (loop) {
+                Event event = listener.getOne().get();
+                if (event.message() instanceof ProposeTransactionsMessage) {
+                    processNewCommit(c, event);
+                } else if (event.message() instanceof ConnRequest) {
+                    processCovidTestRequest(c, event);
+                }
+            }
+        } catch (InterruptedException | ExecutionException ignored) {}
+    }
+
+    private void initMicroledger(Context c) {
+        if (!c.getMicrolegders().isExists(covidMicroledgerName)) {
+            System.out.println("Initializing microledger consensus");
+            MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+            Pair<Boolean, AbstractMicroledger> initRes = machine.initMicroledger(covidMicroledgerName, covidMicroledgerParticipants, new ArrayList<>());
+            if (initRes.first) {
+                System.out.println("Consensus successfully initialized");
+            } else {
+                System.out.println("Consensus initialization failed!");
+            }
+        }
+    }
+
+    private void processNewCommit(Context c, Event event) {
+        MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+        machine.acceptCommit(event.getPairwise(), (ProposeTransactionsMessage) event.message());
+    }
+
+    private void processCovidTestRequest(Context c, Event event) {
+        ConnRequest request = (ConnRequest) event.message();
+        Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
+        String connectionKey = event.getRecipientVerkey();
+        Endpoint myEndpoint = c.getEndpointWithEmptyRoutingKeys();
+        Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
+        Pairwise p2p = sm.createConnection(request);
+
+        Message hello = Message.builder().
+                setContext("Welcome to the covid laboratory!").
+                setLocale("en").
+                build();
+        c.sendTo(hello, p2p);
+
+        Issuer issuerMachine = new Issuer(c, p2p, 60);
+        String credId = "cred-id-" + UUID.randomUUID().toString();
+
+        List<ProposedAttrib> preview = new ArrayList<>();
+        CovidTest testRes = testResults.get(connectionKey);
+        for (String key : testRes.keySet()) {
+            preview.add(new ProposedAttrib(key, testRes.get(key).toString()));
+        }
+        boolean ok = issuerMachine.issue(
+                testRes, medCredInfo.schema, medCredInfo.credentialDefinition, "Here is your covid test results", "en",
+                preview, translations, credId);
+        if (ok) {
+            System.out.println("Covid test confirmation was successfully issued");
+            if (testRes.hasCovid()) {
+                AbstractMicroledger ledger = c.getMicrolegders().getLedger(covidMicroledgerName);
+                MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, me);
+                Transaction tr = new Transaction(new JSONObject().put("test_res", testRes));
+                machine.commit(ledger, covidMicroledgerParticipants, Collections.singletonList(tr));
+            }
+        } else {
+            System.out.println("ERROR while issuing");
         }
     }
 }

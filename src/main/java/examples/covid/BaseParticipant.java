@@ -9,11 +9,11 @@ import java.util.List;
 public abstract class BaseParticipant {
 
     boolean loop = false;
-    Hub.Config config = null;
-    List<Pairwise> pairwises = null;
-    Thread thread = null;
-    String covidMicroledgerName = null;
-    Pairwise.Me me = null;
+    Hub.Config config;
+    List<Pairwise> pairwises;
+    Thread thread;
+    String covidMicroledgerName;
+    Pairwise.Me me;
     List<String> covidMicroledgerParticipants;
 
     public BaseParticipant(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me) {
@@ -41,14 +41,9 @@ public abstract class BaseParticipant {
     }
 
     public void stop() {
-        try {
-            loop = false;
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            thread = null;
-        }
+        loop = false;
+        thread.interrupt();
+        thread = null;
     }
 
     protected abstract void routine();

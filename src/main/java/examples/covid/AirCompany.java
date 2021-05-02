@@ -40,7 +40,7 @@ public class AirCompany extends BaseParticipant {
             new AttribTranslation("seat", "seat")
     );
 
-    CredInfo boardingPassCredInfo = null;
+    CredInfo boardingPassCredInfo;
     Map<String, BoardingPass> boardingPasses = new ConcurrentHashMap<>();
     Map<String/*full_name*/, String/*did*/> aircompanyClientDids = new HashMap<>();
 
@@ -80,78 +80,6 @@ public class AirCompany extends BaseParticipant {
         return res;
     }
 
-    @Override
-    protected void routine() {
-        try (Context c = new Context(config)) {
-            Listener listener = c.subscribe();
-            while (loop) {
-                Event event = listener.getOne().get();
-                if (event.message() instanceof InitRequestLedgerMessage) {
-                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
-                    Pair<Boolean, AbstractMicroledger> okMl = machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) event.message());
-                    if (okMl.first) {
-                        System.out.println("Microledger for aircompany created successfully");
-                    } else {
-                        System.out.println("Microledger for aircompany creation failed");
-                    }
-                } else if (event.message() instanceof ProposeTransactionsMessage) {
-                    ProposeTransactionsMessage propose = (ProposeTransactionsMessage) event.message();
-                    MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
-                    machine.acceptCommit(event.getPairwise(), propose);
-                    List<Transaction> trs = propose.transactions();
-                    for (Transaction tr : trs) {
-                        MedSchema testRes = new MedSchema(tr.getJSONObject("test_res"));
-                        for (String conn : boardingPasses.keySet()) {
-                            BoardingPass pass = boardingPasses.get(conn);
-                            if (testRes.getFullName().equals(pass.getFullName())) {
-                                Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
-                                Message hello = Message.builder().
-                                        setContext("We have to revoke your boarding pass" + (new Date()).toString()).
-                                        setLocale("en").
-                                        build();
-                                c.sendTo(hello, pw);
-                            }
-                        }
-                    }
-                } else if (event.message() instanceof ConnRequest) {
-                    ConnRequest request = (ConnRequest) event.message();
-                    Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
-                    String connectionKey = event.getRecipientVerkey();
-                    Endpoint myEndpoint = c.getEndpointWithEmptyRoutingKeys();
-                    Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
-                    Pairwise p2p = sm.createConnection(request);
-
-                    Message hello = Message.builder().
-                            setContext("Welcome to the registration!").
-                            setLocale("en").
-                            build();
-                    c.sendTo(hello, p2p);
-
-                    Issuer issuerMachine = new Issuer(c, p2p, 60);
-                    String credId = "cred-id-" + UUID.randomUUID().toString();
-
-                    List<ProposedAttrib> preview = new ArrayList<ProposedAttrib>();
-                    BoardingPass boardingPass = boardingPasses.get(connectionKey);
-                    for (String key : boardingPass.keySet()) {
-                        preview.add(new ProposedAttrib(key, boardingPass.get(key).toString()));
-                    }
-                    boolean ok = issuerMachine.issue(
-                            boardingPass, boardingPassCredInfo.schema, boardingPassCredInfo.credentialDefinition, "Here is your boarding pass", "en",
-                            preview, translations, credId);
-                    if (ok) {
-                        System.out.println("Boarding pass was successfully issued");
-                        c.getPairwiseList().create(p2p);
-                        aircompanyClientDids.put(boardingPass.getFullName(), p2p.getTheir().getDid());
-                    } else {
-                        System.out.println("ERROR while issuing");
-                    }
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-    }
-
     public String register(BoardingPass boardingPass) {
         try (Context context = new Context(config)) {
             String connectionKey = context.getCrypto().createKey();
@@ -172,6 +100,88 @@ public class AirCompany extends BaseParticipant {
 
             boardingPasses.put(connectionKey, boardingPass);
             return qrUrl;
+        }
+    }
+
+    @Override
+    protected void routine() {
+        try (Context c = new Context(config)) {
+            Listener listener = c.subscribe();
+            while (loop) {
+                Event event = listener.getOne().get();
+                if (event.message() instanceof InitRequestLedgerMessage) {
+                    processInitMicroledger(c, event);
+                } else if (event.message() instanceof ProposeTransactionsMessage) {
+                    processNewCommit(c, event);
+                } else if (event.message() instanceof ConnRequest) {
+                    processBoardingPassRequest(c, event);
+                }
+            }
+        } catch (InterruptedException | ExecutionException ignored) {}
+    }
+
+    private void processNewCommit(Context c, Event event) {
+        ProposeTransactionsMessage propose = (ProposeTransactionsMessage) event.message();
+        MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+        machine.acceptCommit(event.getPairwise(), propose);
+        List<Transaction> trs = propose.transactions();
+        for (Transaction tr : trs) {
+            CovidTest testRes = new CovidTest(tr.getJSONObject("test_res"));
+            for (String conn : boardingPasses.keySet()) {
+                BoardingPass pass = boardingPasses.get(conn);
+                if (testRes.getFullName().equals(pass.getFullName())) {
+                    Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
+                    Message hello = Message.builder().
+                            setContext("We have to revoke your boarding pass" + (new Date()).toString()).
+                            setLocale("en").
+                            build();
+                    c.sendTo(hello, pw);
+                }
+            }
+        }
+    }
+
+    private void processInitMicroledger(Context c, Event event) {
+        MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
+        Pair<Boolean, AbstractMicroledger> okMl = machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) event.message());
+        if (okMl.first) {
+            System.out.println("Microledger for aircompany created successfully");
+        } else {
+            System.out.println("Microledger for aircompany creation failed");
+        }
+    }
+
+    private void processBoardingPassRequest(Context c, Event event) {
+        ConnRequest request = (ConnRequest) event.message();
+        Pair<String, String> didVerkey = c.getDid().createAndStoreMyDid();
+        String connectionKey = event.getRecipientVerkey();
+        Endpoint myEndpoint = c.getEndpointWithEmptyRoutingKeys();
+        Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
+        Pairwise p2p = sm.createConnection(request);
+
+        Message hello = Message.builder().
+                setContext("Welcome to the registration!").
+                setLocale("en").
+                build();
+        c.sendTo(hello, p2p);
+
+        Issuer issuerMachine = new Issuer(c, p2p, 60);
+        String credId = "cred-id-" + UUID.randomUUID().toString();
+
+        List<ProposedAttrib> preview = new ArrayList<>();
+        BoardingPass boardingPass = boardingPasses.get(connectionKey);
+        for (String key : boardingPass.keySet()) {
+            preview.add(new ProposedAttrib(key, boardingPass.get(key).toString()));
+        }
+        boolean ok = issuerMachine.issue(
+                boardingPass, boardingPassCredInfo.schema, boardingPassCredInfo.credentialDefinition, "Here is your boarding pass", "en",
+                preview, translations, credId);
+        if (ok) {
+            System.out.println("Boarding pass was successfully issued");
+            c.getPairwiseList().create(p2p);
+            aircompanyClientDids.put(boardingPass.getFullName(), p2p.getTheir().getDid());
+        } else {
+            System.out.println("ERROR while issuing");
         }
     }
 }
