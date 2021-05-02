@@ -1,4 +1,4 @@
-package com.sirius.sdk.examples.covid;
+package examples.covid;
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.ProposedAttrib;

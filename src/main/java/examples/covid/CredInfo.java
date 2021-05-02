@@ -1,4 +1,4 @@
-package com.sirius.sdk.examples.covid;
+package examples.covid;
 
 import com.sirius.sdk.agent.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.ledger.Schema;

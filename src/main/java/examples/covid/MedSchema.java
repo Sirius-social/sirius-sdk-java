@@ -1,4 +1,4 @@
-package com.sirius.sdk.examples.covid;
+package examples.covid;
 
 import org.json.JSONObject;
 
