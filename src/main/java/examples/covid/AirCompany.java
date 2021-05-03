@@ -43,6 +43,7 @@ public class AirCompany extends BaseParticipant {
     CredInfo boardingPassCredInfo;
     Map<String, BoardingPass> boardingPasses = new ConcurrentHashMap<>();
     Map<String/*full_name*/, String/*did*/> aircompanyClientDids = new HashMap<>();
+    Set<String> covidPosNames = new HashSet<>();
 
     public AirCompany(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo boardingPassCredInfo) {
         super(config, pairwises, covidMicroledgerName, me);
@@ -127,12 +128,19 @@ public class AirCompany extends BaseParticipant {
         List<Transaction> trs = propose.transactions();
         for (Transaction tr : trs) {
             CovidTest testRes = new CovidTest(tr.getJSONObject("test_res"));
+
+            if (testRes.hasCovid()) {
+                covidPosNames.add(testRes.getFullName());
+            } else {
+                covidPosNames.remove(testRes.getFullName());
+            }
+
             for (String conn : boardingPasses.keySet()) {
                 BoardingPass pass = boardingPasses.get(conn);
                 if (testRes.getFullName().equals(pass.getFullName())) {
                     Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
                     Message hello = Message.builder().
-                            setContext("We have to revoke your boarding pass" + (new Date()).toString()).
+                            setContext("We have to revoke your boarding pass due to positive covid test").
                             setLocale("en").
                             build();
                     c.sendTo(hello, pw);
@@ -159,17 +167,27 @@ public class AirCompany extends BaseParticipant {
         Inviter sm = new Inviter(c, new Pairwise.Me(didVerkey.first, didVerkey.second), connectionKey, myEndpoint);
         Pairwise p2p = sm.createConnection(request);
 
+        BoardingPass boardingPass = boardingPasses.get(connectionKey);
+
         Message hello = Message.builder().
-                setContext("Welcome to the registration!").
+                setContext("Dear " + boardingPass.getFullName() + ", welcome to the registration!").
                 setLocale("en").
                 build();
         c.sendTo(hello, p2p);
+
+        if (covidPosNames.contains(boardingPass.getFullName())) {
+            Message reject = Message.builder().
+                    setContext("Sorry, we can't issue the boarding pass. Get rid of covid first!").
+                    setLocale("en").
+                    build();
+            c.sendTo(reject, p2p);
+            return;
+        }
 
         Issuer issuerMachine = new Issuer(c, p2p, 60);
         String credId = "cred-id-" + UUID.randomUUID().toString();
 
         List<ProposedAttrib> preview = new ArrayList<>();
-        BoardingPass boardingPass = boardingPasses.get(connectionKey);
         for (String key : boardingPass.keySet()) {
             preview.add(new ProposedAttrib(key, boardingPass.get(key).toString()));
         }

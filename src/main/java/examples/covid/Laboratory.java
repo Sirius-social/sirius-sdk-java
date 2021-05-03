@@ -48,7 +48,7 @@ public class Laboratory extends BaseParticipant {
     }
 
     public static CredInfo createMedCreds(Context issuer, String did, String dkmsName) {
-        String schemaName = "Covid test result";
+        String schemaName = "Covid test result 2";
         Pair<String, AnonCredSchema> schemaPair = issuer.getAnonCreds().issuerCreateSchema(did, schemaName, "1.0",
                 "approved", "timestamp", "bio_location", "location", "full_name", "has_covid");
         AnonCredSchema anoncredSchema = schemaPair.second;
