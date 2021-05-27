@@ -1,7 +1,12 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message;
 
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
+import com.sirius.sdk.agent.aries_rfc.concept_0017_attachments.Attach;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Message extends AriesProtocolMessage {
 
@@ -19,6 +24,24 @@ public class Message extends AriesProtocolMessage {
 
     public static Builder<?> builder() {
         return new MessageBuilder();
+    }
+
+    public List<Attach> getAttaches() {
+        List<Attach> res = new ArrayList<>();
+        if (messageObjectHasKey("~attach")) {
+            JSONArray arr = getMessageObj().getJSONArray("~attach");
+            for (Object o : arr) {
+                res.add(new Attach((JSONObject) o));
+            }
+        }
+        return res;
+    }
+
+    public void addAttach(Attach att) {
+        if (!messageObjectHasKey("~attach")) {
+            getMessageObj().put("~attach", new JSONArray());
+        }
+        getMessageObj().getJSONArray("~attach").put(att);
     }
 
     public static abstract class Builder<B extends Message.Builder<B>> extends AriesProtocolMessage.Builder<B> {

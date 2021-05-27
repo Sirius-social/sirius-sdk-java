@@ -1,3 +1,4 @@
+import com.sirius.sdk.agent.aries_rfc.concept_0017_attachments.Attach;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
 import com.sirius.sdk.messaging.Message;
@@ -9,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 
 public class TestMessages {
 
@@ -150,38 +152,19 @@ public class TestMessages {
 
     }
 
-
     @Test
-    public void testAriesAck(){
-        //TODO make test ack 
-     //   Ack message = new Ack();
+    public void test0095MsgAttaches() {
+        com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message msg = com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message.builder().
+                setContext("context").
+                setLocale("en").
+                build();
+        Attach att = new Attach().setId("id").setMimeType("image/png").setFileName("photo.png").setData("eW91ciB0ZXh0".getBytes(StandardCharsets.UTF_8));
+
+        msg.addAttach(att);
+
+        Assert.assertEquals(1, msg.getAttaches().size());
+        Assert.assertEquals(new String(msg.getAttaches().get(0).getData()), "eW91ciB0ZXh0");
     }
-
-/*    def test_aries_ack():
-
-    message = Ack(thread_id='ack-thread-id', status=AckStatus.PENDING)
-    assert message.protocol == 'notification'
-            assert message.name == 'ack'
-            assert message.version == '1.0'
-            assert str(message.version_info) == '1.0.0'
-            assert message.status == AckStatus.PENDING
-    message.validate()
-
-    ok, ack = restore_message_instance(
-    {
-        '@id': 'ack-message-id',
-            '@type': 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack',
-            'status': 'PENDING',
-            "~thread": {
-        'thid': 'thread-id'
-    },
-    }
-    )
-            assert ok is True
-    assert isinstance(ack, Ack)
-    assert ack.thread_id == 'thread-id'
-            ack.validate()
-            assert ack.status == AckStatus.PENDING*/
 }
 
 
