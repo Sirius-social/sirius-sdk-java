@@ -48,32 +48,26 @@ public class Issuer extends BaseIssuingStateMachine {
                     setPreview(preview).
                     setIssuerSchema(schema.getBody()).
                     setTranslation(translation).
-                    setExpiresTime(expiresTime).
+                    //setExpiresTime(expiresTime).
                     build();
 
             log.log(Level.INFO, "20% - Send offer");
             // Switch to await participant action
-
-            log.log(Level.INFO, offerMsg.getMessageObj().toString());
 
             Pair<Boolean, Message> okResp = coprotocol.sendAndWait(offerMsg);
 
             if (!(okResp.second instanceof RequestCredentialMessage)) {
                 throw new StateMachineTerminatedWithError("offer_processing_error", "Unexpected @type: " + okResp.second.getType());
             }
-            RequestCredentialMessage resp = (RequestCredentialMessage) okResp.second;
 
             // Step-2: Create credential
-            RequestCredentialMessage requestMsg = resp;
+            RequestCredentialMessage requestMsg = (RequestCredentialMessage) okResp.second;
             log.log(Level.INFO, "40% - Received credential request");
 
             JSONObject encodedCredValues = new JSONObject();
             for (String key : values.keySet()) {
                 JSONObject encCredVal = new JSONObject();
-                if (values.get(key) instanceof Boolean)
-                    encCredVal.put("raw", values.get(key));
-                else
-                    encCredVal.put("raw", values.get(key).toString());
+                encCredVal.put("raw", values.get(key).toString());
                 encCredVal.put("encoded", Codec.encode(values.get(key)));
                 encodedCredValues.put(key, encCredVal);
             }

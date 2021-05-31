@@ -163,8 +163,8 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
             }
 
             if (translation != null && !translation.isEmpty()) {
-                if (jsonObject.has("~attach"))
-                    jsonObject.remove("~attach");
+                if (!jsonObject.has("~attach"))
+                    jsonObject.put("~attach", new JSONArray());
 
                 JSONObject attach = new JSONObject();
                 attach.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
@@ -180,14 +180,14 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
                 }
                 data.put("json", transArr);
                 attach.put("data", data);
-                JSONArray attaches = new JSONArray();
+
+                JSONArray attaches = jsonObject.getJSONArray("~attach");
                 attaches.put(attach);
-                jsonObject.put("~attach", attaches);
             }
 
             if (issuerSchema != null) {
-                if (jsonObject.has("~attach"))
-                    jsonObject.remove("~attach");
+                if (!jsonObject.has("~attach"))
+                    jsonObject.put("~attach", new JSONArray());
 
                 JSONObject attach = new JSONObject();
                 attach.put("@type", BaseIssueCredentialMessage.ISSUER_SCHEMA_TYPE);
@@ -196,9 +196,9 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
                 JSONObject data = new JSONObject();
                 data.put("json", issuerSchema);
                 attach.put("data", data);
-                JSONArray attaches = new JSONArray();
+
+                JSONArray attaches = jsonObject.getJSONArray("~attach");
                 attaches.put(attach);
-                jsonObject.put("~attach", attaches);
             }
 
             if(expiresTime != null) {

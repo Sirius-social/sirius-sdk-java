@@ -27,10 +27,10 @@ public class PostCommitTransactionsMessage extends BaseTransactionsMessage {
     }
 
     public JSONArray getCommits() {
-        JSONArray commits = getMessageObj().optJSONArray("commits");
-        return commits != null ? commits : new JSONArray();
+        if (!getMessageObj().has("commits"))
+            getMessageObj().put("commits", new JSONArray());
+        return getMessageObj().optJSONArray("commits");
     }
-
 
     public void addCommitSign(AbstractCrypto api, CommitTransactionsMessage commit, Pairwise.Me me) {
         JSONObject signed = Utils.sign(api, commit.getMessageObj(), me.getVerkey());

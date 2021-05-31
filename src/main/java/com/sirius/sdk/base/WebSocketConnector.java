@@ -52,17 +52,17 @@ public class WebSocketConnector extends BaseConnector {
 
         @Override
         public void onConnected(WebSocket webSocket, Map<String, List<String>> map) throws Exception {
-            log.log(Level.INFO, "Connected");
+            //log.log(Level.INFO, "Connected");
         }
 
         @Override
         public void onConnectError(WebSocket webSocket, WebSocketException e) throws Exception {
-            log.log(Level.INFO, "Connect error");
+            log.log(Level.WARNING, "Connect error");
         }
 
         @Override
         public void onDisconnected(WebSocket webSocket, WebSocketFrame webSocketFrame, WebSocketFrame webSocketFrame1, boolean b) throws Exception {
-            log.log(Level.INFO, "Disconnected");
+            //log.log(Level.INFO, "Disconnected");
         }
 
         @Override
@@ -272,14 +272,14 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public boolean write(byte[] data) {
-        log.log(Level.INFO, "Sending binary data");
+        //log.log(Level.INFO, "Sending binary data");
         webSocket.sendBinary(data);
         return true;
     }
 
     public boolean write(Message message) {
         String payload = message.serialize();
-        log.log(Level.INFO, "Sending message");
+        //log.log(Level.INFO, "Sending message");
         webSocket.sendText(payload);
         return true;
     }

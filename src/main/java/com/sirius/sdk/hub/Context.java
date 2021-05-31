@@ -619,6 +619,10 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().generateQrCode(value);
     }
 
+    public boolean ping() {
+        return getCurrentHub().getAgentConnectionLazy().ping();
+    }
+
     public Endpoint getEndpointWithEmptyRoutingKeys() {
         for (Endpoint e : getEndpoints()) {
             if (e.getRoutingKeys().size() == 0) {

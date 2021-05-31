@@ -75,12 +75,12 @@ public class AddressedTunnel {
             JSONObject jsonObject = new JSONObject(payloadString);
             if (jsonObject.has("protected")) {
                 String unpacked = p2p.unpack(new String(payload, StandardCharsets.US_ASCII));
-                log.log(Level.INFO, "Received protected message. Unpacked: " + unpacked);
+                //log.log(Level.INFO, "Received protected message. Unpacked: " + unpacked);
                 context.setEncrypted(true);
                 return new Message(unpacked);
             } else {
                 context.setEncrypted(false);
-                log.log(Level.INFO, "Received message: " + payload);
+                //log.log(Level.INFO, "Received message: " + payload);
                 return new Message(new String(payload, StandardCharsets.US_ASCII));
             }
         } catch (Exception e) {
