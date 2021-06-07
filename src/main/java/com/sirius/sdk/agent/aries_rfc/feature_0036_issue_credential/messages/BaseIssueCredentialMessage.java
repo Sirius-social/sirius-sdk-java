@@ -7,6 +7,7 @@ public class BaseIssueCredentialMessage extends AriesProtocolMessage {
     public static final String PROTOCOL = "issue-credential";
     public static final String DEF_LOCALE = "en";
     public static final String CREDENTIAL_PREVIEW_TYPE = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview";
+    public static final String CREDENTIAL_PROPOSAL_TYPE = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-proposal";
     public static final String CREDENTIAL_TRANSLATION_TYPE = "https://github.com/Sirius-social/agent/tree/master/messages/credential-translation";
     public static final String ISSUER_SCHEMA_TYPE = "https://github.com/Sirius-social/agent/tree/master/messages/issuer-schema";
     public static final String CREDENTIAL_TRANSLATION_ID = "credential-translation";

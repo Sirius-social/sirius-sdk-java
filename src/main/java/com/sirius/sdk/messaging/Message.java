@@ -85,7 +85,7 @@ public class Message implements JsonSerializable<Message> {
 
     public String getStringFromJSON(String key) {
         if (messageObjectHasKey(key)) {
-            String value = messageObj.getString(key);
+            String value = messageObj.optString(key);
             if (value == null || value.isEmpty()) {
                 return "";
             }
