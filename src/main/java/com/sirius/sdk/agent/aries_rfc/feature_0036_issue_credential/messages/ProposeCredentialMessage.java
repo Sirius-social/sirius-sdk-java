@@ -45,7 +45,7 @@ public class ProposeCredentialMessage  extends BaseIssueCredentialMessage {
         List<ProposedAttrib> res = new ArrayList<>();
         JSONObject credentialProposal = getMessageObj().optJSONObject("credential_proposal");
         if (credentialProposal != null) {
-            if (credentialProposal.optString("@type").equals(CREDENTIAL_PROPOSAL_TYPE)) {
+            if (credentialProposal.optString("@type").equals(CREDENTIAL_PREVIEW_TYPE)) {
                 JSONArray attribs = credentialProposal.optJSONArray("attributes");
                 if (attribs != null) {
                     for (Object o : attribs) {
@@ -112,7 +112,7 @@ public class ProposeCredentialMessage  extends BaseIssueCredentialMessage {
 
             if (credentialProposal != null) {
                 JSONObject credProposal = new JSONObject().
-                        put("@type", CREDENTIAL_PROPOSAL_TYPE);
+                        put("@type", CREDENTIAL_PREVIEW_TYPE);
                 JSONArray attributes = new JSONArray();
                 for (ProposedAttrib attrib : credentialProposal)
                     attributes.put(attrib);
