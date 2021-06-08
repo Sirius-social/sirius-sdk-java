@@ -1,13 +1,14 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueProblemReport;
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueCredentialMessage;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.OfferCredentialMessage;
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.RequestCredentialMessage;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
@@ -57,6 +58,7 @@ public class Holder extends BaseIssuingStateMachine {
 
             // Step-3: Store credential
             String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
+            storeMimeTypes(credId, offer.getCredentialPreview());
 
             Ack ack = Ack.builder().
                     setStatus(Ack.Status.OK).
@@ -90,5 +92,29 @@ public class Holder extends BaseIssuingStateMachine {
         }
         credId = context.getAnonCreds().proverStoreCredential(credId, credMetadata, cred, credDef, revRegDef);
         return credId;
+    }
+
+    private void storeMimeTypes(String credId, List<ProposedAttrib> preview) {
+        if (!preview.isEmpty()) {
+            JSONObject mimeTypes = new JSONObject();
+            for (ProposedAttrib attr : preview) {
+                if (attr.has("mime-type")) {
+                    mimeTypes.put(attr.optString("name"), attr.optString("mime-type"));
+                }
+            }
+            context.getNonSecrets().addWalletRecord("mime-types", credId,
+                    new String(Base64.getEncoder().encode(mimeTypes.toString().getBytes(StandardCharsets.UTF_8))));
+        }
+    }
+
+    public static JSONObject getMimeTypes(Context c, String credId) {
+        String record = c.getNonSecrets().getWalletRecord("mime-types", credId, new RetrieveRecordOptions(true, true, false));
+        if (record != null) {
+            JSONObject rec = new JSONObject(record);
+            String b64 = rec.optString("value");
+            String vals = new String(Base64.getDecoder().decode(b64.getBytes(StandardCharsets.UTF_8)));
+            return new JSONObject(vals);
+        }
+        return new JSONObject();
     }
 }

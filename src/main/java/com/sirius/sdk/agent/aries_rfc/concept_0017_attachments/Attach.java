@@ -23,11 +23,11 @@ public class Attach extends JSONObject {
     }
 
     public String getMimeType() {
-        return optString("mime_type");
+        return optString("mime-type");
     }
 
     public Attach setMimeType(String mimeType) {
-        put("mime_type", mimeType);
+        put("mime-type", mimeType);
         return this;
     }
 

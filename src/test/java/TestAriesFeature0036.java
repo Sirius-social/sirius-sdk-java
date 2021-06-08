@@ -52,7 +52,8 @@ public class TestAriesFeature0036 {
         String issuerDid = i2h.getMe().getDid();
         String issuerVerkey = i2h.getMe().getVerkey();
         String schemaName = "schema_" + UUID.randomUUID().toString();
-        Pair<String, AnonCredSchema> schemaPair = issuer.getWallet().getAnoncreds().issuerCreateSchema(issuerDid, schemaName, "1.0", "attr1", "attr2", "attr3");
+        Pair<String, AnonCredSchema> schemaPair = issuer.getWallet().getAnoncreds().issuerCreateSchema(issuerDid,
+                schemaName, "1.0", "attr1", "attr2", "attr3", "attr4");
         String schemaId = schemaPair.first;
         AnonCredSchema anoncredSchema = schemaPair.second;
         Ledger ledger = issuer.getLedgers().get("default");
@@ -81,7 +82,12 @@ public class TestAriesFeature0036 {
         JSONObject values = (new JSONObject()).
                 put("attr1", "Value-1").
                 put("attr2", 567).
-                put("attr3", 5.7);
+                put("attr3", 5.7).
+                put("attr4", "base64");
+        List<ProposedAttrib> preview = Arrays.asList(
+                new ProposedAttrib("attr1", "Value-1", "text/plain"),
+                new ProposedAttrib("attr4", "base64", "image/png")
+                );
 
         CompletableFuture<Boolean> issuerFuture = CompletableFuture.supplyAsync(
                 () -> {
@@ -94,7 +100,7 @@ public class TestAriesFeature0036 {
                         Thread.sleep(10);
                         return issuerMachine.issue(
                                 values, schema, credDef, "Hello Iam issuer", "en",
-                                new ArrayList<ProposedAttrib>(), new ArrayList<AttribTranslation>(), credId);
+                                preview, new ArrayList<AttribTranslation>(), credId);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -110,7 +116,7 @@ public class TestAriesFeature0036 {
                             build()) {
                         Event event = null;
                         try {
-                            event = context.subscribe().getOne().get(10, TimeUnit.SECONDS);
+                            event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
                         } catch (InterruptedException | ExecutionException | TimeoutException e) {
                             e.printStackTrace();
                             return new Pair<Boolean, String>(false, "");
@@ -122,6 +128,11 @@ public class TestAriesFeature0036 {
                         if (okCredId.first) {
                             String cred = context.getAnonCreds().proverGetCredential(okCredId.second);
                             System.out.println(cred);
+
+                            JSONObject mimeTypes = Holder.getMimeTypes(context, okCredId.second);
+                            Assert.assertEquals(2, mimeTypes.length());
+                            Assert.assertEquals("text/plain", mimeTypes.optString("attr1"));
+                            Assert.assertEquals("image/png", mimeTypes.optString("attr4"));
                         }
                         return okCredId;
                     } catch (WalletItemNotFoundException e) {

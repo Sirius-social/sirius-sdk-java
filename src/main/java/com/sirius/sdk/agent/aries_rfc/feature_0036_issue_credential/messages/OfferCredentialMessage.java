@@ -26,7 +26,6 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         super(message);
     }
 
-
     public ParseResult parse() throws SiriusValidationError {
         JSONArray offerAttaches = getMessageObj().getJSONArray("offers~attach");
         if (offerAttaches == null) {
@@ -85,6 +84,23 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         return parse().credDefBody;
     }
 
+    public List<ProposedAttrib> getCredentialPreview() {
+        List<ProposedAttrib> res = new ArrayList<>();
+        JSONObject credentialPreview = getMessageObj().optJSONObject("credential_preview");
+        if (credentialPreview != null) {
+            if (credentialPreview.optString("@type").equals(CREDENTIAL_PREVIEW_TYPE)) {
+                JSONArray attribs = credentialPreview.optJSONArray("attributes");
+                if (attribs != null) {
+                    for (Object o : attribs) {
+                        res.add(new ProposedAttrib((JSONObject) o));
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
     public static Builder<?> builder() {
         return new OfferCredentialMessageBuilder();
     }
@@ -138,7 +154,7 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
                 credPreview.put("@type", BaseIssueCredentialMessage.CREDENTIAL_PREVIEW_TYPE);
                 JSONArray attributes = new JSONArray();
                 for (ProposedAttrib attrib : preview)
-                    attributes.put(attrib.getDict());
+                    attributes.put(attrib);
                 credPreview.put("attributes", attributes);
                 jsonObject.put("credential_preview", credPreview);
             }
