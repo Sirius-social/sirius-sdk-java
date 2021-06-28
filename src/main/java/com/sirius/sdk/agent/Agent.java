@@ -15,6 +15,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
+import com.sirius.sdk.agent.wallet.AbstractWallet;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
@@ -78,6 +79,11 @@ public class Agent extends AbstractAgent {
         this.timeout = timeout;
         this.name = null;
         this.storage = null;
+    }
+
+    @Override
+    public DynamicWallet getWallet() {
+        return (DynamicWallet)wallet;
     }
 
     public void open() {

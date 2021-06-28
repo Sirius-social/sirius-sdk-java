@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * <p>
  * Reactive nature of Smart-Contract design
  */
-public class AgentEvents extends BaseAgentConnection {
+public class AgentEvents extends WebSocketAgentConnection {
     Logger log = Logger.getLogger(AgentEvents.class.getName());
     String tunnel;
 
@@ -33,10 +33,6 @@ public class AgentEvents extends BaseAgentConnection {
         super(serverAddress, credentials, p2p, timeout);
     }
 
-    @Override
-    public BaseConnector createConnector() {
-        return null;
-    }
     @Override
     public Object remoteCall(String msgType, RemoteParams params, boolean waitResponse) throws Exception {
         return null;
