@@ -15,6 +15,7 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
 
 
@@ -34,17 +35,111 @@ public abstract  class AbstractAgent extends TransportLayer {
     public abstract String generateQrCode(String value);
     public abstract boolean ping();
 
+
+
     AbstractWallet wallet;
+
+    public void setMicroledgers(MicroledgerList microledgers) {
+        this.microledgers = microledgers;
+    }
+
     MicroledgerList microledgers;
+
+    public void setPairwiseList(WalletPairwiseList pairwiseList) {
+        this.pairwiseList = pairwiseList;
+    }
+
     WalletPairwiseList pairwiseList;
+
+    public void setEndpoints(List<Endpoint> endpoints) {
+        this.endpoints = endpoints;
+    }
+
     List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
     AgentEvents events;
+
+    public String getServerAddress() {
+        return serverAddress;
+    }
+
     String serverAddress;
+
+    public byte[] getCredentials() {
+        return credentials;
+    }
+
     byte[] credentials;
+
+    public P2PConnection getP2p() {
+        return p2p;
+    }
+
     P2PConnection p2p;
+
+    public int getTimeout() {
+        return timeout;
+    }
+
     int timeout = BaseAgentConnection.IO_TIMEOUT;
     String name;
+
+    public AbstractImmutableCollection getStorage() {
+        return storage;
+    }
+
+    public void setStorage(AbstractImmutableCollection storage) {
+        this.storage = storage;
+    }
+
+    AbstractImmutableCollection storage;
+
+    public void setWallet(AbstractWallet wallet) {
+        this.wallet = wallet;
+    }
+
+    /**
+     * @param serverAddress example https://my-cloud-provider.com
+     * @param credentials   credentials that point websocket connection to your agent and server-side services like
+     *                      routing keys maintenance ant etc.
+     * @param p2p           encrypted connection to establish tunnel to Agent that is running on server-side
+     * @param timeout
+     * @param storage
+     * @param name
+     */
+    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = name;
+        this.storage = storage;
+    }
+
+    /**
+     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     */
+    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = storage;
+    }
+
+    /**
+     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     */
+    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = null;
+    }
+
 
     public String getName() {
         return name;

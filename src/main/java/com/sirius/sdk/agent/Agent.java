@@ -37,7 +37,7 @@ import java.util.*;
 public class Agent extends AbstractAgent {
 
     AgentRPC rpc;
-    AbstractImmutableCollection storage;
+
 
     /**
      * @param serverAddress example https://my-cloud-provider.com
@@ -49,36 +49,21 @@ public class Agent extends AbstractAgent {
      * @param name
      */
     public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = name;
-        this.storage = storage;
+        super(serverAddress,credentials,p2p,timeout,storage,name);
     }
 
     /**
      *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
     public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = null;
-        this.storage = storage;
+        super(serverAddress,credentials,p2p,timeout,storage);
     }
 
     /**
      *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
     public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = null;
-        this.storage = null;
+        super(serverAddress,credentials,p2p,timeout);
     }
 
     @Override

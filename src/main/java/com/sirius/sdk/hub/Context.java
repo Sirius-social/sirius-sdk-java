@@ -28,6 +28,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class Context implements Closeable {
         }
     }
 
-    Hub currentHub = null;
+    AbstractHub currentHub = null;
     AbstractNonSecrets nonSecrets = new AbstractNonSecrets() {
         @Override
         public void addWalletRecord(String type, String id, String value, String tags) {
@@ -575,10 +576,10 @@ public class Context implements Closeable {
         return new Builder();
     }
 
-    public Context(Hub.Config config) {
+    public Context(AbstractHub.Config config) {
         currentHub = new Hub(config);
     }
-    public Context(Hub hub) {
+    public Context(AbstractHub hub) {
         currentHub = hub;
     }
 
@@ -647,7 +648,7 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().subscribe();
     }
 
-    public Hub getCurrentHub() {
+    public AbstractHub getCurrentHub() {
         return currentHub;
     }
 
@@ -669,6 +670,10 @@ public class Context implements Closeable {
 
     @Override
     public void close() {
-        currentHub.close();
+        try {
+            currentHub.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

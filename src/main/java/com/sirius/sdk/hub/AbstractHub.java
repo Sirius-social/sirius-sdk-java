@@ -33,6 +33,11 @@ public abstract  class AbstractHub implements Closeable {
     }
 
     private final AbstractHub.Config config;
+
+    public void setAgent(AbstractAgent agent) {
+        this.agent = agent;
+    }
+
     AbstractAgent agent = null;
 
     public Config getConfig() {
