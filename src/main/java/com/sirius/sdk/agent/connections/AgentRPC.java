@@ -20,7 +20,7 @@ import java.util.*;
  * <p>
  * Proactive form of Smart-Contract design
  */
-public class AgentRPC extends BaseAgentConnection {
+public class AgentRPC extends WebSocketAgentConnection {
 
     List<Endpoint> endpoints;
     List<String> networks;

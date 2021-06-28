@@ -16,4 +16,6 @@ public abstract class BaseConnector implements ReadOnlyChannel, WriteOnlyChannel
      * Close communication
      */
     public  abstract void close();
+
+    public  abstract  boolean isOpen();
 }

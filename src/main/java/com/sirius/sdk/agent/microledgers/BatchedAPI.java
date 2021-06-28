@@ -2,17 +2,18 @@ package com.sirius.sdk.agent.microledgers;
 
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import org.json.JSONObject;
 
 import java.util.*;
 
 public class BatchedAPI extends AbstractBatchedAPI {
-    AgentRPC api;
+    BaseAgentConnection api;
     List<String> names = new ArrayList<>();
     Map<String, AbstractMicroledger> external = null;
 
-    public BatchedAPI(AgentRPC api, Map<String, AbstractMicroledger> external) {
+    public BatchedAPI(BaseAgentConnection api, Map<String, AbstractMicroledger> external) {
         this.api = api;
         this.external = external;
     }

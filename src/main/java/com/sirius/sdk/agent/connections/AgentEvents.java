@@ -1,5 +1,7 @@
 package com.sirius.sdk.agent.connections;
 
+import com.sirius.sdk.agent.RemoteParams;
+import com.sirius.sdk.base.BaseConnector;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -29,6 +31,15 @@ public class AgentEvents extends BaseAgentConnection {
 
     public AgentEvents(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
         super(serverAddress, credentials, p2p, timeout);
+    }
+
+    @Override
+    public BaseConnector createConnector() {
+        return null;
+    }
+    @Override
+    public Object remoteCall(String msgType, RemoteParams params, boolean waitResponse) throws Exception {
+        return null;
     }
 
     @Override

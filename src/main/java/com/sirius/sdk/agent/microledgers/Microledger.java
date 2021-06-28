@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.microledgers;
 
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.utils.Pair;
@@ -14,16 +15,16 @@ import java.util.List;
 
 public class Microledger extends AbstractMicroledger {
     String name;
-    AgentRPC api;
+    BaseAgentConnection api;
     JSONObject state = null;
 
-    public Microledger(String name, AgentRPC api, JSONObject state) {
+    public Microledger(String name, BaseAgentConnection api, JSONObject state) {
         this.name = name;
         this.api = api;
         this.state = state;
     }
 
-    public Microledger(String name, AgentRPC api) {
+    public Microledger(String name, BaseAgentConnection api) {
         this.name = name;
         this.api = api;
     }

@@ -4,7 +4,7 @@ import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.wallet.impl.*;
 
-public class DynamicWallet {
+public class DynamicWallet extends AbstractWallet{
     AnonCredsProxy anoncreds;
     DIDProxy did;
     CryptoProxy crypto;

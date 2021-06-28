@@ -33,28 +33,10 @@ import java.util.*;
  * See details:
  * - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0004-agents
  */
-public class Agent extends TransportLayer {
+public class Agent extends AbstractAgent {
 
-    String serverAddress;
-    byte[] credentials;
-    P2PConnection p2p;
-    int timeout = BaseAgentConnection.IO_TIMEOUT;
-    String name;
-
-
-    List<Endpoint> endpoints;
     AgentRPC rpc;
-
-
-    Map<String, Ledger> ledgers = new HashMap<>();
-    WalletPairwiseList pairwiseList;
-
-    MicroledgerList microledgers;
     AbstractImmutableCollection storage;
-    AgentEvents events;
-
-
-    DynamicWallet wallet;
 
     /**
      * @param serverAddress example https://my-cloud-provider.com
@@ -121,9 +103,6 @@ public class Agent extends TransportLayer {
         return rpc != null && rpc.isOpen();
     }
 
-    public String getName() {
-        return name;
-    }
 
     public boolean ping() {
         try {
@@ -193,36 +172,7 @@ public class Agent extends TransportLayer {
         throw new RuntimeException("Open Agent at first!");
     }
 
-    public AgentEvents getEvents() {
-        checkIsOpen();
-        return events;
-    }
 
-    public DynamicWallet getWallet() {
-        checkIsOpen();
-        return wallet;
-    }
-
-    public List<Endpoint> getEndpoints() {
-        checkIsOpen();
-        return endpoints;
-    }
-
-    public Map<String, Ledger> getLedgers() {
-        checkIsOpen();
-        return ledgers;
-    }
-
-
-    public AbstractMicroledgerList getMicroledgers() {
-        checkIsOpen();
-        return microledgers;
-    }
-
-    public WalletPairwiseList getPairwiseList() {
-        checkIsOpen();
-        return pairwiseList;
-    }
 
     public Listener subscribe() {
         checkIsOpen();

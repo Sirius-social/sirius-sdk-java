@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.microledgers;
 
 import com.sirius.sdk.agent.RemoteParams;
 import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.utils.JSONUtils;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MicroledgerList extends AbstractMicroledgerList {
-    AgentRPC api;
+    BaseAgentConnection api;
     Map<String, AbstractMicroledger> instances = new HashMap<>();
     BatchedAPI batchedAPI;
 
@@ -85,7 +86,7 @@ public class MicroledgerList extends AbstractMicroledgerList {
         return this.batchedAPI;
     }
 
-    public MicroledgerList(AgentRPC api) {
+    public MicroledgerList(BaseAgentConnection api) {
         this.api = api;
         this.batchedAPI = new BatchedAPI(api, this.instances);
     }

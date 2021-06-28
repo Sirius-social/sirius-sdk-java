@@ -578,6 +578,9 @@ public class Context implements Closeable {
     public Context(Hub.Config config) {
         currentHub = new Hub(config);
     }
+    public Context(Hub hub) {
+        currentHub = hub;
+    }
 
     public AbstractNonSecrets getNonSecrets() {
         return nonSecrets;

@@ -8,9 +8,13 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+shadowJar {
+    relocate 'org.json', 'shadow.org.json'
+}
+
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
-    shadow 'org.json:json:20200518'
+    implementation('org.json:json:20200518')
     implementation 'org.slf4j:slf4j-api:2.0.0-alpha1'
     implementation 'net.java.dev.jna:jna:5.6.0'
     implementation  'commons-lang:commons-lang:2.6'
@@ -26,3 +30,4 @@ dependencies {
     testImplementation  'junit:junit:4+'
     testImplementation  'org.slf4j:slf4j-simple:2.0.0-alpha1'
 }
+
