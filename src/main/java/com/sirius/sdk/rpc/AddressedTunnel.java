@@ -100,6 +100,7 @@ public class AddressedTunnel {
      */
     public boolean post(Message message, boolean encrypt) {
         String payload = null;
+        System.out.println(message.getMessageObj());
         if (encrypt) {
             payload = p2p.pack(message.serialize());
         } else {

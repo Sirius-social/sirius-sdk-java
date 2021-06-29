@@ -69,7 +69,7 @@ public abstract class BaseAgentConnection {
         connector = createConnector();
     }
 
-    public  abstract BaseConnector createConnector();
+    public abstract BaseConnector createConnector();
     public abstract String path();
 
     public void setup(Message context) {

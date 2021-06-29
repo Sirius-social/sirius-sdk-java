@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 public class Event extends Message {
 
     Pairwise pairwise;
-    public Event(Pairwise pairwise,String message) {
+    public Event(Pairwise pairwise, String message) {
         super(message);
         this.pairwise = pairwise;
     }

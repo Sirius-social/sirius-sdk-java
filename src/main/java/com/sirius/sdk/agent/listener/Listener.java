@@ -1,7 +1,7 @@
 package com.sirius.sdk.agent.listener;
 
 import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
-import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -14,10 +14,10 @@ import java.util.concurrent.CompletableFuture;
 
 public class Listener {
 
-    AgentEvents source;
+    CloudAgentEvents source;
     AbstractPairwiseList pairwiseResolver;
 
-    public Listener(AgentEvents source, AbstractPairwiseList pairwiseResolver) {
+    public Listener(CloudAgentEvents source, AbstractPairwiseList pairwiseResolver) {
         this.source = source;
         this.pairwiseResolver = pairwiseResolver;
     }

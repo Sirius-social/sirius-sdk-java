@@ -1,9 +1,8 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.connections.Endpoint;
-import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
@@ -57,7 +56,7 @@ public abstract  class AbstractAgent extends TransportLayer {
 
     List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
-    AgentEvents events;
+    CloudAgentEvents events;
 
     public String getServerAddress() {
         return serverAddress;
@@ -174,7 +173,7 @@ public abstract  class AbstractAgent extends TransportLayer {
 
     public Listener subscribe() {
         checkIsOpen();
-        events = new AgentEvents(serverAddress, credentials, p2p, timeout);
+        events = new CloudAgentEvents(serverAddress, credentials, p2p, timeout);
         try {
             events.create();
         } catch (SiriusFieldValueError siriusFieldValueError) {
