@@ -119,7 +119,7 @@ public class Airport extends BaseParticipant {
         Verifier machine = new Verifier(c, pw, verLedger);
         Verifier.VerifyParams params = new Verifier.VerifyParams();
         params.proofRequest = proofRequest;
-        params.comment = "I am Verifier";
+        params.comment = "Verify covid test and boarding pass";
         params.protoVersion = "1.0";
         boolean ok = machine.verify(params);
         if (ok) {

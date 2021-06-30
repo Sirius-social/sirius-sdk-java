@@ -131,20 +131,19 @@ public class AirCompany extends BaseParticipant {
 
             if (testRes.hasCovid()) {
                 covidPosNames.add(testRes.getFullName());
+                for (String conn : boardingPasses.keySet()) {
+                    BoardingPass pass = boardingPasses.get(conn);
+                    if (testRes.getFullName().equals(pass.getFullName())) {
+                        Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
+                        Message hello = Message.builder().
+                                setContext("We have to revoke your boarding pass due to positive covid test").
+                                setLocale("en").
+                                build();
+                        c.sendTo(hello, pw);
+                    }
+                }
             } else {
                 covidPosNames.remove(testRes.getFullName());
-            }
-
-            for (String conn : boardingPasses.keySet()) {
-                BoardingPass pass = boardingPasses.get(conn);
-                if (testRes.getFullName().equals(pass.getFullName())) {
-                    Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
-                    Message hello = Message.builder().
-                            setContext("We have to revoke your boarding pass due to positive covid test").
-                            setLocale("en").
-                            build();
-                    c.sendTo(hello, pw);
-                }
             }
         }
     }
