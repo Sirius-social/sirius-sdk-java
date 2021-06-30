@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryImmutableCollection;
 import com.sirius.sdk.storage.impl.InMemoryKeyValueStorage;
@@ -60,7 +60,7 @@ public class TestStorages {
         //TODO test
         ConfTest confTest = ConfTest.newInstance();
 
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
       //  agent1: Agent

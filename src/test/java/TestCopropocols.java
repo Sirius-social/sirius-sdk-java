@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
 import com.sirius.sdk.agent.listener.Event;
@@ -10,7 +10,6 @@ import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.coprotocols.AbstractCoProtocol;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedP2P;
 import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedTheirs;
@@ -151,8 +150,8 @@ public class TestCopropocols {
         Entity entity1 = agent1params.getEntitiesList().get(0);
         Entity entity2 = agent2params.getEntitiesList().get(0);
 
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
 
         agent1.open();
         agent2.open();
@@ -185,8 +184,8 @@ public class TestCopropocols {
 
     @Test
     public void testPairwiseProtocol() {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
 
         agent1.open();
         agent2.open();
@@ -231,8 +230,8 @@ public class TestCopropocols {
 
     @Test
     public void testThreadBasedProtocol() {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
 
         agent1.open();
         agent2.open();
@@ -278,8 +277,8 @@ public class TestCopropocols {
 
     @Test
     public void testThreadbasedProtocolOnHub() {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
 
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");
@@ -349,9 +348,9 @@ public class TestCopropocols {
 
     @Test
     public void testCoprotocolThreadedTheirsSend() throws InterruptedException, ExecutionException, TimeoutException {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
-        Agent agent3 = confTest.getAgent("agent3");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent3 = confTest.getAgent("agent3");
 
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");
@@ -415,9 +414,9 @@ public class TestCopropocols {
 
     @Test
     public void testCoprotocolThreadedTheirsSwitch() throws InterruptedException, ExecutionException, TimeoutException {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
-        Agent agent3 = confTest.getAgent("agent3");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent3 = confTest.getAgent("agent3");
 
         AgentParams agent1params = testSuite.getAgentParams("agent1");
         AgentParams agent2params = testSuite.getAgentParams("agent2");

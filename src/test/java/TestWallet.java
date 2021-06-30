@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
@@ -28,8 +28,8 @@ public class TestWallet {
 
     @Test
     public void testCryptoPackMessage() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
         agent1.open();
         agent2.open();
 
@@ -66,8 +66,8 @@ public class TestWallet {
 
     @Test
     public void testCryptoSign() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
         agent1.open();
         agent2.open();
 
@@ -99,7 +99,7 @@ public class TestWallet {
 
     @Test
     public void testDidMaintenance() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
         //1: Create Key
@@ -174,8 +174,8 @@ public class TestWallet {
 
     @Test
     public void testTheirDidMaintenance() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
         agent1.open();
         agent2.open();
 
@@ -218,7 +218,7 @@ public class TestWallet {
 
     @Test
     public void testRecordValue() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
         String value = "my-value-" + UUID.randomUUID().toString();
@@ -253,7 +253,7 @@ public class TestWallet {
 
     @Test
     public void testRecordValueWithTags() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
         String value = "my-value-" + UUID.randomUUID().toString();
@@ -307,7 +307,7 @@ public class TestWallet {
 
     @Test
     public void testRecordValueWithTagsThenUpdate() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
         String value = "my-value-" + UUID.randomUUID().toString();
@@ -353,7 +353,7 @@ public class TestWallet {
 
     @Test
     public void testRecordSearch() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
 
         String id1 = "id-1-" + UUID.randomUUID().toString();
@@ -437,7 +437,7 @@ public class TestWallet {
 
     @Test
     public void testRegisterSchemaInNetwork() {
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent2 = confTest.agent2();
         agent2.open();
         String seed = "000000000000000000000000Trustee1";
 
@@ -464,7 +464,7 @@ public class TestWallet {
 
     @Test
     public void testRegisterCredDefInNetwork() {
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent2 = confTest.agent2();
         String defaultNetwork = confTest.defaultNetwork();
 
         agent2.open();
@@ -491,8 +491,8 @@ public class TestWallet {
 
     @Test
     public void testNymOperationsInNetwork() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
 
         agent1.open();
         agent2.open();
@@ -557,8 +557,8 @@ public class TestWallet {
 
     @Test
     public void testAttributeOperationsInNetwork() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
 
         agent1.open();
         agent2.open();

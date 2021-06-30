@@ -5,9 +5,7 @@ import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
-import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
-import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
@@ -33,7 +31,7 @@ import java.util.*;
  * See details:
  * - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0004-agents
  */
-public class Agent extends TransportLayer {
+public class CloudAgent extends AbstractAgent {
 
     String serverAddress;
     byte[] credentials;
@@ -41,20 +39,7 @@ public class Agent extends TransportLayer {
     int timeout = BaseAgentConnection.IO_TIMEOUT;
     String name;
 
-
-    List<Endpoint> endpoints;
     AgentRPC rpc;
-
-
-    Map<String, Ledger> ledgers = new HashMap<>();
-    WalletPairwiseList pairwiseList;
-
-    MicroledgerList microledgers;
-    AbstractImmutableCollection storage;
-    AgentEvents events;
-
-
-    DynamicWallet wallet;
 
     /**
      * @param serverAddress example https://my-cloud-provider.com
@@ -65,7 +50,7 @@ public class Agent extends TransportLayer {
      * @param storage
      * @param name
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.p2p = p2p;
@@ -75,9 +60,9 @@ public class Agent extends TransportLayer {
     }
 
     /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     *Overload constructor {@link #CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.p2p = p2p;
@@ -87,9 +72,9 @@ public class Agent extends TransportLayer {
     }
 
     /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     *Overload constructor {@link #CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.p2p = p2p;
@@ -98,6 +83,7 @@ public class Agent extends TransportLayer {
         this.storage = null;
     }
 
+    @Override
     public void open() {
         try {
             rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
@@ -117,10 +103,12 @@ public class Agent extends TransportLayer {
         }
     }
 
+    @Override
     public boolean isOpen() {
         return rpc != null && rpc.isOpen();
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -154,8 +142,9 @@ public class Agent extends TransportLayer {
      * @param routing_keys Routing key of recipient
      * @return
      */
+    @Override
     public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
-                                              String endpoint, String my_vk, List<String> routing_keys) throws SiriusRPCError {
+                                              String endpoint, String my_vk, List<String> routing_keys) {
         checkIsOpen();
         try {
             Message message1 = rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
@@ -164,14 +153,11 @@ public class Agent extends TransportLayer {
             siriusConnectionClosed.printStackTrace();
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
         }
         return new Pair<>(false, null);
     }
-
-    public void sendTo(Message message, Pairwise to) throws SiriusRPCError {
-        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
-    }
-
 
     public void close() {
         if (rpc != null) {
@@ -183,47 +169,15 @@ public class Agent extends TransportLayer {
         wallet = null;
     }
 
-
-    public List<Endpoint> checkIsOpen() {
+    @Override
+    public boolean checkIsOpen() {
         if (rpc != null) {
-            if (rpc.isOpen()) {
-                return rpc.getEndpoints();
-            }
+            return true;
         }
         throw new RuntimeException("Open Agent at first!");
     }
 
-    public AgentEvents getEvents() {
-        checkIsOpen();
-        return events;
-    }
-
-    public DynamicWallet getWallet() {
-        checkIsOpen();
-        return wallet;
-    }
-
-    public List<Endpoint> getEndpoints() {
-        checkIsOpen();
-        return endpoints;
-    }
-
-    public Map<String, Ledger> getLedgers() {
-        checkIsOpen();
-        return ledgers;
-    }
-
-
-    public AbstractMicroledgerList getMicroledgers() {
-        checkIsOpen();
-        return microledgers;
-    }
-
-    public WalletPairwiseList getPairwiseList() {
-        checkIsOpen();
-        return pairwiseList;
-    }
-
+    @Override
     public Listener subscribe() {
         checkIsOpen();
         events = new AgentEvents(serverAddress, credentials, p2p, timeout);
@@ -236,7 +190,8 @@ public class Agent extends TransportLayer {
 
     }
 
-    public String generateQrCode(String value){
+    @Override
+    public String generateQrCode(String value) {
         checkIsOpen();
         RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
                 .add("value",value)

@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.ledger.CredentialDefinition;
 import com.sirius.sdk.agent.ledger.Schema;
@@ -24,7 +24,7 @@ public class TestLedgers {
 
     @Test
     public void testSchemaRegistration() {
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
         String seed = "000000000000000000000000Steward1";
         Pair<String, String> didVerkey = agent1.getWallet().getDid().createAndStoreMyDid(null, seed);
@@ -51,8 +51,8 @@ public class TestLedgers {
 
     @Test
     public void testSchemaLoading(){
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
         agent1.open();
         agent2.open();
         String seed1 = "000000000000000000000000Steward1";
@@ -81,7 +81,7 @@ public class TestLedgers {
 
     @Test
     public void testSchemaFetching(){
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
         String seed = "000000000000000000000000Steward1";
         Pair<String,String> didVerkey = agent1.getWallet().getDid().createAndStoreMyDid(null,seed);
@@ -108,7 +108,7 @@ public class TestLedgers {
 
     @Test
     public void testRegisterCredDef(){
-        Agent agent1 = confTest.agent1();
+        CloudAgent agent1 = confTest.agent1();
         agent1.open();
         String seed = "000000000000000000000000Steward1";
         Pair<String,String> didVerkey = agent1.getWallet().getDid().createAndStoreMyDid(null,seed);

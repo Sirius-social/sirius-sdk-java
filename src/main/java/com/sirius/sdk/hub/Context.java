@@ -649,11 +649,7 @@ public class Context implements Closeable {
     }
 
     public void sendTo(Message message, Pairwise to) {
-        try {
-            currentHub.getAgentConnectionLazy().sendTo(message, to);
-        } catch (SiriusRPCError siriusRPCError) {
-            siriusRPCError.printStackTrace();
-        }
+        currentHub.getAgentConnectionLazy().sendTo(message, to);
     }
 
     public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {

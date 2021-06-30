@@ -1,7 +1,7 @@
 package com.sirius.sdk.hub;
 
 import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.wallet.abstract_wallet.*;
@@ -28,7 +28,7 @@ public class Hub implements Closeable {
     }
 
     private final Config config;
-    Agent agent = null;
+    CloudAgent agent = null;
 
     public Hub(Config config) {
         this.config = config;
@@ -110,7 +110,7 @@ public class Hub implements Closeable {
         }
     }
 
-    public Agent getAgent() {
+    public CloudAgent getAgent() {
         return agent;
     }
 
@@ -140,7 +140,7 @@ public class Hub implements Closeable {
         return this;
     }
 
-    public Agent getAgentConnectionLazy() {
+    public CloudAgent getAgentConnectionLazy() {
         if (!agent.isOpen()) {
             agent.open();
         }
@@ -148,7 +148,7 @@ public class Hub implements Closeable {
     }
 
     void createAgentInstance() {
-        agent = new Agent(config.serverUri, config.credentials, config.p2p, config.ioTimeout, config.storage);
+        agent = new CloudAgent(config.serverUri, config.credentials, config.p2p, config.ioTimeout, config.storage);
         agent.open();
     }
 

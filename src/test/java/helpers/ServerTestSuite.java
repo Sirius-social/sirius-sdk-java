@@ -1,6 +1,6 @@
 package helpers;
 
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.base.JsonMessage;
@@ -138,7 +138,7 @@ public class ServerTestSuite {
         }
     }
 
-    public static String getFirstEndpointAddressWIthEmptyRoutingKeys(Agent agent) {
+    public static String getFirstEndpointAddressWIthEmptyRoutingKeys(CloudAgent agent) {
         for (Endpoint e : agent.getEndpoints()) {
             if (e.getRoutingKeys().size() == 0) {
                 return e.getAddress();

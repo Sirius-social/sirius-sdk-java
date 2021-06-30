@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
@@ -19,8 +19,8 @@ public class TestPairwise {
 
     @Test
     public void testPairwiseList() {
-        Agent agent1 = confTest.agent1();
-        Agent agent2 = confTest.agent2();
+        CloudAgent agent1 = confTest.agent1();
+        CloudAgent agent2 = confTest.agent2();
 
         agent1.open();
         agent2.open();

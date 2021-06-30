@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
@@ -42,8 +42,8 @@ public class TestAriesFeature0036 {
     @Test
     public void testSane() throws InterruptedException, ExecutionException, TimeoutException {
 
-        Agent issuer = confTest.getAgent("agent1");
-        Agent holder = confTest.getAgent("agent2");
+        CloudAgent issuer = confTest.getAgent("agent1");
+        CloudAgent holder = confTest.getAgent("agent2");
         issuer.open();
         holder.open();
         Pairwise i2h = confTest.getPairwise(issuer, holder);

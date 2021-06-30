@@ -155,7 +155,7 @@ public class TestMessages {
     @Test
     public void test0095MsgAttaches() {
         com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message msg = com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message.builder().
-                setContext("context").
+                setContent("context").
                 setLocale("en").
                 build();
         Attach att = new Attach().setId("id").setMimeType("image/png").setFileName("photo.png").setData("eW91ciB0ZXh0".getBytes(StandardCharsets.UTF_8));

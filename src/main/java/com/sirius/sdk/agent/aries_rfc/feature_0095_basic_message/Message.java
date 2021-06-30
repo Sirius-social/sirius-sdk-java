@@ -53,8 +53,8 @@ public class Message extends AriesProtocolMessage {
             return self();
         }
 
-        public B setContext(String context) {
-            this.content = context;
+        public B setContent(String content) {
+            this.content = content;
             return self();
         }
 

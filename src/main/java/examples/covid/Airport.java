@@ -20,9 +20,6 @@ import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
 import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 public class Airport extends BaseParticipant {
@@ -131,13 +128,13 @@ public class Airport extends BaseParticipant {
                     equalsIgnoreCase("true");
             if (hasCovid) {
                 Message hello = Message.builder().
-                        setContext("Sorry, but we can't let your go to the terminal. Please, get rid of covid first!").
+                        setContent("Sorry, but we can't let your go to the terminal. Please, get rid of covid first!").
                         setLocale("en").
                         build();
                 c.sendTo(hello, pw);
             } else {
                 Message hello = Message.builder().
-                        setContext("Welcome on board!").
+                        setContent("Welcome on board!").
                         setLocale("en").
                         build();
                 c.sendTo(hello, pw);

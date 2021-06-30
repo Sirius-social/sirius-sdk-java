@@ -3,7 +3,7 @@ package helpers;
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
@@ -104,9 +104,9 @@ public class ConfTest {
         return new IndyAgent();
     }
 
-    public Agent getAgent(String name) {
+    public CloudAgent getAgent(String name) {
         AgentParams params = getSuiteSingleton().getAgentParams(name);
-        Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+        CloudAgent agent = new CloudAgent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                 params.getConnection(), 60, null, name);
         return agent;
     }
@@ -119,35 +119,35 @@ public class ConfTest {
         return getIndyAgentSingleton();
     }
 
-    public Agent agent1() {
+    public CloudAgent agent1() {
         return getAgent("agent1");
     }
 
-    public Agent agent2() {
+    public CloudAgent agent2() {
         return getAgent("agent2");
     }
 
-    public Agent agent3() {
+    public CloudAgent agent3() {
         return getAgent("agent3");
     }
 
-    public Agent agent4() {
+    public CloudAgent agent4() {
         return getAgent("agent4");
     }
 
-    public Agent A() {
+    public CloudAgent A() {
         return getAgent("agent1");
     }
 
-    public Agent B() {
+    public CloudAgent B() {
         return getAgent("agent2");
     }
 
-    public Agent C() {
+    public CloudAgent C() {
         return getAgent("agent3");
     }
 
-    public Agent D() {
+    public CloudAgent D() {
         return getAgent("agent4");
     }
 
@@ -159,7 +159,7 @@ public class ConfTest {
         return "default";
     }
 
-    public Pairwise getPairwise(Agent me, Agent their) {
+    public Pairwise getPairwise(CloudAgent me, CloudAgent their) {
         ServerTestSuite suite = getSuiteSingleton();
         AgentParams myParams = suite.getAgentParams(me.getName());
         AgentParams theirParams = suite.getAgentParams(their.getName());

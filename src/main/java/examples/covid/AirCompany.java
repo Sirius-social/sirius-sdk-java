@@ -136,7 +136,7 @@ public class AirCompany extends BaseParticipant {
                     if (testRes.getFullName().equals(pass.getFullName())) {
                         Pairwise pw = c.getPairwiseList().loadForDid(aircompanyClientDids.get(pass.getFullName()));
                         Message hello = Message.builder().
-                                setContext("We have to revoke your boarding pass due to positive covid test").
+                                setContent("We have to revoke your boarding pass due to positive covid test").
                                 setLocale("en").
                                 build();
                         c.sendTo(hello, pw);
@@ -169,14 +169,14 @@ public class AirCompany extends BaseParticipant {
         BoardingPass boardingPass = boardingPasses.get(connectionKey);
 
         Message hello = Message.builder().
-                setContext("Dear " + boardingPass.getFullName() + ", welcome to the registration!").
+                setContent("Dear " + boardingPass.getFullName() + ", welcome to the registration!").
                 setLocale("en").
                 build();
         c.sendTo(hello, p2p);
 
         if (covidPosNames.contains(boardingPass.getFullName())) {
             Message reject = Message.builder().
-                    setContext("Sorry, we can't issue the boarding pass. Get rid of covid first!").
+                    setContent("Sorry, we can't issue the boarding pass. Get rid of covid first!").
                     setLocale("en").
                     build();
             c.sendTo(reject, p2p);
