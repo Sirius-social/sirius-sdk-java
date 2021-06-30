@@ -11,7 +11,6 @@ public abstract class AbstractCoProtocol implements Closeable {
 
     int timeToLiveSec = 60;
     boolean isAborted = false;
-    Hub hub = null;
     boolean started = false;
     AbstractCoProtocolTransport transport = null;
     Context context;

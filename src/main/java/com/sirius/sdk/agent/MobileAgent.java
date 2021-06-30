@@ -89,6 +89,8 @@ public class MobileAgent extends AbstractAgent {
             } catch (IndyException | InterruptedException | ExecutionException | TimeoutException | IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            throw new RuntimeException("Not yet supported!");
         }
         return new Pair<>(false, null);
     }
