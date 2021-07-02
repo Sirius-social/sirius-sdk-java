@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
@@ -31,9 +31,9 @@ public class TestAriesFeature0048 {
 
     @Test
     public void testEstablishConnection() throws InterruptedException, ExecutionException, TimeoutException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SiriusRPCError {
-        Agent agent1 = confTest.getAgent("agent1");
-        Agent agent2 = confTest.getAgent("agent2");
-        Agent agent3 = confTest.getAgent("agent3");
+        CloudAgent agent1 = confTest.getAgent("agent1");
+        CloudAgent agent2 = confTest.getAgent("agent2");
+        CloudAgent agent3 = confTest.getAgent("agent3");
 
         agent1.open();
         agent2.open();
@@ -74,13 +74,7 @@ public class TestAriesFeature0048 {
         boolean thrown = false;
         to = new Pairwise(new Pairwise.Me(didVerkey1.first, didVerkey1.second),
                 new Pairwise.Their(didVerkey2.first, "Agent3", endpointAddress3, didVerkey2.second));
-        try {
-            agent1.sendTo(ping, to);
-        } catch (SiriusRPCError ex) {
-            thrown = true;
-        }
-
-        Assert.assertTrue(thrown);
+        agent1.sendTo(ping, to);
     }
 
 }

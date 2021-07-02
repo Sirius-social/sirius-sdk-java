@@ -1,6 +1,5 @@
 import com.goterl.lazycode.lazysodium.LazySodium;
-import com.sirius.sdk.agent.Agent;
-import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.microledgers.*;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -28,7 +27,7 @@ public class TestMicroledgers {
 
     @Test
     public void testInitLedger() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -58,7 +57,7 @@ public class TestMicroledgers {
 
     @Test
     public void testMerkleInfo() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -99,7 +98,7 @@ public class TestMicroledgers {
 
     @Test
     public void testAppendOperations() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -133,7 +132,7 @@ public class TestMicroledgers {
 
     @Test
     public void testCommitDiscard() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -180,7 +179,7 @@ public class TestMicroledgers {
 
     @Test
     public void testResetUncommitted() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -213,7 +212,7 @@ public class TestMicroledgers {
 
     @Test
     public void testGetOperations() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -274,7 +273,7 @@ public class TestMicroledgers {
 
     @Test
     public void testReset() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -315,7 +314,7 @@ public class TestMicroledgers {
 
     @Test
     public void testList() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -367,7 +366,7 @@ public class TestMicroledgers {
 
     @Test
     public void testGetAllTxns() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -409,7 +408,7 @@ public class TestMicroledgers {
 
     @Test
     public void testAuditProof() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -483,7 +482,7 @@ public class TestMicroledgers {
 
     @Test
     public void testLeafHash() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -506,7 +505,7 @@ public class TestMicroledgers {
 
     @Test
     public void testRename() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         String ledgerName = confTest.ledgerName();
         agent4.open();
         try {
@@ -531,7 +530,7 @@ public class TestMicroledgers {
 
     @Test
     public void testBatchedOps() {
-        Agent agent4 = confTest.getAgent("agent4");
+        CloudAgent agent4 = confTest.getAgent("agent4");
         List<String> ledgerNames = Arrays.asList("Ledger-" + UUID.randomUUID(), "Ledger-" + UUID.randomUUID());
         agent4.open();
         try {

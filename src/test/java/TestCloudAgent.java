@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.connections.Endpoint;
@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class TestAgent {
+public class TestCloudAgent {
 
     ConfTest confTest;
 
@@ -43,7 +43,7 @@ public class TestAgent {
         for (int i = 0; i < allAgentsList.size(); i++) {
             String agentName = allAgentsList.get(i);
             AgentParams params = testSuite.getAgentParams(agentName);
-            Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+            CloudAgent agent = new CloudAgent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                     params.getConnection(), 10);
             agent.open();
             boolean isPinged = agent.ping();
@@ -56,7 +56,7 @@ public class TestAgent {
     public void testAgentsWallet() {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams params = testSuite.getAgentParams("agent1");
-        Agent agent = new Agent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+        CloudAgent agent = new CloudAgent(params.getServerAddress(), params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                 params.getConnection(), 10);
         agent.open();
         //Check wallet calls is ok
@@ -76,9 +76,9 @@ public class TestAgent {
         List<Entity> entityList2 = agent2params.getEntitiesList();
         Entity entity1 = entityList1.get(0);
         Entity entity2 = entityList2.get(0);
-        Agent agent1 = new Agent(agent1params.getServerAddress(), agent1params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+        CloudAgent agent1 = new CloudAgent(agent1params.getServerAddress(), agent1params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                 agent1params.getConnection(), 10);
-        Agent agent2 = new Agent(agent2params.getServerAddress(), agent2params.getCredentials().getBytes(StandardCharsets.US_ASCII),
+        CloudAgent agent2 = new CloudAgent(agent2params.getServerAddress(), agent2params.getCredentials().getBytes(StandardCharsets.US_ASCII),
                 agent2params.getConnection(), 10);
         agent1.open();
         agent2.open();
@@ -143,9 +143,9 @@ public class TestAgent {
         List<Entity> agent2ParamsEntitiesList = agent2Params.getEntitiesList();
         Entity entity1 = agent1ParamsEntitiesList.get(0);
         Entity entity2 = agent2ParamsEntitiesList.get(0);
-        Agent agent1 = new Agent(agent1Params.getServerAddress(), agent1Params.getCredentials().
+        CloudAgent agent1 = new CloudAgent(agent1Params.getServerAddress(), agent1Params.getCredentials().
                 getBytes(StandardCharsets.US_ASCII), agent1Params.getConnection(), 10);
-        Agent agent2 = new Agent(agent2Params.getServerAddress(), agent2Params.getCredentials().
+        CloudAgent agent2 = new CloudAgent(agent2Params.getServerAddress(), agent2Params.getCredentials().
                 getBytes(StandardCharsets.US_ASCII), agent2Params.getConnection(), 10);
 
         agent1.open();

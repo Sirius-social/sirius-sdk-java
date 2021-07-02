@@ -147,7 +147,7 @@ public class Main {
                         // Ensure pairwise is stored
                         context.getPairwiseList().ensureExists(p2p);
                         Message hello = Message.builder().
-                                setContext("Waiting for your credential propose").
+                                setContent("Waiting for your credential propose").
                                 setLocale("en").
                                 build();
                         context.sendTo(hello, p2p);

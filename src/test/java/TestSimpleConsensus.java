@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.consensus.simple.messages.*;
 import com.sirius.sdk.agent.consensus.simple.state_machines.MicroLedgerSimpleConsensus;
 import com.sirius.sdk.agent.listener.Event;
@@ -43,8 +43,8 @@ public class TestSimpleConsensus {
 
     @Test
     public void testInitLedgerMessaging() throws SiriusContextError, SiriusValidationError {
-        Agent agentA = confTest.getAgent("agent1");
-        Agent agentB = confTest.getAgent("agent2");
+        CloudAgent agentA = confTest.getAgent("agent1");
+        CloudAgent agentB = confTest.getAgent("agent2");
         String ledgerName = confTest.ledgerName();
 
         agentA.open();
@@ -103,8 +103,8 @@ public class TestSimpleConsensus {
 
     @Test
     public void testTransactionMessaging() throws SiriusValidationError {
-        Agent agentA = confTest.getAgent("agent1");
-        Agent agentB = confTest.getAgent("agent2");
+        CloudAgent agentA = confTest.getAgent("agent1");
+        CloudAgent agentB = confTest.getAgent("agent2");
         String ledgerName = confTest.ledgerName();
 
         agentA.open();
@@ -218,9 +218,9 @@ public class TestSimpleConsensus {
 
     @Test
     public void testSimpleConsensusInitLedger() throws InterruptedException, ExecutionException, TimeoutException {
-        Agent agentA = confTest.getAgent("agent1");
-        Agent agentB = confTest.getAgent("agent2");
-        Agent agentC = confTest.getAgent("agent3");
+        CloudAgent agentA = confTest.getAgent("agent1");
+        CloudAgent agentB = confTest.getAgent("agent2");
+        CloudAgent agentC = confTest.getAgent("agent3");
         String ledgerName = confTest.ledgerName();
 
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
@@ -286,7 +286,7 @@ public class TestSimpleConsensus {
             Assert.assertTrue(agentB.getMicroledgers().isExists(ledgerName));
             Assert.assertTrue(agentC.getMicroledgers().isExists(ledgerName));
 
-            for (Agent agent : Arrays.asList(agentA, agentB, agentC)) {
+            for (CloudAgent agent : Arrays.asList(agentA, agentB, agentC)) {
                 AbstractMicroledger ledger = agent.getMicroledgers().getLedger(ledgerName);
                 List<Transaction> txns = ledger.getAllTransactions();
                 Assert.assertEquals(2, txns.size());
@@ -338,9 +338,9 @@ public class TestSimpleConsensus {
 
     @Test
     public void testSimpleConsensusCommit() throws InterruptedException, ExecutionException, TimeoutException {
-        Agent agentA = confTest.getAgent("agent1");
-        Agent agentB = confTest.getAgent("agent2");
-        Agent agentC = confTest.getAgent("agent3");
+        CloudAgent agentA = confTest.getAgent("agent1");
+        CloudAgent agentB = confTest.getAgent("agent2");
+        CloudAgent agentC = confTest.getAgent("agent3");
         String ledgerName = confTest.ledgerName();
 
         ServerTestSuite testSuite = confTest.getSuiteSingleton();

@@ -154,7 +154,7 @@ public abstract class AbstractCoProtocolTransport {
         } catch (SiriusRPCError siriusRPCError) {
             siriusRPCError.printStackTrace();
         } finally {
-            cleanupContext();
+            cleanupContext(message);
         }
 
         if (checkVerkeys) {
@@ -251,7 +251,7 @@ public abstract class AbstractCoProtocolTransport {
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
         } finally {
-            cleanupContext();
+            cleanupContext(message);
         }
     }
 

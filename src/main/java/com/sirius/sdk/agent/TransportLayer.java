@@ -6,7 +6,7 @@ import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 
-public abstract  class TransportLayer {
+public abstract class TransportLayer {
 
     public abstract TheirEndpointCoProtocolTransport spawn(String my_verkey, TheirEndpoint endpoint);
 

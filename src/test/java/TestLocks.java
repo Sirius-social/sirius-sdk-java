@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
@@ -36,13 +36,13 @@ public class TestLocks {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams params = testSuite.getAgentParams("agent1");
 
-        Agent session1 = new Agent(
+        CloudAgent session1 = new CloudAgent(
                 params.getServerAddress(),
                 params.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params.getConnection(),
                 5);
 
-        Agent session2 = new Agent(
+        CloudAgent session2 = new CloudAgent(
                 params.getServerAddress(),
                 params.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params.getConnection(),
@@ -88,13 +88,13 @@ public class TestLocks {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams params = testSuite.getAgentParams("agent1");
 
-        Agent session1 = new Agent(
+        CloudAgent session1 = new CloudAgent(
                 params.getServerAddress(),
                 params.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params.getConnection(),
                 5);
 
-        Agent session2 = new Agent(
+        CloudAgent session2 = new CloudAgent(
                 params.getServerAddress(),
                 params.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params.getConnection(),
@@ -129,13 +129,13 @@ public class TestLocks {
         AgentParams params1 = testSuite.getAgentParams("agent1");
         AgentParams params2 = testSuite.getAgentParams("agent2");
 
-        Agent session1 = new Agent(
+        CloudAgent session1 = new CloudAgent(
                 params1.getServerAddress(),
                 params1.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params1.getConnection(),
                 5);
 
-        Agent session2 = new Agent(
+        CloudAgent session2 = new CloudAgent(
                 params2.getServerAddress(),
                 params2.getCredentials().getBytes(StandardCharsets.UTF_8),
                 params2.getConnection(),

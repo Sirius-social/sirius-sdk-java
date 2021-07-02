@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import helpers.ConfTest;
@@ -16,7 +16,7 @@ public class TestPerformance {
 
 
 
-    public void routineForPinger (Agent agent, Pairwise p ,String threadId){
+    public void routineForPinger (CloudAgent agent, Pairwise p , String threadId){
         ThreadBasedCoProtocolTransport transport = agent.spawn(threadId, p);
        
 

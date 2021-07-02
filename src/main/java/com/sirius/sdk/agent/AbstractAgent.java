@@ -1,160 +1,80 @@
 package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.connections.AgentEvents;
-import com.sirius.sdk.agent.connections.BaseAgentConnection;
+import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.Endpoint;
-import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
-import com.sirius.sdk.agent.wallet.AbstractWallet;
-import com.sirius.sdk.encryption.P2PConnection;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusFieldValueError;
+import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
 
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract  class AbstractAgent extends TransportLayer {
-
-    public abstract boolean isOpen();
-
-    public abstract void open();
-
-    public abstract void close();
-
-    public abstract List<Endpoint> checkIsOpen();
-    public abstract String generateQrCode(String value);
-    public abstract boolean ping();
-
-
-
-    AbstractWallet wallet;
-
-    public void setMicroledgers(MicroledgerList microledgers) {
-        this.microledgers = microledgers;
-    }
-
-    MicroledgerList microledgers;
-
-    public void setPairwiseList(WalletPairwiseList pairwiseList) {
-        this.pairwiseList = pairwiseList;
-    }
-
-    WalletPairwiseList pairwiseList;
-
-    public void setEndpoints(List<Endpoint> endpoints) {
-        this.endpoints = endpoints;
-    }
+public abstract class AbstractAgent extends TransportLayer {
 
     List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
+    WalletPairwiseList pairwiseList;
+    DynamicWallet wallet;
+    MicroledgerList microledgers;
+    AbstractImmutableCollection storage;
     AgentEvents events;
 
-    public String getServerAddress() {
-        return serverAddress;
-    }
+    public abstract void open();
 
-    String serverAddress;
+    public abstract boolean isOpen();
 
-    public byte[] getCredentials() {
-        return credentials;
-    }
-
-    byte[] credentials;
-
-    public P2PConnection getP2p() {
-        return p2p;
-    }
-
-    P2PConnection p2p;
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    int timeout = BaseAgentConnection.IO_TIMEOUT;
-    String name;
-
-    public AbstractImmutableCollection getStorage() {
-        return storage;
-    }
-
-    public void setStorage(AbstractImmutableCollection storage) {
-        this.storage = storage;
-    }
-
-    AbstractImmutableCollection storage;
-
-    public void setWallet(AbstractWallet wallet) {
-        this.wallet = wallet;
-    }
+    public abstract String getName();
 
     /**
-     * @param serverAddress example https://my-cloud-provider.com
-     * @param credentials   credentials that point websocket connection to your agent and server-side services like
-     *                      routing keys maintenance ant etc.
-     * @param p2p           encrypted connection to establish tunnel to Agent that is running on server-side
-     * @param timeout
-     * @param storage
-     * @param name
+     * Implementation of basicmessage feature
+     * See details:
+     * - https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message
+     *
+     * @param message      Message
+     *                     See details:
+     *                     - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0020-message-types
+     * @param their_vk     Verkey of recipient
+     * @param endpoint     Endpoint address of recipient
+     * @param my_vk        VerKey of Sender (AuthCrypt mode)
+     *                     See details:
+     *                     - https://github.com/hyperledger/aries-rfcs/tree/master/features/0019-encryption-envelope#authcrypt-mode-vs-anoncrypt-mode
+     * @param routing_keys Routing key of recipient
+     * @return
      */
-    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = name;
-        this.storage = storage;
+    public abstract Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
+                                              String endpoint, String my_vk, List<String> routing_keys);
+
+    public void sendTo(Message message, Pairwise to) {
+        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
     }
 
-    /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
-     */
-    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = null;
-        this.storage = storage;
-    }
+    public abstract void close();
 
-    /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
-     */
-    public AbstractAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
-        this.serverAddress = serverAddress;
-        this.credentials = credentials;
-        this.p2p = p2p;
-        this.timeout = timeout;
-        this.name = null;
-        this.storage = null;
-    }
+    public abstract boolean checkIsOpen();
 
+    public abstract Listener subscribe();
 
-    public String getName() {
-        return name;
-    }
+    public abstract String generateQrCode(String value);
 
-
-    public Map<String, Ledger> getLedgers() {
+    public AgentEvents getEvents() {
         checkIsOpen();
-        return ledgers;
+        return events;
     }
 
-
-    public WalletPairwiseList getPairwiseList() {
+    public DynamicWallet getWallet() {
         checkIsOpen();
-        return pairwiseList;
+        return wallet;
     }
 
     public List<Endpoint> getEndpoints() {
@@ -162,38 +82,20 @@ public abstract  class AbstractAgent extends TransportLayer {
         return endpoints;
     }
 
-    public AbstractWallet getWallet() {
+    public Map<String, Ledger> getLedgers() {
         checkIsOpen();
-        return wallet;
+        return ledgers;
     }
+
 
     public AbstractMicroledgerList getMicroledgers() {
         checkIsOpen();
         return microledgers;
     }
 
-    public Listener subscribe() {
+    public WalletPairwiseList getPairwiseList() {
         checkIsOpen();
-        events = new AgentEvents(serverAddress, credentials, p2p, timeout);
-        try {
-            events.create();
-        } catch (SiriusFieldValueError siriusFieldValueError) {
-            siriusFieldValueError.printStackTrace();
-        }
-        return new Listener(events, pairwiseList);
-
+        return pairwiseList;
     }
 
-    public abstract void sendTo(Message message, Pairwise to) throws SiriusRPCError;
-
-    /**
-     * Acquire N resources given by names
-     * @param resources names of resources that you are going to lock
-     * @param lockTimeoutSec max timeout resources will be locked. Resources will be automatically unlocked on expire
-     * @param enterTimeoutSec timeout to wait resources are released
-     * @return
-     */
-    public abstract Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec);
-
-    public abstract void release();
 }

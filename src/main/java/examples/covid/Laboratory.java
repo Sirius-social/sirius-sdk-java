@@ -145,7 +145,7 @@ public class Laboratory extends BaseParticipant {
         Pairwise p2p = sm.createConnection(request);
 
         Message hello = Message.builder().
-                setContext("Welcome to the covid laboratory!").
+                setContent("Welcome to the covid laboratory!").
                 setLocale("en").
                 build();
         c.sendTo(hello, p2p);

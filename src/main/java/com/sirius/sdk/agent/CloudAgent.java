@@ -5,9 +5,7 @@ import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
-import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
-import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
@@ -15,7 +13,6 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
-import com.sirius.sdk.agent.wallet.AbstractWallet;
 import com.sirius.sdk.agent.wallet.DynamicWallet;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
@@ -34,10 +31,15 @@ import java.util.*;
  * See details:
  * - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0004-agents
  */
-public class Agent extends AbstractAgent {
+public class CloudAgent extends AbstractAgent {
+
+    String serverAddress;
+    byte[] credentials;
+    P2PConnection p2p;
+    int timeout = BaseAgentConnection.IO_TIMEOUT;
+    String name;
 
     AgentRPC rpc;
-
 
     /**
      * @param serverAddress example https://my-cloud-provider.com
@@ -48,29 +50,40 @@ public class Agent extends AbstractAgent {
      * @param storage
      * @param name
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
-        super(serverAddress,credentials,p2p,timeout,storage,name);
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = name;
+        this.storage = storage;
     }
 
     /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     *Overload constructor {@link #CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
-        super(serverAddress,credentials,p2p,timeout,storage);
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = storage;
     }
 
     /**
-     *Overload constructor {@link #Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
+     *Overload constructor {@link #CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout, AbstractImmutableCollection storage, String name)}
      */
-    public Agent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
-        super(serverAddress,credentials,p2p,timeout);
+    public CloudAgent(String serverAddress, byte[] credentials, P2PConnection p2p, int timeout) {
+        this.serverAddress = serverAddress;
+        this.credentials = credentials;
+        this.p2p = p2p;
+        this.timeout = timeout;
+        this.name = null;
+        this.storage = null;
     }
 
     @Override
-    public DynamicWallet getWallet() {
-        return (DynamicWallet)wallet;
-    }
-
     public void open() {
         try {
             rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
@@ -90,10 +103,15 @@ public class Agent extends AbstractAgent {
         }
     }
 
+    @Override
     public boolean isOpen() {
         return rpc != null && rpc.isOpen();
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
 
     public boolean ping() {
         try {
@@ -124,8 +142,9 @@ public class Agent extends AbstractAgent {
      * @param routing_keys Routing key of recipient
      * @return
      */
+    @Override
     public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
-                                              String endpoint, String my_vk, List<String> routing_keys) throws SiriusRPCError {
+                                              String endpoint, String my_vk, List<String> routing_keys) {
         checkIsOpen();
         try {
             Message message1 = rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
@@ -134,14 +153,11 @@ public class Agent extends AbstractAgent {
             siriusConnectionClosed.printStackTrace();
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
             siriusInvalidPayloadStructure.printStackTrace();
+        } catch (SiriusRPCError siriusRPCError) {
+            siriusRPCError.printStackTrace();
         }
         return new Pair<>(false, null);
     }
-
-    public void sendTo(Message message, Pairwise to) throws SiriusRPCError {
-        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
-    }
-
 
     public void close() {
         if (rpc != null) {
@@ -153,18 +169,15 @@ public class Agent extends AbstractAgent {
         wallet = null;
     }
 
-
-    public List<Endpoint> checkIsOpen() {
+    @Override
+    public boolean checkIsOpen() {
         if (rpc != null) {
-            if (rpc.isOpen()) {
-                return rpc.getEndpoints();
-            }
+            return true;
         }
         throw new RuntimeException("Open Agent at first!");
     }
 
-
-
+    @Override
     public Listener subscribe() {
         checkIsOpen();
         events = new AgentEvents(serverAddress, credentials, p2p, timeout);
@@ -177,7 +190,8 @@ public class Agent extends AbstractAgent {
 
     }
 
-    public String generateQrCode(String value){
+    @Override
+    public String generateQrCode(String value) {
         checkIsOpen();
         RemoteParams params = RemoteParams.RemoteParamsBuilder.create()
                 .add("value",value)

@@ -4,15 +4,17 @@ import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 
 import com.goterl.lazycode.lazysodium.interfaces.SecretBox;
 
+import com.goterl.lazycode.lazysodium.interfaces.Sign;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
-
+import org.apache.commons.lang.ArrayUtils;
 
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class Custom {
@@ -24,7 +26,7 @@ public class Custom {
      * @param urlSafe flag if needed to convert to urlsafe presentation
      * @return bytes array
      */
-    public byte[] b64ToBytes(String value, boolean urlSafe) {
+    public static byte[] b64ToBytes(String value, boolean urlSafe) {
        byte[] valueBytes =  value.getBytes(StandardCharsets.US_ASCII);
      /*   if isinstance(value, str):
         value = value.encode('ascii')
@@ -52,7 +54,7 @@ public class Custom {
      * @param urlSafe flag if needed to convert to urlsafe presentation
      * @return base64 presentation
      */
-    public String bytesToB64(byte[] bytes, boolean urlSafe) {
+    public static String bytesToB64(byte[] bytes, boolean urlSafe) {
         if(bytes == null) {
             return null;
         }
@@ -72,7 +74,7 @@ public class Custom {
      * Small cache provided for key conversions which happen frequently in pack
      * and unpack and message handling.
      */
-    public byte[] b58ToBytes(String value) {
+    public static byte[] b58ToBytes(String value) {
         return Base58.decode(value);
     }
 
@@ -81,7 +83,7 @@ public class Custom {
      * Small cache provided for key conversions which happen frequently in pack
      * and unpack and message handling.
      */
-    public String bytesToB58(byte[] value) {
+    public static String bytesToB58(byte[] value) {
         return Base58.encode(value);
     }
 
@@ -91,7 +93,7 @@ public class Custom {
      * @param seed (bytes) Seed for keypair
      * @return A tuple of (public key, secret key)
      */
-    public KeyPair createKeypair(byte[] seed) throws SiriusCryptoError, SodiumException {
+    public static KeyPair createKeypair(byte[] seed) throws SiriusCryptoError, SodiumException {
         //  Sodium.crypto_sign_seed_keypair()
         if (seed != null) {
             validateSeed(seed);
@@ -106,7 +108,7 @@ public class Custom {
      *
      * @return A new random seed
      */
-    public byte[] randomSeed() {
+    public static byte[] randomSeed() {
 
         return LibSodium.getInstance().getLazySodium().randomBytesBuf(SecretBox.KEYBYTES);
 
@@ -119,7 +121,7 @@ public class Custom {
      * @param message The seed to validate
      * @return The validated and encoded seed
      */
-    public byte[] validateSeed(String message) throws SiriusCryptoError {
+    public static byte[] validateSeed(String message) throws SiriusCryptoError {
         if (message == null) {
             return null;
         }
@@ -138,7 +140,7 @@ public class Custom {
      * @param bytes The seed to validate
      * @return The validated and encoded seed
      */
-    public byte[] validateSeed(byte[] bytes) throws SiriusCryptoError {
+    public static byte[] validateSeed(byte[] bytes) throws SiriusCryptoError {
         if (bytes == null) {
             return null;
         }
@@ -148,5 +150,34 @@ public class Custom {
         return bytes;
     }
 
+    /**
+     * Sign a message using a private signing key.
+     * @param message The message to sign
+     * @param secret The private signing key
+     * @return The signature
+     */
+    public static byte[] signMessage(byte[] message, byte[] secret) {
+        byte[] signedMessage = new byte[Sign.BYTES + message.length];
+        if (LibSodium.getInstance().getLazySodium().cryptoSign(signedMessage, message, message.length, secret)) {
+            return Arrays.copyOfRange(signedMessage, 0, Sign.BYTES);
+        }
+        return null;
+    }
+
+    /**
+     * Verify a signed message according to a public verification key.
+     * @param verkey The verkey to use in verification
+     * @param message original message
+     * @param signature signature
+     * @return
+     */
+    public static boolean verifySignedMessage(byte[] verkey, byte[] message, byte[] signature) {
+        byte[] signedMessage = ArrayUtils.addAll(signature, message);
+        return LibSodium.getInstance().getLazySodium().cryptoSignOpen(message, signedMessage, signedMessage.length, verkey);
+    }
+
+    public static byte[] didFromVerkey(byte[] verkey) {
+        return Arrays.copyOfRange(verkey, 0, 16);
+    }
 
 }

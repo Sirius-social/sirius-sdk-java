@@ -1,4 +1,4 @@
-import com.sirius.sdk.agent.Agent;
+import com.sirius.sdk.agent.CloudAgent;
 import com.sirius.sdk.agent.Codec;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.ledger.Ledger;
@@ -38,9 +38,9 @@ public class TestAriesFeature0037 {
 
     @Test
     public void testSane() throws InterruptedException, ExecutionException, TimeoutException {
-        Agent issuer = confTest.getAgent("agent1");
-        Agent prover = confTest.getAgent("agent2");
-        Agent verifier = confTest.getAgent("agent3");
+        CloudAgent issuer = confTest.getAgent("agent1");
+        CloudAgent prover = confTest.getAgent("agent2");
+        CloudAgent verifier = confTest.getAgent("agent3");
 
         issuer.open();
         prover.open();
