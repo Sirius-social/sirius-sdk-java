@@ -2,19 +2,20 @@ package com.sirius.sdk.agent.wallet;
 
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.RemoteParams;
+import com.sirius.sdk.agent.wallet.abstract_wallet.*;
 import com.sirius.sdk.agent.wallet.impl.*;
 
-public class DynamicWallet {
-    AnonCredsProxy anoncreds;
-    DIDProxy did;
-    CryptoProxy crypto;
-    CacheProxy cache;
-    LedgerProxy ledger;
+public class CloudWallet implements AbstractWallet {
+    AbstractAnonCreds anoncreds;
+    AbstractDID did;
+    AbstractCrypto crypto;
+    AbstractCache cache;
+    AbstractLedger ledger;
+    AbstractPairwise pairwise;
+    AbstractNonSecrets nonSecrets;
     AgentRPC rpc;
-    PairwiseProxy pairwise;
-    NonSecretsProxy nonSecrets;
 
-    public DynamicWallet(AgentRPC agentRPC) {
+    public CloudWallet(AgentRPC agentRPC) {
         this.rpc = agentRPC;
         did = new DIDProxy(rpc);
         crypto = new CryptoProxy(rpc);
@@ -25,34 +26,38 @@ public class DynamicWallet {
         anoncreds = new AnonCredsProxy(rpc);
     }
 
-
-
-    public DIDProxy getDid() {
+    @Override
+    public AbstractDID getDid() {
         return did;
     }
 
-    public CryptoProxy getCrypto() {
+    @Override
+    public AbstractCrypto getCrypto() {
         return crypto;
     }
 
-    public CacheProxy getCache() {
+    @Override
+    public AbstractCache getCache() {
         return cache;
     }
 
-    public LedgerProxy getLedger() {
+    @Override
+    public AbstractLedger getLedger() {
         return ledger;
     }
 
-
-    public PairwiseProxy getPairwise() {
+    @Override
+    public AbstractPairwise getPairwise() {
         return pairwise;
     }
 
-    public AnonCredsProxy getAnoncreds() {
+    @Override
+    public AbstractAnonCreds getAnoncreds() {
         return anoncreds;
     }
 
-    public NonSecretsProxy getNonSecrets() {
+    @Override
+    public AbstractNonSecrets getNonSecrets() {
         return nonSecrets;
     }
 

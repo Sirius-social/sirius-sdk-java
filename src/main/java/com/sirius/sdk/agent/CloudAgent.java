@@ -1,6 +1,6 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
 import com.sirius.sdk.agent.ledger.Ledger;
@@ -13,7 +13,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
-import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.wallet.CloudWallet;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
@@ -89,7 +89,7 @@ public class CloudAgent extends AbstractAgent {
             rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
             rpc.create();
             endpoints = rpc.getEndpoints();
-            wallet = new DynamicWallet(rpc);
+            wallet = new CloudWallet(rpc);
             if (storage == null) {
                 storage = new InWalletImmutableCollection(wallet.getNonSecrets());
             }
@@ -180,7 +180,7 @@ public class CloudAgent extends AbstractAgent {
     @Override
     public Listener subscribe() {
         checkIsOpen();
-        events = new AgentEvents(serverAddress, credentials, p2p, timeout);
+        events = new CloudAgentEvents(serverAddress, credentials, p2p, timeout);
         try {
             events.create();
         } catch (SiriusFieldValueError siriusFieldValueError) {

@@ -25,6 +25,13 @@ public class TestMobileAgent {
 
     ConfTest confTest;
 
+    JSONObject walletConfig = new JSONObject().
+            put("id", "Wallet1").
+            put("storage_type", "default");
+    JSONObject walletCredentials = new JSONObject().
+            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+            put("key_derivation_method", "RAW");
+
     @Before
     public void configureTest() {
         confTest = ConfTest.newInstance();
@@ -48,12 +55,6 @@ public class TestMobileAgent {
             }
         }
 
-        JSONObject walletConfig = new JSONObject().
-                put("id", "Wallet1").
-                put("storage_type", "default");
-        JSONObject walletCredentials = new JSONObject().
-                put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
-                put("key_derivation_method", "RAW");
         MobileAgent mobileAgent = new MobileAgent(walletConfig, walletCredentials);
         mobileAgent.open();
 
@@ -72,5 +73,28 @@ public class TestMobileAgent {
         Assert.assertEquals(((Message) event.message()).getContent(), msg.getContent());
 
         cloudAgent.close();
+    }
+
+    @Test
+    public void testListener() throws ExecutionException, InterruptedException, TimeoutException {
+        MobileAgent mobileAgent = new MobileAgent(walletConfig, walletCredentials);
+        mobileAgent.open();
+
+        Message msg = Message.builder().
+                setContent("Test").
+                setLocale("en").
+                build();
+
+        String myVerkey = mobileAgent.getWallet().getCrypto().createKey();
+        byte[] bytesMsg = mobileAgent.packMessage(msg, myVerkey);
+
+        Listener listener = mobileAgent.subscribe();
+        CompletableFuture<Event> cf = listener.getOne();
+
+        mobileAgent.receiveMsg(bytesMsg);
+
+        Event event = cf.get(60, TimeUnit.SECONDS);
+
+        Assert.assertEquals(myVerkey, event.getRecipientVerkey());
     }
 }

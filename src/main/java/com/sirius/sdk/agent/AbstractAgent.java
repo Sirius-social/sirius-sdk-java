@@ -1,7 +1,6 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.AgentEvents;
-import com.sirius.sdk.agent.connections.AgentRPC;
+import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -9,8 +8,8 @@ import com.sirius.sdk.agent.microledgers.AbstractMicroledgerList;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
-import com.sirius.sdk.agent.wallet.DynamicWallet;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
+import com.sirius.sdk.agent.wallet.AbstractWallet;
+import com.sirius.sdk.agent.wallet.CloudWallet;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
@@ -25,10 +24,10 @@ public abstract class AbstractAgent extends TransportLayer {
     List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
     WalletPairwiseList pairwiseList;
-    DynamicWallet wallet;
+    AbstractWallet wallet;
     MicroledgerList microledgers;
     AbstractImmutableCollection storage;
-    AgentEvents events;
+    CloudAgentEvents events;
 
     public abstract void open();
 
@@ -67,12 +66,12 @@ public abstract class AbstractAgent extends TransportLayer {
 
     public abstract String generateQrCode(String value);
 
-    public AgentEvents getEvents() {
+    public CloudAgentEvents getEvents() {
         checkIsOpen();
         return events;
     }
 
-    public DynamicWallet getWallet() {
+    public AbstractWallet getWallet() {
         checkIsOpen();
         return wallet;
     }

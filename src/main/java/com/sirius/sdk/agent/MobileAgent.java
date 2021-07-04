@@ -1,15 +1,18 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.wallet.MobileWallet;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -23,6 +26,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,7 +38,19 @@ public class MobileAgent extends AbstractAgent {
     JSONObject walletCredentials = null;
     int timeoutSec = 60;
 
-    Wallet wallet;
+    Wallet indyWallet;
+
+    class MobileAgentEvents implements AgentEvents {
+
+        CompletableFuture<Message> future;
+        @Override
+        public CompletableFuture<Message> pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
+            future = new CompletableFuture<>();
+            return future;
+        }
+    }
+
+    MobileAgentEvents events = new MobileAgentEvents();
 
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
@@ -43,17 +60,16 @@ public class MobileAgent extends AbstractAgent {
     @Override
     public void open() {
         try {
-            //Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-            this.wallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (IndyException e) {
+            Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
             e.printStackTrace();
         }
+        try {
+            this.indyWallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
+            e.printStackTrace();
+        }
+        wallet = new MobileWallet(indyWallet);
     }
 
     @Override
@@ -75,7 +91,7 @@ public class MobileAgent extends AbstractAgent {
             JSONArray receivers = new JSONArray(their_vk.toArray());
             try {
                 byte[] cryptoMsg = Crypto.packMessage(
-                        wallet, receivers.toString(),
+                        indyWallet, receivers.toString(),
                         my_vk, message.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
                 HttpClient httpClient = HttpClients.createDefault();
                 HttpPost httpPost = new HttpPost(endpoint);
@@ -95,6 +111,37 @@ public class MobileAgent extends AbstractAgent {
         return new Pair<>(false, null);
     }
 
+    public byte[] packMessage(Message msg, String theirVk) {
+        JSONArray receivers = new JSONArray(new String[] {theirVk});
+        try {
+            return Crypto.packMessage(
+                    indyWallet, receivers.toString(),
+                    null, msg.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void receiveMsg(byte[] bytes) {
+        try {
+            byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
+            JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+            JSONObject eventMessage = new JSONObject().
+                    put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                    put("content_type", "application/ssi-agent-wire").
+                    put("@id", UUID.randomUUID()).
+                    put("message", unpackedMessage.optJSONObject("message")).
+                    put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
+            if (unpackedMessage.has("sender_verkey")) {
+                eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+            }
+            events.future.complete(new Message(eventMessage));
+        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void close() {
 
@@ -102,12 +149,12 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public boolean checkIsOpen() {
-        return false;
+        return this.indyWallet != null;
     }
 
     @Override
     public Listener subscribe() {
-        return null;
+        return new Listener(events, null);
     }
 
     @Override
