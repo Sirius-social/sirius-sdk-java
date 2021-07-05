@@ -17,7 +17,6 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -50,7 +49,7 @@ public class Context implements Closeable {
         }
     }
 
-    Hub currentHub = null;
+    AbstractHub currentHub = null;
     AbstractNonSecrets nonSecrets = new AbstractNonSecrets() {
         @Override
         public void addWalletRecord(String type, String id, String value, String tags) {
@@ -521,62 +520,50 @@ public class Context implements Closeable {
         }
     };
 
-    public static class Builder {
-        Hub.Config config = new Hub.Config();
+    public static class CloudContextBuilder {
+        CloudHub.Config config = new CloudHub.Config();
 
-        //public AbstractCrypto crypto = null;
-        //        public AbstractMicroledgerList microledgers = null;
-        //        public AbstractPairwiseList pairwiseStorage = null;
-        //        public AbstractDID did = null;
-        //        public AbstractAnonCreds anoncreds = null;
-        //        public AbstractNonSecrets nonSecrets = null;
-        //        public String serverUri = null;
-        //        public byte[] credentials;
-        //        public P2PConnection p2p;
-        //        public int ioTimeout = BaseAgentConnection.IO_TIMEOUT;
-        //        public AbstractImmutableCollection storage = null;
-
-        public Builder setCrypto(AbstractCrypto crypto) {
+        public CloudContextBuilder setCrypto(AbstractCrypto crypto) {
             this.config.crypto = crypto;
             return this;
         }
 
-        public Builder setMicroledgers(AbstractMicroledgerList microledgers) {
+        public CloudContextBuilder setMicroledgers(AbstractMicroledgerList microledgers) {
             this.config.microledgers = microledgers;
             return this;
         }
 
-        public Builder setServerUri(String serverUri) {
+        public CloudContextBuilder setServerUri(String serverUri) {
             this.config.serverUri = serverUri;
             return this;
         }
 
-        public Builder setCredentials(byte[] credentials) {
+        public CloudContextBuilder setCredentials(byte[] credentials) {
             this.config.credentials = credentials;
             return this;
         }
 
-        public Builder setP2p(P2PConnection p2p) {
+        public CloudContextBuilder setP2p(P2PConnection p2p) {
             this.config.p2p = p2p;
             return this;
         }
 
-        public Builder setTimeoutSec(int timeoutSec) {
+        public CloudContextBuilder setTimeoutSec(int timeoutSec) {
             this.config.ioTimeout = timeoutSec;
             return this;
         }
 
         public Context build() {
-            return new Context(this.config);
+            return new Context(new CloudHub(this.config));
         }
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static CloudContextBuilder cloudContextBuilder() {
+        return new CloudContextBuilder();
     }
 
-    public Context(Hub.Config config) {
-        currentHub = new Hub(config);
+    public Context(AbstractHub hub) {
+        currentHub = hub;
     }
 
     public AbstractNonSecrets getNonSecrets() {
@@ -619,9 +606,9 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().generateQrCode(value);
     }
 
-    public boolean ping() {
-        return getCurrentHub().getAgentConnectionLazy().ping();
-    }
+//    public boolean ping() {
+//        return getCurrentHub().getAgentConnectionLazy().ping();
+//    }
 
     public Endpoint getEndpointWithEmptyRoutingKeys() {
         for (Endpoint e : getEndpoints()) {
@@ -644,7 +631,7 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().subscribe();
     }
 
-    public Hub getCurrentHub() {
+    public AbstractHub getCurrentHub() {
         return currentHub;
     }
 

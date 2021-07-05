@@ -101,7 +101,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(serverUri).
                 setCredentials(credentials).
                 setP2p(p2PConnection).build()) {

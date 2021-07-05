@@ -15,7 +15,7 @@ import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
@@ -30,7 +30,7 @@ public class Airport extends BaseParticipant {
     String aircompanyDid;
     String dkmsName;
 
-    public Airport(Hub.Config config, CredInfo medCredInfo, String labDid, CredInfo boardingPassCredInfo, String aircompanyDid, String dkmsName) {
+    public Airport(CloudHub.Config config, CredInfo medCredInfo, String labDid, CredInfo boardingPassCredInfo, String aircompanyDid, String dkmsName) {
         super(config, null, null, null);
         this.medCredInfo = medCredInfo;
         this.labDid = labDid;

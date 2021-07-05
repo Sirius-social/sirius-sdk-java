@@ -317,7 +317,7 @@ public class TestCopropocols {
         String threadUi = UUID.randomUUID().toString();
         Pairwise finalPairwise = pairwise1;
         CompletableFuture<Void> cf1 = CompletableFuture.runAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent1params.getServerAddress()).
                     setP2p(agent1params.getConnection()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8)).
@@ -329,7 +329,7 @@ public class TestCopropocols {
 
         Pairwise finalPairwise2 = pairwise2;
         CompletableFuture<Void> cf2 = CompletableFuture.runAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent2params.getServerAddress()).
                     setP2p(agent2params.getConnection()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8)).
@@ -367,7 +367,7 @@ public class TestCopropocols {
         List<Message> rcvMessages = Collections.synchronizedList(new ArrayList<>());
 
         CompletableFuture<Void> sender = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent1params.getServerAddress()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent1params.getConnection()).build()) {
@@ -382,7 +382,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> reader1 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
@@ -394,7 +394,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> reader2 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {
@@ -433,7 +433,7 @@ public class TestCopropocols {
         List<CoProtocolThreadedTheirs.SendAndWaitResult> statuses = new ArrayList<>();
 
         CompletableFuture<Void> actor = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent1params.getServerAddress()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent1params.getConnection()).build()) {
@@ -448,7 +448,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> responder1 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
@@ -466,7 +466,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> responder2 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.builder().
+            try (Context context = Context.cloudContextBuilder().
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {

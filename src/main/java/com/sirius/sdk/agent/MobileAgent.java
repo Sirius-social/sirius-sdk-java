@@ -7,6 +7,7 @@ import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.wallet.MobileWallet;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -70,6 +71,7 @@ public class MobileAgent extends AbstractAgent {
             e.printStackTrace();
         }
         wallet = new MobileWallet(indyWallet);
+        pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
     }
 
     @Override
@@ -154,12 +156,22 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public Listener subscribe() {
-        return new Listener(events, null);
+        return new Listener(events, pairwiseList);
     }
 
     @Override
     public String generateQrCode(String value) {
         return null;
+    }
+
+    @Override
+    public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
+        return null;
+    }
+
+    @Override
+    public void release() {
+
     }
 
     @Override

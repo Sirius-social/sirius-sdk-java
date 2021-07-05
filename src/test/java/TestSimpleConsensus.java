@@ -185,7 +185,7 @@ public class TestSimpleConsensus {
     private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
                                             List<String> participants, String ledgerName, List<Transaction> genesis) {
         return unused -> {
-            try (Context c = Context.builder().
+            try (Context c = Context.cloudContextBuilder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -198,7 +198,7 @@ public class TestSimpleConsensus {
 
     private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreationAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
         return unused -> {
-            try (Context c = Context.builder().
+            try (Context c = Context.cloudContextBuilder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -303,7 +303,7 @@ public class TestSimpleConsensus {
                                                                                      Pairwise.Me me, List<String> participants,
                                                                                      AbstractMicroledger ledger, List<Transaction> txns) {
         return unused -> {
-            try (Context c = Context.builder().
+            try (Context c = Context.cloudContextBuilder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -316,7 +316,7 @@ public class TestSimpleConsensus {
 
     private Function<Void, Boolean> routineOfTxnAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
         return unused -> {
-            try (Context c = Context.builder().
+            try (Context c = Context.cloudContextBuilder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).

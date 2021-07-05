@@ -91,7 +91,7 @@ public class TestAriesFeature0036 {
 
         CompletableFuture<Boolean> issuerFuture = CompletableFuture.supplyAsync(
                 () -> {
-                    try (Context context = Context.builder().
+                    try (Context context = Context.cloudContextBuilder().
                             setServerUri(issuerParams.getServerAddress()).
                             setCredentials(issuerParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                             setP2p(issuerParams.getConnection()).
@@ -109,7 +109,7 @@ public class TestAriesFeature0036 {
 
         CompletableFuture<Pair<Boolean, String>> holderFuture = CompletableFuture.supplyAsync(
                 () -> {
-                    try (Context context = Context.builder().
+                    try (Context context = Context.cloudContextBuilder().
                             setServerUri(holderParams.getServerAddress()).
                             setCredentials(holderParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                             setP2p(holderParams.getConnection()).

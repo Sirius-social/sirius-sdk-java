@@ -21,7 +21,7 @@ import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
 
 import java.util.*;
@@ -45,7 +45,7 @@ public class AirCompany extends BaseParticipant {
     Map<String/*full_name*/, String/*did*/> aircompanyClientDids = new HashMap<>();
     Set<String> covidPosNames = new HashSet<>();
 
-    public AirCompany(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo boardingPassCredInfo) {
+    public AirCompany(CloudHub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo boardingPassCredInfo) {
         super(config, pairwises, covidMicroledgerName, me);
         this.boardingPassCredInfo = boardingPassCredInfo;
     }

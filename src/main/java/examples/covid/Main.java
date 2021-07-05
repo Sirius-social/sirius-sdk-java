@@ -4,23 +4,22 @@ import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class Main {
 
     static final String DKMS_NAME = "test_network";
     static final String COVID_MICROLEDGER_NAME = "covid_ledger_test3";
 
-    static Hub.Config steward = new Hub.Config();
-    static Hub.Config labConfig = new Hub.Config();
-    static Hub.Config airCompanyConfig = new Hub.Config();
-    static Hub.Config airportConfig = new Hub.Config();
+    static CloudHub.Config steward = new CloudHub.Config();
+    static CloudHub.Config labConfig = new CloudHub.Config();
+    static CloudHub.Config airCompanyConfig = new CloudHub.Config();
+    static CloudHub.Config airportConfig = new CloudHub.Config();
 
     static final String LAB_DID = "X1YdguoHBaY1udFQMbbKKG";
     static final String AIRCOMPANY_DID = "XwVCkzM6sMxk87M2GKtya6";

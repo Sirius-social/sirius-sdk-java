@@ -3,7 +3,7 @@ package examples.covid;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class Helpers {
 
-    public static Pairwise establishConnection(Hub.Config myConf, Entity myEntity, Hub.Config theirConf, Entity theirEntity) {
+    public static Pairwise establishConnection(CloudHub.Config myConf, Entity myEntity, CloudHub.Config theirConf, Entity theirEntity) {
         Context me = new Context(myConf);
         Context their = new Context(theirConf);
 

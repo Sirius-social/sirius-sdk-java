@@ -11,7 +11,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -83,7 +83,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        Hub.Config config = new Hub.Config();
+        CloudHub.Config config = new CloudHub.Config();
         config.serverUri = "https://demo.socialsirius.com";
         config.credentials = "ez8ucxfrTiV1hPX99MHt/JZL1h63sUO9saQCgn2BsaC2EndwDSYpOo6eFpn8xP8ZDoj5B5KN4aaLiyzTqkrbDxrbAe/+2uObPTl6xZdXMBs=".getBytes(StandardCharsets.UTF_8);
         config.p2p = new P2PConnection("B1n1Hwj1USs7z6FAttHCJcqhg7ARe7xtcyfHJCdXoMnC",

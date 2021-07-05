@@ -30,7 +30,7 @@ public class TestAriesFeature0160 {
 
     public static void runInviter(String uri, byte[] credentials, P2PConnection p2p, String expectedConnectionKey,
                                   Pairwise.Me me) {
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(uri).
                 setCredentials(credentials).
                 setP2p(p2p).
@@ -59,7 +59,7 @@ public class TestAriesFeature0160 {
 
     public static void runInvitee(String uri, byte[] credentials, P2PConnection p2p, Invitation invitation,
                                   String myLabel, Pairwise.Me me) {
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(uri).
                 setCredentials(credentials).
                 setP2p(p2p).
@@ -89,7 +89,7 @@ public class TestAriesFeature0160 {
         // Get endpoints
         String connectionKey = null;
         Invitation invitation = null;
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(inviter.getServerAddress()).
                 setCredentials(inviter.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(inviter.getConnection()).
@@ -105,7 +105,7 @@ public class TestAriesFeature0160 {
 
         // Init Me
         Pairwise.Me inviterMe = null;
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(inviter.getServerAddress()).
                 setCredentials(inviter.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(inviter.getConnection()).
@@ -114,7 +114,7 @@ public class TestAriesFeature0160 {
             inviterMe = new Pairwise.Me(didVerkey.first, didVerkey.second);
         }
         Pairwise.Me inviteeMe = null;
-        try (Context context = Context.builder().
+        try (Context context = Context.cloudContextBuilder().
                 setServerUri(invitee.getServerAddress()).
                 setCredentials(invitee.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(invitee.getConnection()).

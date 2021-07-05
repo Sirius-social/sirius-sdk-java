@@ -287,6 +287,7 @@ public class CloudAgent extends AbstractAgent {
      * @param enterTimeoutSec timeout to wait resources are released
      * @return
      */
+    @Override
     public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
         checkIsOpen();
         return new RemoteCallWrapper<Pair<Boolean, List<String>>>(rpc){}.
@@ -297,10 +298,7 @@ public class CloudAgent extends AbstractAgent {
                                 .add("lock_timeout", lockTimeoutSec));
     }
 
-    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec) {
-        return acquire(resources, lockTimeoutSec, 3.0);
-    }
-
+    @Override
     public void release() {
         new RemoteCallWrapper<Void>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/release");

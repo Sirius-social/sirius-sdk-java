@@ -97,4 +97,19 @@ public abstract class AbstractAgent extends TransportLayer {
         return pairwiseList;
     }
 
+    /**
+     * Acquire N resources given by names
+     * @param resources names of resources that you are going to lock
+     * @param lockTimeoutSec max timeout resources will be locked. Resources will be automatically unlocked on expire
+     * @param enterTimeoutSec timeout to wait resources are released
+     * @return
+     */
+    public abstract Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec);
+
+    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec) {
+        return acquire(resources, lockTimeoutSec, 3.0);
+    }
+
+    public abstract void release();
+
 }
