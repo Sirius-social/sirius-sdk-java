@@ -8,7 +8,7 @@ public class TheirEndpoint {
     String verkey;
     List<String> routingKeys;
 
-    public String getEndpoint() {
+    public String getEndpointAddress() {
         return endpoint;
     }
 

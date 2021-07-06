@@ -7,9 +7,10 @@ import org.hyperledger.indy.sdk.wallet.Wallet;
 import java.util.List;
 
 public class DIDMobile extends AbstractDID {
+    Wallet wallet;
 
     public DIDMobile(Wallet wallet) {
-
+        this.wallet = wallet;
     }
 
     @Override

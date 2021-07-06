@@ -3,12 +3,13 @@ import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.model.Entity;
-import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.AbstractCloudCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedP2P;
@@ -50,7 +51,7 @@ public class TestCopropocols {
         msgLog = new ArrayList<>();
     }
 
-    void routine1(AbstractCoProtocolTransport protocol) {
+    void routine1(AbstractCloudCoProtocolTransport protocol) {
         try {
             Message firstReq = new Message(new JSONObject().
                     put("@type", TEST_MSG_TYPES[0]).
@@ -92,7 +93,7 @@ public class TestCopropocols {
         }
     }
 
-    void routine2(AbstractCoProtocolTransport protocol) {
+    void routine2(AbstractCloudCoProtocolTransport protocol) {
         try {
             Thread.sleep(1000);
             Message firstResp = new Message(new JSONObject().
@@ -160,9 +161,9 @@ public class TestCopropocols {
         String agent2Endpoint = ServerTestSuite.getFirstEndpointAddressWIthEmptyRoutingKeys(agent2);
 
         TheirEndpoint their1 = new TheirEndpoint(agent2Endpoint, entity2.getVerkey());
-        TheirEndpointCoProtocolTransport agent1Protocol = agent1.spawn(entity1.getVerkey(), their1);
+        TheirEndpointCoProtocolTransport agent1Protocol = (TheirEndpointCoProtocolTransport) agent1.spawn(entity1.getVerkey(), their1);
         TheirEndpoint their2 = new TheirEndpoint(agent1Endpoint, entity1.getVerkey());
-        TheirEndpointCoProtocolTransport agent2Protocol = agent2.spawn(entity2.getVerkey(), their2);
+        TheirEndpointCoProtocolTransport agent2Protocol = (TheirEndpointCoProtocolTransport) agent2.spawn(entity2.getVerkey(), their2);
 
         agent1Protocol.start(Collections.singletonList("test_protocol"));
         agent2Protocol.start(Collections.singletonList("test_protocol"));
@@ -317,7 +318,7 @@ public class TestCopropocols {
         String threadUi = UUID.randomUUID().toString();
         Pairwise finalPairwise = pairwise1;
         CompletableFuture<Void> cf1 = CompletableFuture.runAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent1params.getServerAddress()).
                     setP2p(agent1params.getConnection()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8)).
@@ -329,7 +330,7 @@ public class TestCopropocols {
 
         Pairwise finalPairwise2 = pairwise2;
         CompletableFuture<Void> cf2 = CompletableFuture.runAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent2params.getServerAddress()).
                     setP2p(agent2params.getConnection()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8)).
@@ -367,7 +368,7 @@ public class TestCopropocols {
         List<Message> rcvMessages = Collections.synchronizedList(new ArrayList<>());
 
         CompletableFuture<Void> sender = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent1params.getServerAddress()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent1params.getConnection()).build()) {
@@ -382,7 +383,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> reader1 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
@@ -394,7 +395,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> reader2 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {
@@ -433,7 +434,7 @@ public class TestCopropocols {
         List<CoProtocolThreadedTheirs.SendAndWaitResult> statuses = new ArrayList<>();
 
         CompletableFuture<Void> actor = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent1params.getServerAddress()).
                     setCredentials(agent1params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent1params.getConnection()).build()) {
@@ -448,7 +449,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> responder1 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
@@ -466,7 +467,7 @@ public class TestCopropocols {
         }, r -> new Thread(r).start());
 
         CompletableFuture<Void> responder2 = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {

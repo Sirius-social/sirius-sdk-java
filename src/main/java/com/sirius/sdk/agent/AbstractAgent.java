@@ -9,7 +9,6 @@ import com.sirius.sdk.agent.microledgers.MicroledgerList;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.wallet.AbstractWallet;
-import com.sirius.sdk.agent.wallet.CloudWallet;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
@@ -55,7 +54,7 @@ public abstract class AbstractAgent extends TransportLayer {
                                               String endpoint, String my_vk, List<String> routing_keys);
 
     public void sendTo(Message message, Pairwise to) {
-        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpoint(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
+        sendMessage(message, Collections.singletonList(to.getTheir().getVerkey()), to.getTheir().getEndpointAddress(), to.getMe().getVerkey(), to.getTheir().getRoutingKeys());
     }
 
     public abstract void close();

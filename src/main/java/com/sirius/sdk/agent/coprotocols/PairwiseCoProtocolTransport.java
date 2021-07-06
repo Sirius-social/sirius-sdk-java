@@ -5,14 +5,14 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 
 import java.util.List;
 
-public class PairwiseCoProtocolTransport extends AbstractCoProtocolTransport {
+public class PairwiseCoProtocolTransport extends AbstractCloudCoProtocolTransport {
 
     Pairwise pairwise;
 
     public PairwiseCoProtocolTransport(Pairwise pairwise, AgentRPC rpc) {
         super(rpc);
         this.pairwise = pairwise;
-        setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpoint(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
+        setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpointAddress(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
     }
 
     @Override

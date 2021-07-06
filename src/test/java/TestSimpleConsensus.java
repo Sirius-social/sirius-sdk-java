@@ -9,6 +9,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
@@ -185,7 +186,7 @@ public class TestSimpleConsensus {
     private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreator(String uri, byte[] credentials, P2PConnection p2p, Pairwise.Me me,
                                             List<String> participants, String ledgerName, List<Transaction> genesis) {
         return unused -> {
-            try (Context c = Context.cloudContextBuilder().
+            try (Context c = CloudContext.builder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -198,7 +199,7 @@ public class TestSimpleConsensus {
 
     private Function<Void, Pair<Boolean, AbstractMicroledger>> routineOfLedgerCreationAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
         return unused -> {
-            try (Context c = Context.cloudContextBuilder().
+            try (Context c = CloudContext.builder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -303,7 +304,7 @@ public class TestSimpleConsensus {
                                                                                      Pairwise.Me me, List<String> participants,
                                                                                      AbstractMicroledger ledger, List<Transaction> txns) {
         return unused -> {
-            try (Context c = Context.cloudContextBuilder().
+            try (Context c = CloudContext.builder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).
@@ -316,7 +317,7 @@ public class TestSimpleConsensus {
 
     private Function<Void, Boolean> routineOfTxnAcceptor(String uri, byte[] credentials, P2PConnection p2p) {
         return unused -> {
-            try (Context c = Context.cloudContextBuilder().
+            try (Context c = CloudContext.builder().
                     setServerUri(uri).
                     setCredentials(credentials).
                     setP2p(p2p).

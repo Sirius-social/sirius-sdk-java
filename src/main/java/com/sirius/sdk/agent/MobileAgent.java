@@ -1,9 +1,7 @@
 package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.connections.AgentEvents;
-import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.TheirEndpointCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.*;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
@@ -26,6 +24,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -45,13 +44,13 @@ public class MobileAgent extends AbstractAgent {
 
         CompletableFuture<Message> future;
         @Override
-        public CompletableFuture<Message> pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
+        public CompletableFuture<Message> pull() {
             future = new CompletableFuture<>();
             return future;
         }
     }
 
-    MobileAgentEvents events = new MobileAgentEvents();
+    List<MobileAgentEvents> events = new ArrayList<>();
 
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
@@ -138,7 +137,8 @@ public class MobileAgent extends AbstractAgent {
             if (unpackedMessage.has("sender_verkey")) {
                 eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
             }
-            events.future.complete(new Message(eventMessage));
+            for (MobileAgentEvents e : events)
+                e.future.complete(new Message(eventMessage));
         } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
             e.printStackTrace();
         }
@@ -156,7 +156,9 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public Listener subscribe() {
-        return new Listener(events, pairwiseList);
+        MobileAgentEvents e = new MobileAgentEvents();
+        events.add(e);
+        return new Listener(e, pairwiseList);
     }
 
     @Override
@@ -175,8 +177,8 @@ public class MobileAgent extends AbstractAgent {
     }
 
     @Override
-    public TheirEndpointCoProtocolTransport spawn(String my_verkey, TheirEndpoint endpoint) {
-        return null;
+    public AbstractCoProtocolTransport spawn(String my_verkey, TheirEndpoint endpoint) {
+        return new TheirEndpointMobileCoProtocolTransport(this, my_verkey, endpoint);
     }
 
     @Override

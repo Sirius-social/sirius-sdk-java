@@ -10,6 +10,7 @@ import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
@@ -90,7 +91,7 @@ public class Main {
                 "y7fwmKxfatm6SLN6sqy6LFFjKufgzSsmqA2D4WZz55Y8W7JFeA3LvmicC36E8rdHoAiFhZgSf4fuKmimk9QyBec",
                 "5NUzoX1YNm5VXsgzudvVikN7VQpRf5rhaTnPxyu12eZC");
 
-        context = new Context(config);
+        context = new CloudContext(config);
         Pair<String, String> qrCodeRes = qrCode();
         String connectionKey = qrCodeRes.first;
         String qrUrl = qrCodeRes.second;

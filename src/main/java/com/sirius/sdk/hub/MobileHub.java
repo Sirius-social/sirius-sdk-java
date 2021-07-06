@@ -12,10 +12,12 @@ public class MobileHub extends AbstractHub {
 
     public MobileHub(MobileHub.Config config) {
         this.config = config;
+        createAgentInstance();
     }
 
     @Override
     void createAgentInstance() {
         agent = new MobileAgent(((Config) config).walletConfig, ((Config) config).walletCredentials);
+        agent.open();
     }
 }

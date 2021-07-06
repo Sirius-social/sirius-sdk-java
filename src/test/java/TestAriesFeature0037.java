@@ -10,6 +10,7 @@ import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -114,7 +115,7 @@ public class TestAriesFeature0037 {
         String predReferentId = "predicate1_referent";
 
         JSONObject proofRequest = null;
-        try (Context context = Context.cloudContextBuilder().
+        try (Context context = CloudContext.builder().
                 setServerUri(verifierParams.getServerAddress()).
                 setCredentials(verifierParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(verifierParams.getConnection()).
@@ -139,7 +140,7 @@ public class TestAriesFeature0037 {
         //run_verifier
         JSONObject finalProofRequest = proofRequest;
         CompletableFuture<Boolean> runVerifier = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(verifierParams.getServerAddress()).
                     setCredentials(verifierParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                     setP2p(verifierParams.getConnection()).
@@ -157,7 +158,7 @@ public class TestAriesFeature0037 {
 
         //run prover
         CompletableFuture<Boolean> runProver = CompletableFuture.supplyAsync(() -> {
-            try (Context context = Context.cloudContextBuilder().
+            try (Context context = CloudContext.builder().
                     setServerUri(proverParams.getServerAddress()).
                     setCredentials(proverParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                     setP2p(proverParams.getConnection()).

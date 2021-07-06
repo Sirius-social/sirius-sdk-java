@@ -19,6 +19,7 @@ import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
@@ -79,7 +80,7 @@ public class Laboratory extends BaseParticipant {
     }
 
     public String issueTestResults(CovidTest testRes) {
-        try (Context context = new Context(config)) {
+        try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             if (myEndpoint == null)
@@ -103,7 +104,7 @@ public class Laboratory extends BaseParticipant {
 
     @Override
     protected void routine() {
-        try (Context c = new Context(config)) {
+        try (Context c = new CloudContext(config)) {
             initMicroledger(c);
 
             Listener listener = c.subscribe();

@@ -3,6 +3,7 @@ package com.sirius.sdk.agent;
 import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
+import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
@@ -209,7 +210,7 @@ public class CloudAgent extends AbstractAgent {
     }
 
     @Override
-    public TheirEndpointCoProtocolTransport spawn(String myVerkey, TheirEndpoint endpoint) {
+    public AbstractCoProtocolTransport spawn(String myVerkey, TheirEndpoint endpoint) {
         AgentRPC new_rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
         try {
             new_rpc.create();

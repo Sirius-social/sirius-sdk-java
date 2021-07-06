@@ -1,5 +1,6 @@
 package com.sirius.sdk.hub.coprotocols;
 
+import com.sirius.sdk.agent.coprotocols.AbstractCloudCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.hub.Context;
 

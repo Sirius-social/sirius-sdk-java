@@ -3,6 +3,7 @@ package examples.covid;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 
@@ -75,7 +76,7 @@ public class Main {
 
     public static void main(String[] args) {
         CredInfo medCredInfo;
-        try (Context c = new Context(labConfig)) {
+        try (Context c = new CloudContext(labConfig)) {
             medCredInfo = Laboratory.createMedCreds(c, LAB_DID, DKMS_NAME);
             if (medCredInfo != null) {
                 System.out.println("Covid test credentials registered successfully");
@@ -86,7 +87,7 @@ public class Main {
         }
 
         CredInfo boardingPassCredInfo;
-        try (Context c = new Context(airCompanyConfig)) {
+        try (Context c = new CloudContext(airCompanyConfig)) {
             boardingPassCredInfo = AirCompany.createBoardingPassCreds(c, AIRCOMPANY_DID, DKMS_NAME);
             if (boardingPassCredInfo != null) {
                 System.out.println("Boarding pass credentials registered successfully");

@@ -30,7 +30,7 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
-public class Context implements Closeable {
+public abstract class Context implements Closeable {
 
     // loading all Message classes to force their registration in static block
     static {
@@ -520,49 +520,7 @@ public class Context implements Closeable {
         }
     };
 
-    public static class CloudContextBuilder {
-        CloudHub.Config config = new CloudHub.Config();
-
-        public CloudContextBuilder setCrypto(AbstractCrypto crypto) {
-            this.config.crypto = crypto;
-            return this;
-        }
-
-        public CloudContextBuilder setMicroledgers(AbstractMicroledgerList microledgers) {
-            this.config.microledgers = microledgers;
-            return this;
-        }
-
-        public CloudContextBuilder setServerUri(String serverUri) {
-            this.config.serverUri = serverUri;
-            return this;
-        }
-
-        public CloudContextBuilder setCredentials(byte[] credentials) {
-            this.config.credentials = credentials;
-            return this;
-        }
-
-        public CloudContextBuilder setP2p(P2PConnection p2p) {
-            this.config.p2p = p2p;
-            return this;
-        }
-
-        public CloudContextBuilder setTimeoutSec(int timeoutSec) {
-            this.config.ioTimeout = timeoutSec;
-            return this;
-        }
-
-        public Context build() {
-            return new Context(new CloudHub(this.config));
-        }
-    }
-
-    public static CloudContextBuilder cloudContextBuilder() {
-        return new CloudContextBuilder();
-    }
-
-    public Context(AbstractHub hub) {
+    Context(AbstractHub hub) {
         currentHub = hub;
     }
 

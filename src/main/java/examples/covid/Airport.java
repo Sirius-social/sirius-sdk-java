@@ -14,6 +14,7 @@ import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
@@ -40,7 +41,7 @@ public class Airport extends BaseParticipant {
     }
 
     public String enterToTerminal() {
-        try (Context context = new Context(config)) {
+        try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             if (myEndpoint == null)
@@ -59,7 +60,7 @@ public class Airport extends BaseParticipant {
 
     @Override
     protected void routine() {
-        try (Context c = new Context(config)) {
+        try (Context c = new CloudContext(config)) {
             Listener listener = c.subscribe();
             while (loop) {
                 Event event = listener.getOne().get();
