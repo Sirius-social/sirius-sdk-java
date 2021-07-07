@@ -1,5 +1,6 @@
 import com.sirius.sdk.agent.CloudAgent;
-import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.wallet.AbstractWallet;
+import com.sirius.sdk.agent.wallet.CloudWallet;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.NYMRole;
@@ -33,8 +34,8 @@ public class TestWallet {
         agent1.open();
         agent2.open();
 
-        DynamicWallet walletSender = agent1.getWallet();
-        DynamicWallet walletRecipient = agent2.getWallet();
+        AbstractWallet walletSender = agent1.getWallet();
+        AbstractWallet walletRecipient = agent2.getWallet();
 
         String verkeySender = walletSender.getCrypto().createKey();
         String verkeyRecipient = walletRecipient.getCrypto().createKey();
@@ -71,8 +72,8 @@ public class TestWallet {
         agent1.open();
         agent2.open();
 
-        DynamicWallet walletSigner = agent1.getWallet();
-        DynamicWallet walletVerifier = agent2.getWallet();
+        AbstractWallet walletSigner = agent1.getWallet();
+        AbstractWallet walletVerifier = agent2.getWallet();
 
         String keySigner = walletSigner.getCrypto().createKey();
         JSONObject message = new JSONObject();
@@ -179,8 +180,8 @@ public class TestWallet {
         agent1.open();
         agent2.open();
 
-        DynamicWallet walletMe = agent1.getWallet();
-        DynamicWallet walletTheir = agent2.getWallet();
+        AbstractWallet walletMe = agent1.getWallet();
+        AbstractWallet walletTheir = agent2.getWallet();
 
         Pair<String, String> myDidVerkey = walletMe.getDid().createAndStoreMyDid();
         Pair<String, String> theirDidVerkey = walletTheir.getDid().createAndStoreMyDid();
@@ -497,8 +498,8 @@ public class TestWallet {
         agent1.open();
         agent2.open();
         try {
-            DynamicWallet steward = agent1.getWallet();
-            DynamicWallet actor = agent2.getWallet();
+            AbstractWallet steward = agent1.getWallet();
+            AbstractWallet actor = agent2.getWallet();
 
             String seed = "000000000000000000000000Steward1";
 
@@ -563,8 +564,8 @@ public class TestWallet {
         agent1.open();
         agent2.open();
 
-        DynamicWallet steward = agent1.getWallet();
-        DynamicWallet actor = agent2.getWallet();
+        AbstractWallet steward = agent1.getWallet();
+        AbstractWallet actor = agent2.getWallet();
 
         String seed = "000000000000000000000000Steward1";
         Pair<String, String> didVerkeySteward = steward.getDid().createAndStoreMyDid(null, seed);

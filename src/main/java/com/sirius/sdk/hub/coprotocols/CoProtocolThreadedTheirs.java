@@ -1,7 +1,7 @@
 package com.sirius.sdk.hub.coprotocols;
 
+import com.sirius.sdk.agent.coprotocols.AbstractCloudCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusContextError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -10,7 +10,6 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +84,7 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
      */
     public GetOneResult getOne() {
         try {
-            AbstractCoProtocolTransport.GetOneResult getOneResult = getTransportLazy().getOne();
+            AbstractCloudCoProtocolTransport.GetOneResult getOneResult = getTransportLazy().getOne();
             Pairwise p2p = loadP2PFromVerkey(getOneResult.senderVerkey);
             return new GetOneResult(p2p, getOneResult.message);
         } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
@@ -147,7 +146,8 @@ public class CoProtocolThreadedTheirs extends AbstractCoProtocol {
             } else {
                 transport = context.getCurrentHub().getAgentConnectionLazy().spawn(this.thid, this.pthid);
             }
-            transport.start(timeToLiveSec);
+            transport.setTimeToLiveSec(timeToLiveSec);
+            transport.start();
             started = true;
         }
         return transport;

@@ -1,7 +1,7 @@
 package examples.covid;
 
 import com.sirius.sdk.agent.pairwise.Pairwise;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,14 +9,14 @@ import java.util.List;
 public abstract class BaseParticipant {
 
     boolean loop = false;
-    Hub.Config config;
+    CloudHub.Config config;
     List<Pairwise> pairwises;
     Thread thread;
     String covidMicroledgerName;
     Pairwise.Me me;
     List<String> covidMicroledgerParticipants;
 
-    public BaseParticipant(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me) {
+    public BaseParticipant(CloudHub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me) {
         this.config = config;
         this.pairwises = pairwises;
         this.covidMicroledgerName = covidMicroledgerName;

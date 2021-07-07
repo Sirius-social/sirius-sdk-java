@@ -7,6 +7,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
@@ -28,13 +29,9 @@ public class TestAriesFeature0160 {
 
     ConfTest confTest;
 
-    public static void runInviter(String uri, byte[] credentials, P2PConnection p2p, String expectedConnectionKey,
+    public static void runInviter(Context context, String expectedConnectionKey,
                                   Pairwise.Me me) {
-        try (Context context = Context.builder().
-                setServerUri(uri).
-                setCredentials(credentials).
-                setP2p(p2p).
-                build()) {
+        try {
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             Listener listener = context.subscribe();
             Event event = listener.getOne().get(30, TimeUnit.SECONDS);
@@ -57,22 +54,16 @@ public class TestAriesFeature0160 {
         }
     }
 
-    public static void runInvitee(String uri, byte[] credentials, P2PConnection p2p, Invitation invitation,
+    public static void runInvitee(Context context, Invitation invitation,
                                   String myLabel, Pairwise.Me me) {
-        try (Context context = Context.builder().
-                setServerUri(uri).
-                setCredentials(credentials).
-                setP2p(p2p).
-                build()) {
-            Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
-            // Create and start machine
-            Invitee machine = new Invitee(context, me, myEndpoint);
-            Pairwise pairwise = machine.createConnection(invitation, myLabel);
-            if (pairwise == null) {
-                Assert.fail();
-            }
-            context.getPairwiseList().ensureExists(pairwise);
+        Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
+        // Create and start machine
+        Invitee machine = new Invitee(context, me, myEndpoint);
+        Pairwise pairwise = machine.createConnection(invitation, myLabel);
+        if (pairwise == null) {
+            Assert.fail();
         }
+        context.getPairwiseList().ensureExists(pairwise);
     }
 
     @Before
@@ -89,7 +80,7 @@ public class TestAriesFeature0160 {
         // Get endpoints
         String connectionKey = null;
         Invitation invitation = null;
-        try (Context context = Context.builder().
+        try (Context context = CloudContext.builder().
                 setServerUri(inviter.getServerAddress()).
                 setCredentials(inviter.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(inviter.getConnection()).
@@ -105,7 +96,7 @@ public class TestAriesFeature0160 {
 
         // Init Me
         Pairwise.Me inviterMe = null;
-        try (Context context = Context.builder().
+        try (Context context = CloudContext.builder().
                 setServerUri(inviter.getServerAddress()).
                 setCredentials(inviter.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(inviter.getConnection()).
@@ -114,7 +105,7 @@ public class TestAriesFeature0160 {
             inviterMe = new Pairwise.Me(didVerkey.first, didVerkey.second);
         }
         Pairwise.Me inviteeMe = null;
-        try (Context context = Context.builder().
+        try (Context context = CloudContext.builder().
                 setServerUri(invitee.getServerAddress()).
                 setCredentials(invitee.getCredentials().getBytes(StandardCharsets.UTF_8)).
                 setP2p(invitee.getConnection()).
@@ -126,8 +117,13 @@ public class TestAriesFeature0160 {
         String finalConnectionKey = connectionKey;
         Pairwise.Me finalInviterMe = inviterMe;
         CompletableFuture<Boolean> runInviterFeature = CompletableFuture.supplyAsync(() -> {
-            runInviter(inviter.getServerAddress(), inviter.getCredentials().getBytes(StandardCharsets.UTF_8),
-                    inviter.getConnection(), finalConnectionKey, finalInviterMe);
+            try (Context context = CloudContext.builder().
+                    setServerUri(inviter.getServerAddress()).
+                    setCredentials(inviter.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                    setP2p(inviter.getConnection()).
+                    build()) {
+                runInviter(context, finalConnectionKey, finalInviterMe);
+            }
             return true;
         }, r -> new Thread(r).start());
 
@@ -140,15 +136,18 @@ public class TestAriesFeature0160 {
                 e.printStackTrace();
                 Assert.fail();
             }
-            runInvitee(invitee.getServerAddress(), invitee.getCredentials().getBytes(StandardCharsets.UTF_8),
-                    invitee.getConnection(), finalInvitation, "Invitee", finalInviteeMe);
+            try (Context context = CloudContext.builder().
+                    setServerUri(invitee.getServerAddress()).
+                    setCredentials(invitee.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                    setP2p(invitee.getConnection()).
+                    build()) {
+                runInvitee(context, finalInvitation, "Invitee", finalInviteeMe);
+            }
             return true;
         }, r -> new Thread(r).start());
 
         runInviterFeature.get(60, TimeUnit.SECONDS);
         runInviteeFeature.get(60, TimeUnit.SECONDS);
-
-
     }
 
 }

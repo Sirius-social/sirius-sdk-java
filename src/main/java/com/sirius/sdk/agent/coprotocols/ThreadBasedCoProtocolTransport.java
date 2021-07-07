@@ -18,7 +18,7 @@ import java.util.List;
  *   - https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0008-message-id-and-threading
  *
  */
-public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
+public class ThreadBasedCoProtocolTransport extends AbstractCloudCoProtocolTransport {
 
     String thid;
     Pairwise pairwise;
@@ -36,7 +36,7 @@ public class ThreadBasedCoProtocolTransport extends AbstractCoProtocolTransport{
         receivedOrders = new JSONObject();
         if (pairwise != null) {
             this.their = pairwise.getTheir();
-            setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpoint(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
+            setup(pairwise.getTheir().getVerkey(), pairwise.getTheir().getEndpointAddress(), pairwise.getMe().getVerkey(), pairwise.getTheir().getRoutingKeys());
         } else {
             setup(null, null, null, null);
         }

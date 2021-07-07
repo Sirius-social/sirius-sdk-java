@@ -1,8 +1,9 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.AgentEvents;
+import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.AgentRPC;
 import com.sirius.sdk.agent.connections.BaseAgentConnection;
+import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.microledgers.MicroledgerList;
@@ -13,7 +14,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
-import com.sirius.sdk.agent.wallet.DynamicWallet;
+import com.sirius.sdk.agent.wallet.CloudWallet;
 import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
@@ -89,7 +90,7 @@ public class CloudAgent extends AbstractAgent {
             rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
             rpc.create();
             endpoints = rpc.getEndpoints();
-            wallet = new DynamicWallet(rpc);
+            wallet = new CloudWallet(rpc);
             if (storage == null) {
                 storage = new InWalletImmutableCollection(wallet.getNonSecrets());
             }
@@ -180,7 +181,7 @@ public class CloudAgent extends AbstractAgent {
     @Override
     public Listener subscribe() {
         checkIsOpen();
-        events = new AgentEvents(serverAddress, credentials, p2p, timeout);
+        events = new CloudAgentEvents(serverAddress, credentials, p2p, timeout);
         try {
             events.create();
         } catch (SiriusFieldValueError siriusFieldValueError) {
@@ -209,7 +210,7 @@ public class CloudAgent extends AbstractAgent {
     }
 
     @Override
-    public TheirEndpointCoProtocolTransport spawn(String myVerkey, TheirEndpoint endpoint) {
+    public AbstractCoProtocolTransport spawn(String myVerkey, TheirEndpoint endpoint) {
         AgentRPC new_rpc = new AgentRPC(serverAddress, credentials, p2p, timeout);
         try {
             new_rpc.create();
@@ -287,6 +288,7 @@ public class CloudAgent extends AbstractAgent {
      * @param enterTimeoutSec timeout to wait resources are released
      * @return
      */
+    @Override
     public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
         checkIsOpen();
         return new RemoteCallWrapper<Pair<Boolean, List<String>>>(rpc){}.
@@ -297,10 +299,7 @@ public class CloudAgent extends AbstractAgent {
                                 .add("lock_timeout", lockTimeoutSec));
     }
 
-    public Pair<Boolean, List<String>> acquire(List<String> resources, double lockTimeoutSec) {
-        return acquire(resources, lockTimeoutSec, 3.0);
-    }
-
+    @Override
     public void release() {
         new RemoteCallWrapper<Void>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/release");

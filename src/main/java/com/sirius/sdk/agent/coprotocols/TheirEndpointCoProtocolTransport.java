@@ -5,7 +5,7 @@ import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 
 import java.util.List;
 
-public class TheirEndpointCoProtocolTransport extends AbstractCoProtocolTransport {
+public class TheirEndpointCoProtocolTransport extends AbstractCloudCoProtocolTransport {
     String myVerkey;
     TheirEndpoint endpoint;
 
@@ -14,7 +14,7 @@ public class TheirEndpointCoProtocolTransport extends AbstractCoProtocolTranspor
         super(rpc);
         this.myVerkey = myVerkey;
         this.endpoint = endpoint;
-        setup(endpoint.getVerkey(), endpoint.getEndpoint(), myVerkey, endpoint.getRoutingKeys());
+        setup(endpoint.getVerkey(), endpoint.getEndpointAddress(), myVerkey, endpoint.getRoutingKeys());
     }
 
     @Override

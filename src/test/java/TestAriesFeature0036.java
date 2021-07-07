@@ -12,6 +12,7 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
@@ -91,7 +92,7 @@ public class TestAriesFeature0036 {
 
         CompletableFuture<Boolean> issuerFuture = CompletableFuture.supplyAsync(
                 () -> {
-                    try (Context context = Context.builder().
+                    try (Context context = CloudContext.builder().
                             setServerUri(issuerParams.getServerAddress()).
                             setCredentials(issuerParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                             setP2p(issuerParams.getConnection()).
@@ -109,7 +110,7 @@ public class TestAriesFeature0036 {
 
         CompletableFuture<Pair<Boolean, String>> holderFuture = CompletableFuture.supplyAsync(
                 () -> {
-                    try (Context context = Context.builder().
+                    try (Context context = CloudContext.builder().
                             setServerUri(holderParams.getServerAddress()).
                             setCredentials(holderParams.getCredentials().getBytes(StandardCharsets.UTF_8)).
                             setP2p(holderParams.getConnection()).

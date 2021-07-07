@@ -17,6 +17,7 @@ import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import examples.covid.CredInfo;
@@ -101,7 +102,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        try (Context context = Context.builder().
+        try (Context context = CloudContext.builder().
                 setServerUri(serverUri).
                 setCredentials(credentials).
                 setP2p(p2PConnection).build()) {

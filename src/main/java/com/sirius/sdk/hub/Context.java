@@ -17,7 +17,6 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusRPCError;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
@@ -28,11 +27,10 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class Context implements Closeable {
+public abstract class Context implements Closeable {
 
     // loading all Message classes to force their registration in static block
     static {
@@ -522,64 +520,7 @@ public class Context implements Closeable {
         }
     };
 
-    public static class Builder {
-        Hub.Config config = new Hub.Config();
-
-        //public AbstractCrypto crypto = null;
-        //        public AbstractMicroledgerList microledgers = null;
-        //        public AbstractPairwiseList pairwiseStorage = null;
-        //        public AbstractDID did = null;
-        //        public AbstractAnonCreds anoncreds = null;
-        //        public AbstractNonSecrets nonSecrets = null;
-        //        public String serverUri = null;
-        //        public byte[] credentials;
-        //        public P2PConnection p2p;
-        //        public int ioTimeout = BaseAgentConnection.IO_TIMEOUT;
-        //        public AbstractImmutableCollection storage = null;
-
-        public Builder setCrypto(AbstractCrypto crypto) {
-            this.config.crypto = crypto;
-            return this;
-        }
-
-        public Builder setMicroledgers(AbstractMicroledgerList microledgers) {
-            this.config.microledgers = microledgers;
-            return this;
-        }
-
-        public Builder setServerUri(String serverUri) {
-            this.config.serverUri = serverUri;
-            return this;
-        }
-
-        public Builder setCredentials(byte[] credentials) {
-            this.config.credentials = credentials;
-            return this;
-        }
-
-        public Builder setP2p(P2PConnection p2p) {
-            this.config.p2p = p2p;
-            return this;
-        }
-
-        public Builder setTimeoutSec(int timeoutSec) {
-            this.config.ioTimeout = timeoutSec;
-            return this;
-        }
-
-        public Context build() {
-            return new Context(this.config);
-        }
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Context(AbstractHub.Config config) {
-        currentHub = new Hub(config);
-    }
-    public Context(AbstractHub hub) {
+    Context(AbstractHub hub) {
         currentHub = hub;
     }
 
@@ -623,9 +564,9 @@ public class Context implements Closeable {
         return currentHub.getAgentConnectionLazy().generateQrCode(value);
     }
 
-    public boolean ping() {
-        return getCurrentHub().getAgentConnectionLazy().ping();
-    }
+//    public boolean ping() {
+//        return getCurrentHub().getAgentConnectionLazy().ping();
+//    }
 
     public Endpoint getEndpointWithEmptyRoutingKeys() {
         for (Endpoint e : getEndpoints()) {
@@ -666,10 +607,6 @@ public class Context implements Closeable {
 
     @Override
     public void close() {
-        try {
-            currentHub.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        currentHub.close();
     }
 }

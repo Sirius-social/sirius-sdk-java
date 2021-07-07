@@ -20,8 +20,9 @@ import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.Transaction;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.AnonCredSchema;
+import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.Hub;
+import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
 
 import java.util.*;
@@ -45,7 +46,7 @@ public class AirCompany extends BaseParticipant {
     Map<String/*full_name*/, String/*did*/> aircompanyClientDids = new HashMap<>();
     Set<String> covidPosNames = new HashSet<>();
 
-    public AirCompany(Hub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo boardingPassCredInfo) {
+    public AirCompany(CloudHub.Config config, List<Pairwise> pairwises, String covidMicroledgerName, Pairwise.Me me, CredInfo boardingPassCredInfo) {
         super(config, pairwises, covidMicroledgerName, me);
         this.boardingPassCredInfo = boardingPassCredInfo;
     }
@@ -82,7 +83,7 @@ public class AirCompany extends BaseParticipant {
     }
 
     public String register(BoardingPass boardingPass) {
-        try (Context context = new Context(config)) {
+        try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             if (myEndpoint == null)
@@ -106,7 +107,7 @@ public class AirCompany extends BaseParticipant {
 
     @Override
     protected void routine() {
-        try (Context c = new Context(config)) {
+        try (Context c = new CloudContext(config)) {
             Listener listener = c.subscribe();
             while (loop) {
                 Event event = listener.getOne().get();

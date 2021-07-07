@@ -33,6 +33,10 @@ public class Event extends Message {
         return getMessageObj().optString("recipient_verkey");
     }
 
+    public String getSenderVerkey() {
+        return getMessageObj().optString("sender_verkey");
+    }
+
     public Pairwise getPairwise() {
         return pairwise;
     }

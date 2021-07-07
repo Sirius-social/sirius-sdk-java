@@ -1,5 +1,6 @@
 package com.sirius.sdk.hub.coprotocols;
 
+import com.sirius.sdk.agent.coprotocols.AbstractCloudCoProtocolTransport;
 import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
@@ -8,8 +9,6 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-
-import java.io.IOException;
 
 public class CoProtocolThreadedP2P extends AbstractP2PCoProtocol {
     String thid;
@@ -55,7 +54,8 @@ public class CoProtocolThreadedP2P extends AbstractP2PCoProtocol {
             } else {
                 transport = context.getCurrentHub().getAgentConnectionLazy().spawn(this.thid, this.to, this.pthid);
             }
-            transport.start(timeToLiveSec);
+            transport.setTimeToLiveSec(timeToLiveSec);
+            transport.start();
             started = true;
         }
         return transport;
