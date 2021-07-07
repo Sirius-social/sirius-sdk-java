@@ -19,14 +19,14 @@ public abstract class RemoteCallWrapper<T> implements RemoteCall<T> {
     private final TypeToken<T> typeToken = new TypeToken<T>(getClass()) {
     };
     private final Type type = typeToken.getType();
-    BaseAgentConnection rpc;
+    AgentRPC rpc;
     T myClassT;
     Class objectClass;
     //  TypeToken<T> type = new TypeToken<T>(getClass()) {};
     AbstractGenericType<T> abstractGenericType;
     AbstractDAO<T> abstractDAo;
 
-    public RemoteCallWrapper(BaseAgentConnection rpc) {
+    public RemoteCallWrapper(AgentRPC rpc) {
         this.rpc = rpc;
         abstractGenericType = new AbstractGenericType<T>() {
         };

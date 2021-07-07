@@ -32,7 +32,7 @@ dependencies {
     implementation  'org.apache.httpcomponents:httpcore:4.4.13'
     implementation  'commons-codec:commons-codec:1.14'
     implementation  'com.google.guava:guava:29.0-jre'
-    api 'org.hyperledger:indy:1.16.0'
+    implementation 'org.hyperledger:indy:1.16.0'
    // implementation 'org.hyperledger:indy:1+'
     implementation ( 'org.reflections:reflections:0.9.9'){
         exclude group: 'com.google.code.findbugs', module: 'annotations'

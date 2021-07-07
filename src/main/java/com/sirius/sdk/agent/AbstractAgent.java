@@ -20,6 +20,10 @@ import java.util.Map;
 
 public abstract class AbstractAgent extends TransportLayer {
 
+    public void setEndpoints(List<Endpoint> endpoints) {
+        this.endpoints = endpoints;
+    }
+
     List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
     WalletPairwiseList pairwiseList;

@@ -21,9 +21,5 @@ public abstract class WebSocketAgentConnection extends BaseAgentConnection {
         super(serverAddress, credentials, p2p, timeout);
     }
 
-    @Override
-    public BaseConnector createConnector() {
-        return new WebSocketConnector(this.timeout, StandardCharsets.UTF_8, serverAddress, path(), credentials);
-    }
 
 }

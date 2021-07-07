@@ -75,7 +75,7 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public boolean isOpen() {
-        return false;
+        return this.indyWallet!=null;
     }
 
     @Override
@@ -146,7 +146,18 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public void close() {
-
+        if(checkIsOpen()){
+            try {
+                indyWallet.close();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (IndyException e) {
+                e.printStackTrace();
+            }
+            indyWallet = null;
+        }
     }
 
     @Override

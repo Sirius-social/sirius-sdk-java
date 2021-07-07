@@ -15,16 +15,16 @@ import java.util.List;
 
 public class Microledger extends AbstractMicroledger {
     String name;
-    BaseAgentConnection api;
+    AgentRPC api;
     JSONObject state = null;
 
-    public Microledger(String name, BaseAgentConnection api, JSONObject state) {
+    public Microledger(String name, AgentRPC api, JSONObject state) {
         this.name = name;
         this.api = api;
         this.state = state;
     }
 
-    public Microledger(String name, BaseAgentConnection api) {
+    public Microledger(String name, AgentRPC api) {
         this.name = name;
         this.api = api;
     }

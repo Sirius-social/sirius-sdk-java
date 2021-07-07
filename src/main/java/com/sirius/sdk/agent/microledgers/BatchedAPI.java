@@ -9,11 +9,11 @@ import org.json.JSONObject;
 import java.util.*;
 
 public class BatchedAPI extends AbstractBatchedAPI {
-    BaseAgentConnection api;
+    AgentRPC api;
     List<String> names = new ArrayList<>();
     Map<String, AbstractMicroledger> external = null;
 
-    public BatchedAPI(BaseAgentConnection api, Map<String, AbstractMicroledger> external) {
+    public BatchedAPI(AgentRPC api, Map<String, AbstractMicroledger> external) {
         this.api = api;
         this.external = external;
     }

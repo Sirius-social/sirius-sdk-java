@@ -35,23 +35,7 @@ public abstract class BaseAgentConnection {
     P2PConnection p2p;
 
     int timeout = IO_TIMEOUT;
-    BaseConnector connector;
-
-    public String getServerAddress() {
-        return serverAddress;
-    }
-
-    public byte[] getCredentials() {
-        return credentials;
-    }
-
-    public BaseConnector getConnector() {
-        return connector;
-    }
-
-    public P2PConnection getP2p() {
-        return p2p;
-    }
+    WebSocketConnector connector;
 
     public void setTimeout(int timeout) {
         if (timeout <= 0) {
@@ -66,10 +50,9 @@ public abstract class BaseAgentConnection {
         this.credentials = credentials;
         this.p2p = p2p;
         this.timeout = timeout;
-        connector = createConnector();
+        connector = new WebSocketConnector(this.timeout, StandardCharsets.UTF_8, serverAddress, path(), credentials);
     }
 
-    public  abstract BaseConnector createConnector();
     public abstract String path();
 
     public void setup(Message context) {
@@ -108,25 +91,5 @@ public abstract class BaseAgentConnection {
             throw new SiriusFieldValueError("message @type not equal "+MSG_TYPE_CONTEXT);
         }
         setup(context);
-    }
-
-    /**
-     * Call Agent services
-     *
-     * @param msgType
-     * @param params
-     * @param waitResponse wait for response
-     * @return
-     */
-    public abstract  Object remoteCall(String msgType, RemoteParams params, boolean waitResponse) throws Exception;
-
-    public  Object remoteCall(String msgType,  RemoteParams params)
-            throws Exception {
-        return remoteCall(msgType, params, true);
-    }
-
-    public Object remoteCall(String msgType)
-            throws Exception {
-        return remoteCall(msgType, null);
     }
 }

@@ -11,11 +11,26 @@ public class MobileContext extends Context {
         super(new MobileHub(config));
     }
 
+
+    @Override
+    public MobileHub getCurrentHub() {
+        return (MobileHub) super.getCurrentHub();
+    }
+
     public static class MobileContextBuilder {
         MobileHub.Config config = new MobileHub.Config();
 
         public MobileContextBuilder setWalletConfig(JSONObject walletConfig) {
             config.walletConfig = walletConfig;
+            return this;
+        }
+        public MobileContextBuilder setIndyEndpoint(String indyEndpoint) {
+            config.indyEndpoint = indyEndpoint;
+            return this;
+        }
+
+        public MobileContextBuilder setServerUri(String serverUri) {
+            config.serverUri = serverUri;
             return this;
         }
 

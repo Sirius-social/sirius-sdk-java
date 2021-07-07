@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MicroledgerList extends AbstractMicroledgerList {
-    BaseAgentConnection api;
+    AgentRPC api;
     Map<String, AbstractMicroledger> instances = new HashMap<>();
     BatchedAPI batchedAPI;
 
@@ -86,7 +86,7 @@ public class MicroledgerList extends AbstractMicroledgerList {
         return this.batchedAPI;
     }
 
-    public MicroledgerList(BaseAgentConnection api) {
+    public MicroledgerList(AgentRPC api) {
         this.api = api;
         this.batchedAPI = new BatchedAPI(api, this.instances);
     }
