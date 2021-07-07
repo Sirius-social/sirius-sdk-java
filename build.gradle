@@ -3,6 +3,15 @@ plugins {
     id 'java-library'
 }
 
+repositories {
+    google()
+    jcenter()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url "http://dl.bintray.com/lukaville/maven" }
+    maven { url  "https://repo.sovrin.org/repository/maven-public"  }
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
@@ -23,6 +32,8 @@ dependencies {
     implementation  'org.apache.httpcomponents:httpcore:4.4.13'
     implementation  'commons-codec:commons-codec:1.14'
     implementation  'com.google.guava:guava:29.0-jre'
+    api 'org.hyperledger:indy:1.16.0'
+   // implementation 'org.hyperledger:indy:1+'
     implementation ( 'org.reflections:reflections:0.9.9'){
         exclude group: 'com.google.code.findbugs', module: 'annotations'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
