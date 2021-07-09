@@ -1,6 +1,7 @@
 package com.sirius.sdk.hub;
 
 import com.sirius.sdk.agent.MobileAgent;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import org.json.JSONObject;
 
 public class MobileHub extends AbstractHub {
@@ -8,6 +9,7 @@ public class MobileHub extends AbstractHub {
     public static class Config extends AbstractHub.Config {
         public JSONObject walletConfig = null;
         public JSONObject walletCredentials = null;
+        public Invitation mediatorInvitation = null;
     }
 
     public MobileHub(MobileHub.Config config) {
@@ -17,7 +19,11 @@ public class MobileHub extends AbstractHub {
 
     @Override
     void createAgentInstance() {
-        agent = new MobileAgent(((Config) config).walletConfig, ((Config) config).walletCredentials);
+        Config mobileConfig = (Config) config;
+        agent = new MobileAgent(
+                mobileConfig.walletConfig,
+                mobileConfig.walletCredentials,
+                mobileConfig.mediatorInvitation.invitationUrl());
         agent.open();
     }
 }

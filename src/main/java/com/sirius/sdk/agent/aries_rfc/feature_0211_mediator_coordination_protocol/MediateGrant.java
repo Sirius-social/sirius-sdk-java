@@ -1,7 +1,11 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol;
 
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MediateGrant extends CoordinateMediationMessage {
@@ -12,6 +16,20 @@ public class MediateGrant extends CoordinateMediationMessage {
 
     public MediateGrant(String message) {
         super(message);
+    }
+
+    public String getEndpointAddress() {
+        return getMessageObj().optString("endpoint");
+    }
+
+    public List<String> getRoutingKeys() {
+        List<String> res = new ArrayList<>();
+        if (getMessageObj().has("routing_keys")) {
+            JSONArray keys = getMessageObj().optJSONArray("routing_keys");
+            for (Object o : keys)
+                res.add((String) o);
+        }
+        return res;
     }
 
     public static Builder<?> builder() {

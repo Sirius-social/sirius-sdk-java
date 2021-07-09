@@ -1,19 +1,22 @@
-package examples.covid;
+package examples.connect_to_mediator;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
-import com.sirius.sdk.hub.CloudContext;
-import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.CloudHub;
+import com.sirius.sdk.hub.*;
+import examples.covid.*;
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Scanner;
+
 
 public class Main {
-
     static final String DKMS_NAME = "test_network";
     static final String COVID_MICROLEDGER_NAME = "covid_ledger_test3";
 
@@ -44,6 +47,16 @@ public class Main {
             "6M8qgMdkqGzQ2yhryV3F9Kvk785qAFny5JuLp1CJCcHW",
             "Ap29nQ3Kf2bGJdWEV3m4AG");
 
+    public static MobileHub.Config mobileConfig = new MobileHub.Config();
+
+    public static final String MEDIATOR_ADDRESS = "wss://mediator.socialsirius.com:8000/";
+    public static final JSONObject walletConfig = new JSONObject().
+            put("id", "Wallet1").
+            put("storage_type", "default");
+    public static final JSONObject walletCredentials = new JSONObject().
+            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+            put("key_derivation_method", "RAW");
+
     static {
         steward.serverUri = "https://demo.socialsirius.com";
         steward.credentials = "ez8ucxfrTiV1hPX99MHt/C/MUJCo8OmN4AMVmddE/sew8gBzsOg040FWBSXzHd9hDoj5B5KN4aaLiyzTqkrbD3uaeSwmvxVsqkC0xl5dtIc=".getBytes(StandardCharsets.UTF_8);
@@ -72,9 +85,18 @@ public class Main {
                 "HBEe9KkPCK4D1zs6UBzLqWp6j2Gj88zy3miqybvYx42p",
                 "23jutNJBbgn8bbX53Qr36JSeS2VtZHvY4DMqazXHq6mDEPNkuA3FkKVGAMJdjPznfizLg9nh448DXZ7e1724qk1a",
                 "BNxpmTgs9B3yMURa1ta7avKuBA5wcBp5ZmXfqPFPYGAP");
+
+        mobileConfig.walletConfig = walletConfig;
+        mobileConfig.walletCredentials = walletCredentials;
+        mobileConfig.mediatorInvitation = Invitation.builder().
+                setEndpoint(MEDIATOR_ADDRESS).
+                build();
     }
 
     public static void main(String[] args) {
+        Smartphone smartphone = new Smartphone(mobileConfig);
+        smartphone.start();
+
         CredInfo medCredInfo;
         try (Context c = new CloudContext(labConfig)) {
             medCredInfo = Laboratory.createMedCreds(c, LAB_DID, DKMS_NAME);
@@ -135,8 +157,8 @@ public class Main {
                             setApproved("House M.D.").
                             setTimestamp(timestamp);
 
-                    String qr = lab.issueTestResults(testRes).first;
-                    System.out.println("Scan this QR by Sirius App for receiving the Covid test result " + qr);
+                    Invitation labInvitation = lab.issueTestResults(testRes).second;
+                    smartphone.acceptInvitation(labInvitation);
                 }
                 break;
                 case 2: {
@@ -150,13 +172,13 @@ public class Main {
                             setDate(timestamp).
                             setFlight("KC 1234").
                             setSeat("1A");
-                    String qr = airCompany.register(boardingPass).first;
-                    System.out.println("Scan this QR by Sirius App for receiving the boarding pass " + qr);
+                    Invitation acInvitation = airCompany.register(boardingPass).second;
+                    smartphone.acceptInvitation(acInvitation);
                 }
                 break;
                 case 3: {
-                    String qr = airport.enterToTerminal().first;
-                    System.out.println("Scan this QR by Sirius App to enter to the terminal " + qr);
+                    Invitation acInvitation = airport.enterToTerminal().second;
+                    smartphone.acceptInvitation(acInvitation);
                 } break;
                 case 4: {
                     loop = false;
@@ -167,5 +189,6 @@ public class Main {
         airCompany.stop();
         airport.stop();
         lab.stop();
+        smartphone.stop();
     }
 }

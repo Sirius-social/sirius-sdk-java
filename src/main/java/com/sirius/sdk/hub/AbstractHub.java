@@ -87,6 +87,10 @@ public abstract class AbstractHub implements Closeable {
         return agent;
     }
 
+    public Config getConfig() {
+        return config;
+    }
+
     public AbstractAgent getAgent() {
         return agent;
     }

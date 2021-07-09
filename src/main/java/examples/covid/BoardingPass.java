@@ -2,7 +2,7 @@ package examples.covid;
 
 import org.json.JSONObject;
 
-class BoardingPass extends JSONObject {
+public class BoardingPass extends JSONObject {
 
     public BoardingPass() {
         super();

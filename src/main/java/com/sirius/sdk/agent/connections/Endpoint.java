@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.connections;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +23,10 @@ public class Endpoint {
         this.routingKeys = routingKeys;
     }
 
-
+    public Endpoint(String address) {
+        this.address = address;
+        this.routingKeys = new ArrayList<>();
+    }
 
     public String getAddress() {
         return address;

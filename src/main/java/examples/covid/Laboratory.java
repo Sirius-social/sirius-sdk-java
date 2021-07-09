@@ -79,7 +79,7 @@ public class Laboratory extends BaseParticipant {
         return res;
     }
 
-    public String issueTestResults(CovidTest testRes) {
+    public Pair<String, Invitation> issueTestResults(CovidTest testRes) {
         try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
@@ -98,7 +98,7 @@ public class Laboratory extends BaseParticipant {
                 return null;
 
             testResults.put(connectionKey, testRes);
-            return qrUrl;
+            return new Pair<>(qrUrl, invitation);
         }
     }
 

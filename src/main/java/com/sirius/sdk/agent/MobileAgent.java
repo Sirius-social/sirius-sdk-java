@@ -1,12 +1,17 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
 import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.coprotocols.*;
+import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.wallet.MobileWallet;
+import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
@@ -25,20 +30,24 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 public class MobileAgent extends AbstractAgent {
 
     JSONObject walletConfig = null;
     JSONObject walletCredentials = null;
     int timeoutSec = 60;
+    String mediatorAddress;
 
     Wallet indyWallet;
+    WebSocketConnector webSocket;
 
     class MobileAgentEvents implements AgentEvents {
 
@@ -52,9 +61,11 @@ public class MobileAgent extends AbstractAgent {
 
     List<MobileAgentEvents> events = new ArrayList<>();
 
-    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
+    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials, String mediatorAddress) {
         this.walletConfig = walletConfig;
         this.walletCredentials = walletCredentials;
+        this.mediatorAddress = mediatorAddress;
+        webSocket = new WebSocketConnector(this.mediatorAddress, "", null);
     }
 
     @Override
@@ -71,6 +82,16 @@ public class MobileAgent extends AbstractAgent {
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
+
+        final MobileAgent fAgent = this;
+        webSocket.readCallback = new Function<byte[], Void>() {
+            @Override
+            public Void apply(byte[] bytes) {
+                fAgent.receiveMsg(bytes);
+                return null;
+            }
+        };
+        webSocket.open();
     }
 
     @Override
@@ -84,16 +105,23 @@ public class MobileAgent extends AbstractAgent {
     }
 
     @Override
-    public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk, String endpoint, String my_vk, List<String> routing_keys) {
+    public void sendMessage(Message message, List<String> their_vk, String endpoint, String my_vk, List<String> routing_keys) {
         if (!routing_keys.isEmpty())
             throw new RuntimeException("Not yet supported!");
 
-        if (endpoint.startsWith("http")) {
+        byte[] cryptoMsg = null;
+        try {
             JSONArray receivers = new JSONArray(their_vk.toArray());
+            cryptoMsg = Crypto.packMessage(
+                    indyWallet, receivers.toString(),
+                    my_vk, message.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (endpoint.startsWith("http")) {
             try {
-                byte[] cryptoMsg = Crypto.packMessage(
-                        indyWallet, receivers.toString(),
-                        my_vk, message.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
                 HttpClient httpClient = HttpClients.createDefault();
                 HttpPost httpPost = new HttpPost(endpoint);
                 httpPost.setHeader("content-type", "application/ssi-agent-wire");
@@ -101,15 +129,22 @@ public class MobileAgent extends AbstractAgent {
                 HttpResponse response = httpClient.execute(httpPost);
                 int status = response.getStatusLine().getStatusCode();
                 if (status == 200 || status == 202) {
-                    return new Pair<>(true, null);
+                    return;
                 }
-            } catch (IndyException | InterruptedException | ExecutionException | TimeoutException | IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else if (endpoint.startsWith("ws")) {
+            webSocket.write(cryptoMsg);
+            return;
         } else {
             throw new RuntimeException("Not yet supported!");
         }
-        return new Pair<>(false, null);
+        return;
+    }
+
+    public void sendMessageToMediator(Message message) {
+        webSocket.write(message);
     }
 
     public byte[] packMessage(Message msg, String theirVk) {
@@ -146,7 +181,9 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public void close() {
-
+        if (webSocket != null) {
+            webSocket.close();
+        }
     }
 
     @Override
