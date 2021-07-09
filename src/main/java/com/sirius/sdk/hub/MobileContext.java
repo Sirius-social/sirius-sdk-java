@@ -1,4 +1,6 @@
 package com.sirius.sdk.hub;
+import com.sirius.sdk.agent.BaseSender;
+
 import org.json.JSONObject;
 
 public class MobileContext extends Context {
@@ -36,6 +38,11 @@ public class MobileContext extends Context {
 
         public MobileContextBuilder setWalletCredentials(JSONObject walletCredentials) {
             config.walletCredentials = walletCredentials;
+            return this;
+        }
+
+        public MobileContextBuilder setSender(BaseSender sender) {
+            config.sender = sender;
             return this;
         }
 

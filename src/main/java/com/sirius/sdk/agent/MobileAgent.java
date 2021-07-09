@@ -7,8 +7,6 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.wallet.MobileWallet;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.apache.http.HttpResponse;
@@ -21,7 +19,6 @@ import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -38,6 +35,28 @@ public class MobileAgent extends AbstractAgent {
     JSONObject walletCredentials = null;
     int timeoutSec = 60;
 
+    public void setSender(BaseSender sender) {
+        this.sender = sender;
+    }
+
+    BaseSender sender = new BaseSender() {
+        @Override
+        public boolean sendTo(String endpoint, byte[] data) {
+            HttpClient httpClient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(endpoint);
+            httpPost.setHeader("content-type", "application/ssi-agent-wire");
+            httpPost.setEntity(new ByteArrayEntity(data));
+            HttpResponse response = null;
+            try {
+                response = httpClient.execute(httpPost);
+                int status = response.getStatusLine().getStatusCode();
+                return status == 200 || status == 202;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+    };
     Wallet indyWallet;
 
     class MobileAgentEvents implements AgentEvents {
@@ -55,6 +74,7 @@ public class MobileAgent extends AbstractAgent {
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
         this.walletCredentials = walletCredentials;
+        this.sender = sender;
     }
 
     @Override
@@ -94,7 +114,11 @@ public class MobileAgent extends AbstractAgent {
                 byte[] cryptoMsg = Crypto.packMessage(
                         indyWallet, receivers.toString(),
                         my_vk, message.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
-                HttpClient httpClient = HttpClients.createDefault();
+                if(sender!=null){
+                  boolean isSend = sender.sendTo(endpoint,cryptoMsg);
+                  return new Pair<>(isSend, null);
+                }
+              /*  HttpClient httpClient = HttpClients.createDefault();
                 HttpPost httpPost = new HttpPost(endpoint);
                 httpPost.setHeader("content-type", "application/ssi-agent-wire");
                 httpPost.setEntity(new ByteArrayEntity(cryptoMsg));
@@ -102,8 +126,8 @@ public class MobileAgent extends AbstractAgent {
                 int status = response.getStatusLine().getStatusCode();
                 if (status == 200 || status == 202) {
                     return new Pair<>(true, null);
-                }
-            } catch (IndyException | InterruptedException | ExecutionException | TimeoutException | IOException e) {
+                }*/
+            } catch (IndyException | InterruptedException | ExecutionException | TimeoutException e) {
                 e.printStackTrace();
             }
         } else {
@@ -128,11 +152,21 @@ public class MobileAgent extends AbstractAgent {
         try {
             byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
             JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+            Object message = unpackedMessage.opt("message");
+            JSONObject messageObj = null;
+            if(message!=null){
+                if(message instanceof JSONObject){
+                    messageObj = (JSONObject)message;
+                }
+                if(message instanceof String){
+                    messageObj = new JSONObject((String)message);
+                }
+            }
             JSONObject eventMessage = new JSONObject().
                     put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
                     put("content_type", "application/ssi-agent-wire").
                     put("@id", UUID.randomUUID()).
-                    put("message", unpackedMessage.optJSONObject("message")).
+                    put("message", messageObj).
                     put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
             if (unpackedMessage.has("sender_verkey")) {
                 eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));

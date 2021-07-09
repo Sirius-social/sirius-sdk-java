@@ -1,6 +1,7 @@
 package com.sirius.sdk.hub;
 
 import com.sirius.sdk.agent.AbstractAgent;
+import com.sirius.sdk.agent.BaseSender;
 import com.sirius.sdk.agent.MobileAgent;
 import com.sirius.sdk.agent.connections.Endpoint;
 
@@ -16,6 +17,7 @@ public class MobileHub extends AbstractHub {
         public JSONObject walletCredentials = null;
         public String indyEndpoint = null;
         public String serverUri = null;
+        public BaseSender sender = null;
     }
     public String serverUri = null;
     public MobileHub(MobileHub.Config config) {
@@ -34,7 +36,8 @@ public class MobileHub extends AbstractHub {
         agent = new MobileAgent(((Config) config).walletConfig, ((Config) config).walletCredentials);
         List<Endpoint> points = new ArrayList<>();
         points.add(new Endpoint(((Config) config).indyEndpoint, new ArrayList<>(), true));
-        agent.setEndpoints(points);
-        agent.open();
+        getAgent().setEndpoints(points);
+        getAgent().setSender(((Config) config).sender);
+        getAgent().open();
     }
 }
