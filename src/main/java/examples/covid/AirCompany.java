@@ -82,7 +82,7 @@ public class AirCompany extends BaseParticipant {
         return res;
     }
 
-    public String register(BoardingPass boardingPass) {
+    public Pair<String, Invitation> register(BoardingPass boardingPass) {
         try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
@@ -101,7 +101,7 @@ public class AirCompany extends BaseParticipant {
                 return null;
 
             boardingPasses.put(connectionKey, boardingPass);
-            return qrUrl;
+            return new Pair<>(qrUrl, invitation);
         }
     }
 

@@ -1,7 +1,6 @@
 package com.sirius.sdk.base;
 
 import com.neovisionaries.ws.client.*;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.StringUtils;
 
@@ -11,22 +10,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WebSocketConnector extends BaseConnector {
-
 
     Logger log = Logger.getLogger(WebSocketConnector.class.getName());
     public int defTimeout = 30;
     Charset encoding = StandardCharsets.UTF_8;
     String serverAddress;
     String path;
-    byte[] credentials;
+    byte[] credentials = null;
     WebSocket webSocket;
+
+    public Function<byte[], Void> readCallback = null;
 
     public WebSocketConnector(int defTimeout, Charset encoding, String serverAddress, String path, byte[] credentials) {
         this.defTimeout = defTimeout;
@@ -202,8 +200,10 @@ public class WebSocketConnector extends BaseConnector {
                     .addListener(webSocketListener)
                     .addExtension(WebSocketExtension.PERMESSAGE_DEFLATE)
                     .setPingInterval(60 * 3 * 1000).
-                            addHeader("origin", serverAddress).
-                            addHeader("credentials", StringUtils.bytesToString(credentials));
+                            addHeader("origin", serverAddress);
+            if (this.credentials != null) {
+                webSocket.addHeader("credentials", StringUtils.bytesToString(credentials));
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -246,27 +246,13 @@ public class WebSocketConnector extends BaseConnector {
 
 
     private byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
-        //log.log(Level.INFO, frame.getPayloadText());
-        if (exception != null) {
-            //  throw  new SiriusConnectionClosed();
-        }
         if (frame != null) {
             readFuture.complete(frame.getPayload());
+            if (readCallback != null)
+                readCallback.apply(frame.getPayload());
             return frame.getPayload();
         }
         return null;
-   /*     try:
-        msg = await self._ws.receive(timeout=timeout)
-        except asyncio.TimeoutError as e:
-        raise SiriusTimeoutIO() from e
-        if msg.type in [aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.CLOSING, aiohttp.WSMsgType.CLOSED]:
-        raise SiriusConnectionClosed()
-        elif msg.type == aiohttp.WSMsgType.TEXT:
-        return msg.data.encode(self.ENC)
-        elif msg.type == aiohttp.WSMsgType.BINARY:
-        return msg.data
-        elif msg.type == aiohttp.WSMsgType.ERROR:
-        raise SiriusIOError()*/
     }
 
 
@@ -284,65 +270,3 @@ public class WebSocketConnector extends BaseConnector {
         return true;
     }
 }
-
-
-  /*  WebSocket ws;
-    private static final int TIMEOUT = 15000;
-
-    private void connect() {
-
-    }*/
-
-/*
-    DEF_TIMEOUT = 30.0
-            ENC = 'utf-8'
-
-            def __init__(
-            self, server_address: str, path: str, credentials: bytes,
-            timeout: float=DEF_TIMEOUT, loop: asyncio.AbstractEventLoop=None
-            ):
-            self.__session = aiohttp.ClientSession(
-            loop=loop,
-            timeout=aiohttp.ClientTimeout(total=timeout),
-            headers={
-            'origin': server_address,
-            'credentials': credentials.decode('ascii')
-            }
-            )
-            self._url = urljoin(server_address, path)
-            self._ws = None
-
-@property
-    def is_open(self):
-            return self._ws is not None
-
-            async def open(self):
-        if not self.is_open:
-        self._ws = await self.__session.ws_connect(url=self._url)
-
-        async def close(self):
-        if not self.is_open:
-        await self._ws.close()
-        self._ws = None
-
-        async def read(self, timeout: int=None) -> bytes:
-        try:
-        msg = await self._ws.receive(timeout=timeout)
-        except asyncio.TimeoutError as e:
-        raise SiriusTimeoutIO() from e
-        if msg.type in [aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.CLOSING, aiohttp.WSMsgType.CLOSED]:
-        raise SiriusConnectionClosed()
-        elif msg.type == aiohttp.WSMsgType.TEXT:
-        return msg.data.encode(self.ENC)
-        elif msg.type == aiohttp.WSMsgType.BINARY:
-        return msg.data
-        elif msg.type == aiohttp.WSMsgType.ERROR:
-        raise SiriusIOError()
-
-        async def write(self, message: Union[Message, bytes]) -> bool:
-        if isinstance(message, Message):
-        payload = message.serialize().encode(self.ENC)
-        else:
-        payload = message
-        await self._ws.send_bytes(payload)
-        return True*/

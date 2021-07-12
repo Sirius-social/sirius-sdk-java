@@ -42,6 +42,8 @@ public class CloudAgent extends AbstractAgent {
 
     AgentRPC rpc;
 
+    CloudAgentEvents events;
+
     /**
      * @param serverAddress example https://my-cloud-provider.com
      * @param credentials   credentials that point websocket connection to your agent and server-side services like
@@ -144,20 +146,14 @@ public class CloudAgent extends AbstractAgent {
      * @return
      */
     @Override
-    public Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
+    public void sendMessage(Message message, List<String> their_vk,
                                               String endpoint, String my_vk, List<String> routing_keys) {
         checkIsOpen();
         try {
-            Message message1 = rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
-            return new Pair<>(true, message1);
-        } catch (SiriusConnectionClosed siriusConnectionClosed) {
-            siriusConnectionClosed.printStackTrace();
-        } catch (SiriusInvalidPayloadStructure siriusInvalidPayloadStructure) {
-            siriusInvalidPayloadStructure.printStackTrace();
-        } catch (SiriusRPCError siriusRPCError) {
-            siriusRPCError.printStackTrace();
+            rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return new Pair<>(false, null);
     }
 
     public void close() {
@@ -303,6 +299,11 @@ public class CloudAgent extends AbstractAgent {
     public void release() {
         new RemoteCallWrapper<Void>(rpc){}.
                 remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/admin/1.0/release");
+    }
+
+    public CloudAgentEvents getEvents() {
+        checkIsOpen();
+        return events;
     }
 }
 

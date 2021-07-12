@@ -40,7 +40,7 @@ public class Airport extends BaseParticipant {
         this.dkmsName = dkmsName;
     }
 
-    public String enterToTerminal() {
+    public Pair<String, Invitation> enterToTerminal() {
         try (Context context = new CloudContext(config)) {
             String connectionKey = context.getCrypto().createKey();
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
@@ -52,9 +52,8 @@ public class Airport extends BaseParticipant {
                     setEndpoint(myEndpoint.getAddress()).
                     build();
 
-            String qrContent = invitation.invitationUrl();
-
-            return context.generateQrCode(qrContent);
+            String qrContent = context.generateQrCode(invitation.invitationUrl());
+            return new Pair<>(qrContent, invitation);
         }
     }
 

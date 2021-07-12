@@ -1,6 +1,5 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.CloudAgentEvents;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -13,24 +12,20 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.storage.abstract_storage.AbstractImmutableCollection;
 import com.sirius.sdk.utils.Pair;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbstractAgent extends TransportLayer {
 
+    List<Endpoint> endpoints = new ArrayList<>();
     public void setEndpoints(List<Endpoint> endpoints) {
         this.endpoints = endpoints;
     }
 
-    List<Endpoint> endpoints;
     Map<String, Ledger> ledgers = new HashMap<>();
     WalletPairwiseList pairwiseList;
     AbstractWallet wallet;
     MicroledgerList microledgers;
     AbstractImmutableCollection storage;
-    CloudAgentEvents events;
 
     public abstract void open();
 
@@ -54,7 +49,7 @@ public abstract class AbstractAgent extends TransportLayer {
      * @param routing_keys Routing key of recipient
      * @return
      */
-    public abstract Pair<Boolean, Message> sendMessage(Message message, List<String> their_vk,
+    public abstract void sendMessage(Message message, List<String> their_vk,
                                               String endpoint, String my_vk, List<String> routing_keys);
 
     public void sendTo(Message message, Pairwise to) {
@@ -68,11 +63,6 @@ public abstract class AbstractAgent extends TransportLayer {
     public abstract Listener subscribe();
 
     public abstract String generateQrCode(String value);
-
-    public CloudAgentEvents getEvents() {
-        checkIsOpen();
-        return events;
-    }
 
     public AbstractWallet getWallet() {
         checkIsOpen();

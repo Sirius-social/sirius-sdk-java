@@ -11,8 +11,11 @@ import java.util.List;
 
 public class LedgerMobile extends AbstractLedger {
 
-    public LedgerMobile(Wallet wallet) {
+    Wallet wallet;
+    int timeoutSec = 60;
 
+    public LedgerMobile(Wallet wallet) {
+        this.wallet = wallet;
     }
 
     @Override
