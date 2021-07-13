@@ -6,7 +6,14 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClients;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -74,7 +81,12 @@ public class Main {
                 "BNxpmTgs9B3yMURa1ta7avKuBA5wcBp5ZmXfqPFPYGAP");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpGet get = new HttpGet("http://mediator.socialsirius.com:8000/invitation");
+        HttpResponse response = httpClient.execute(get);
+        response.getEntity().toString();
+
         CredInfo medCredInfo;
         try (Context c = new CloudContext(labConfig)) {
             medCredInfo = Laboratory.createMedCreds(c, LAB_DID, DKMS_NAME);
