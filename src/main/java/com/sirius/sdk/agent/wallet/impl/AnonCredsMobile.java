@@ -6,15 +6,24 @@ import com.sirius.sdk.errors.indy_exceptions.DuplicateMasterSecretNameException;
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
 import com.sirius.sdk.utils.Pair;
 import com.sirius.sdk.utils.Triple;
+
+import org.hyperledger.indy.sdk.IndyException;
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class AnonCredsMobile extends AbstractAnonCreds {
 
-    public AnonCredsMobile(Wallet wallet) {
+    Wallet wallet;
+    int timeoutSec = 60;
 
+    public AnonCredsMobile(Wallet wallet) {
+            this.wallet = wallet;
     }
 
     @Override
@@ -139,11 +148,21 @@ public class AnonCredsMobile extends AbstractAnonCreds {
 
     @Override
     public String generateNonce() {
+        try {
+            return  Anoncreds.generateNonce().get(timeoutSec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     @Override
     public String toUnqualified(String entity) {
+        try {
+            return Anoncreds.toUnqualified(entity).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 }
