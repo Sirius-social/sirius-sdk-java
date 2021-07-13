@@ -211,9 +211,33 @@ public class MobileAgent extends AbstractAgent {
 
     public void receiveMsg(byte[] bytes) {
         try {
-            byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
-            JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
-            Object message = unpackedMessage.opt("message");
+
+           /* try {
+                JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
+                if (payload.has("protected")) {
+                    String message = p2p.unpack(payload.toString());
+                    return new Message(message);
+                } else {
+
+                    return new Message(payload.toString());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+
+            }*/
+            Object message = null;
+            String recipient_verkey = null;
+            String sender_verkey = null;
+            JSONObject payload = new JSONObject(new String(bytes, StandardCharsets.US_ASCII));
+            if (payload.has("protected")) {
+                byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
+                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                message = unpackedMessage.opt("message");
+                recipient_verkey = unpackedMessage.optString("recipient_verkey");
+                sender_verkey = unpackedMessage.optString("sender_verkey");
+            } else {
+                message = payload;
+            }
             JSONObject messageObj = null;
             if(message!=null){
                 if(message instanceof JSONObject){
@@ -228,9 +252,9 @@ public class MobileAgent extends AbstractAgent {
                     put("content_type", "application/ssi-agent-wire").
                     put("@id", UUID.randomUUID()).
                     put("message", messageObj).
-                    put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
-            if (unpackedMessage.has("sender_verkey")) {
-                eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+                    put("recipient_verkey",recipient_verkey );
+            if (sender_verkey!=null) {
+                eventMessage.put("sender_verkey", sender_verkey);
             }
             for (MobileAgentEvents e : events)
                 e.future.complete(new Message(eventMessage));
