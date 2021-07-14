@@ -19,8 +19,9 @@ public class MobileWallet implements AbstractWallet {
         crypto = new CryptoMobile(wallet);
         cache = new CacheMobile(wallet);
         ledger = new LedgerMobile(wallet);
-        pairwise = new PairwiseMobile(wallet);
         nonSecrets = new NonSecretsMobile(wallet);
+        pairwise = new PairwiseMobile(wallet,nonSecrets);
+
     }
 
     @Override
