@@ -110,6 +110,8 @@ public class Inviter extends BaseConnectionStateMachine {
                     log.info("100% - Terminated with error");
                     return null;
                 }
+            }else{
+                log.info("100% - Terminated with error");
             }
         } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
             siriusPendingOperation.printStackTrace();

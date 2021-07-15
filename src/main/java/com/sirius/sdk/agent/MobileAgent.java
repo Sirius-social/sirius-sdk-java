@@ -152,7 +152,7 @@ public class MobileAgent extends AbstractAgent {
         if (!routing_keys.isEmpty())
             throw new RuntimeException("Not yet supported!");
 
-        byte[] cryptoMsg = packMessage(message, their_vk);
+        byte[] cryptoMsg = packMessage(message, my_vk,their_vk);
 
                 if(sender!=null){
                   boolean isSend = sender.sendTo(endpoint,cryptoMsg);
@@ -182,16 +182,13 @@ public class MobileAgent extends AbstractAgent {
         return;*/
     }
 
-   /* public void sendMessageToMediator(Message message) {
-        webSocket.write(message);
-    }
-*/
-    public byte[] packMessage(Message msg, List<String> theirVk) {
+
+    public byte[] packMessage(Message msg, String myVk,List<String> theirVk) {
         JSONArray receivers = new JSONArray(theirVk.toArray());
         try {
             return Crypto.packMessage(
                     indyWallet, receivers.toString(),
-                    null, msg.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
+                    myVk, msg.getMessageObj().toString().getBytes(StandardCharsets.UTF_8)).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }

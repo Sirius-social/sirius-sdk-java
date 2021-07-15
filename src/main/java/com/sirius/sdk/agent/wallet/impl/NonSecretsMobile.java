@@ -98,7 +98,6 @@ public class NonSecretsMobile extends AbstractNonSecrets {
         options.setRetrieveRecords(true);
         options.setRetrieveTotalCount(true);
         String optionStr = options.serialize();
-
         try {
             WalletSearch search =  WalletSearch.open(wallet,type,query,optionStr).get(timeoutSec, TimeUnit.SECONDS);
            String searchListString =  WalletSearch.searchFetchNextRecords(wallet,search,limit).get(timeoutSec, TimeUnit.SECONDS);
@@ -111,17 +110,19 @@ public class NonSecretsMobile extends AbstractNonSecrets {
                 JSONObject searchObj = new JSONObject(searchListString);
                 JSONArray records = searchObj.optJSONArray("records");
                 List<String> lis = new ArrayList<>();
-                for(int i=0;i<records.length();i++){
-                   Object object =  records.get(i);
-                   if(object instanceof String){
-                       lis.add((String) object);
-                   }
-                    if(object instanceof JSONObject){
-                        lis.add(((JSONObject) object).toString());
+                if(records!=null){
+                    for(int i=0;i<records.length();i++){
+                        Object object =  records.get(i);
+                        if(object instanceof String){
+                            lis.add((String) object);
+                        }
+                        if(object instanceof JSONObject){
+                            lis.add(((JSONObject) object).toString());
+                        }
                     }
                 }
                 Integer totalCount = searchObj.optInt("totalCount");
-                  return new Pair<>(lis,totalCount);
+                return new Pair<>(lis,totalCount);
             }
 
         } catch (Exception e) {
