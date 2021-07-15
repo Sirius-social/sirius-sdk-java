@@ -9,7 +9,9 @@ public class Type {
 
 
     public static final Pattern MTURI_RE = Pattern.compile("(.*?)([a-z0-9._-]+)/(\\d[^/]*)/([a-z0-9._-]+)$");
+    public static final Pattern MTURI_PROBLEM_REPORT_RE = Pattern.compile("(.*?)([a-z0-9._-]+)/(\\d[^/]*)/([a-z0-9._-]+)/([a-z0-9._-]+)$");
     public static final String FORMAT_PATTERN = "%s%s/%s/%s";
+    public static final String FORMAT_PATTERN_PROBLEM_REPORT = "%s%s/%s/%s/%s";
     String docUri;
 
     public String getDocUri() {
@@ -81,14 +83,24 @@ public class Type {
      */
     public static Type fromStr(String type) throws SiriusInvalidType {
         Matcher matcher = MTURI_RE.matcher(type);
-        if (!matcher.matches()) {
+        Matcher matcherProblemReport = MTURI_PROBLEM_REPORT_RE.matcher(type);
+        if (!matcher.matches() && !matcherProblemReport.matches()) {
             throw new SiriusInvalidType("Invalid message type");
         }
-        if (matcher.groupCount() >= 4) {
-            return new Type(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4));
-        } else {
-            throw new SiriusInvalidType("Invalid message type");
+        if (matcherProblemReport.matches()) {
+            if (matcherProblemReport.groupCount() >= 5) {
+                return new Type(matcherProblemReport.group(1), matcherProblemReport.group(2), matcherProblemReport.group(3), matcherProblemReport.group(5));
+            } else {
+                throw new SiriusInvalidType("Invalid message type");
+            }
         }
-
+        if (matcher.matches()) {
+            if (matcher.groupCount() >= 4) {
+                return new Type(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4));
+            } else {
+                throw new SiriusInvalidType("Invalid message type");
+            }
+        }
+        throw new SiriusInvalidType("Invalid message type");
     }
 }
