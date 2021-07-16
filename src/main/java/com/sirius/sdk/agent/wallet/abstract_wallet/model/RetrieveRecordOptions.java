@@ -9,6 +9,19 @@ public class RetrieveRecordOptions implements JsonSerializable<RetrieveRecordOpt
 
     boolean retrieveType;
     boolean retrieveValue;
+    boolean retrieveTags;
+
+    Boolean retrieveTotalCount;
+    Boolean retrieveRecords;
+
+    public void setRetrieveTotalCount(boolean retrieveTotalCount) {
+        this.retrieveTotalCount = retrieveTotalCount;
+    }
+
+    public void setRetrieveRecords(boolean retrieveRecords) {
+        this.retrieveRecords = retrieveRecords;
+    }
+
 
     public RetrieveRecordOptions() {
     }
@@ -19,7 +32,7 @@ public class RetrieveRecordOptions implements JsonSerializable<RetrieveRecordOpt
         this.retrieveTags = retrieveTags;
     }
 
-    boolean retrieveTags;
+
 
     @Override
     public String serialize() {
