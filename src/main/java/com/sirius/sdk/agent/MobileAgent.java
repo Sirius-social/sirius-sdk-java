@@ -21,6 +21,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.wallet.Wallet;
+import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -68,13 +69,15 @@ public class MobileAgent extends AbstractAgent {
     public void open() {
         try {
             Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            if (!e.getMessage().contains("WalletExistsException"))
+                e.printStackTrace();
         }
         try {
             this.indyWallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            if (!e.getMessage().contains("WalletAlreadyOpenedException"))
+                e.printStackTrace();
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
@@ -138,17 +141,30 @@ public class MobileAgent extends AbstractAgent {
 
     public void receiveMsg(byte[] bytes) {
         try {
-            byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
-            JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
-            JSONObject eventMessage = new JSONObject().
-                    put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
-                    put("content_type", "application/ssi-agent-wire").
-                    put("@id", UUID.randomUUID()).
-                    put("message", unpackedMessage.optJSONObject("message")).
-                    put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
-            if (unpackedMessage.has("sender_verkey")) {
-                eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+            byte[] unpackedMessageBytes;
+            JSONObject eventMessage;
+            if (new JSONObject(new String(bytes)).has("protected")) {
+                unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
+                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                eventMessage = new JSONObject().
+                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                        put("content_type", "application/ssi-agent-wire").
+                        put("@id", UUID.randomUUID()).
+                        put("message", unpackedMessage.optJSONObject("message")).
+                        put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
+                if (unpackedMessage.has("sender_verkey")) {
+                    eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+                }
+            } else {
+                unpackedMessageBytes = bytes;
+                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                eventMessage = new JSONObject().
+                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                        put("content_type", "application/ssi-agent-wire").
+                        put("@id", UUID.randomUUID()).
+                        put("message", unpackedMessage);
             }
+
             for (MobileAgentEvents e : events)
                 e.future.complete(new Message(eventMessage));
         } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
