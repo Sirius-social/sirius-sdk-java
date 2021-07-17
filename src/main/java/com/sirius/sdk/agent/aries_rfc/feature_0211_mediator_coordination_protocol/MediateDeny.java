@@ -7,7 +7,7 @@ import org.json.JSONObject;
 public class MediateDeny extends CoordinateMediationMessage {
 
     static {
-        Message.registerMessageClass(MediateDeny.class, CoordinateMediationMessage.PROTOCOL, "mediate-request");
+        Message.registerMessageClass(MediateDeny.class, CoordinateMediationMessage.PROTOCOL, "mediate-deny");
     }
 
     public MediateDeny(String message) {

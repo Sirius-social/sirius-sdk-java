@@ -1,10 +1,7 @@
 package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.connections.AgentEvents;
-import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.TheirEndpointMobileCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.*;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
@@ -150,7 +147,7 @@ public class MobileAgent extends AbstractAgent {
                         put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
                         put("content_type", "application/ssi-agent-wire").
                         put("@id", UUID.randomUUID()).
-                        put("message", unpackedMessage.optJSONObject("message")).
+                        put("message", new JSONObject(unpackedMessage.optString("message"))).
                         put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
                 if (unpackedMessage.has("sender_verkey")) {
                     eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
@@ -212,27 +209,27 @@ public class MobileAgent extends AbstractAgent {
     }
 
     @Override
-    public PairwiseCoProtocolTransport spawn(Pairwise pairwise) {
+    public AbstractCoProtocolTransport spawn(Pairwise pairwise) {
+        return new PairwiseMobileCoProtocolTransport(this, pairwise);
+    }
+
+    @Override
+    public AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, Pairwise pairwise) {
+    public AbstractCoProtocolTransport spawn(String thid) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid) {
+    public AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise, String pthid) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, Pairwise pairwise, String pthid) {
-        return null;
-    }
-
-    @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, String pthid) {
+    public AbstractCoProtocolTransport spawn(String thid, String pthid) {
         return null;
     }
 }

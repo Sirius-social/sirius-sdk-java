@@ -110,7 +110,7 @@ public class WalletPairwiseList extends AbstractPairwiseList {
             if (results.first.size() > 0) {
                 String raw = results.first.get(0);
                 JSONObject metadataObj = new JSONObject(raw);
-                JSONObject metadata = metadataObj.getJSONObject("metadata");
+                JSONObject metadata = new JSONObject(metadataObj.get("metadata").toString());
                 return restorePairwise(metadata);
             }
         }

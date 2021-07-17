@@ -29,7 +29,6 @@ public class Invitee extends BaseConnectionStateMachine {
         this.context = context;
         this.me = me;
         this.myEndpoint = myEndpoint;
-
     }
 
     public Pairwise createConnection(Invitation invitation, String mylabel, DidDoc didDoc) {

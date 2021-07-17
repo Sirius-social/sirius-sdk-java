@@ -5,6 +5,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protoco
 import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.MediateRequest;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
@@ -15,13 +16,23 @@ import java.util.ArrayList;
 
 public class MobileContext extends Context {
 
+    static final String MEDIATOR_ENDPOINTS = "MEDIATOR_ENDPOINTS";
+
     Pairwise mediatorPw = null;
     int timeToLiveSec = 60;
 
     public MobileContext(MobileHub.Config config) {
         super(new MobileHub(config));
         connectToMediator();
-        askForMediation();
+
+        Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
+        String myEndpoint = getMyEndpoint(invitation.recipientKeys().get(0));
+        if (myEndpoint != null) {
+            Endpoint endpoint = new Endpoint(myEndpoint);
+            getEndpoints().add(endpoint);
+        } else {
+            askForMediation();
+        }
     }
 
     public static class MobileContextBuilder {
@@ -54,7 +65,10 @@ public class MobileContext extends Context {
     public void connectToMediator() {
         Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
 
-        Pair<String, String> didVk = getDid().createAndStoreMyDid();
+        Pair<String, String> didVk = getDidVkForMediator(invitation.recipientKeys().get(0));
+        if (didVk == null) {
+            didVk = getDid().createAndStoreMyDid();
+        }
         Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
         Endpoint endpoint = new Endpoint("ws://");
         Invitee invitee = new Invitee(this, me, endpoint);
@@ -62,8 +76,41 @@ public class MobileContext extends Context {
 
         if (pw != null) {
             getPairwiseList().ensureExists(pw);
-            pw = mediatorPw;
+            mediatorPw = pw;
         }
+    }
+
+    private Pair<String, String> getDidVkForMediator(String mediatorRecipientKey) {
+        String recordStr = getNonSecrets().getWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new RetrieveRecordOptions(false, true, false));
+        if (recordStr != null && !recordStr.isEmpty()) {
+            JSONObject r = new JSONObject(recordStr);
+            JSONObject v = new JSONObject(r.opt("value").toString());
+            if (v.has("my_did")) {
+                String myDid = v.optString("my_did");
+                String myVk = getDid().keyForLocalDid(myDid);
+                return new Pair<>(myDid, myVk);
+            }
+        }
+        return null;
+    }
+
+    private String getMyEndpoint(String mediatorRecipientKey) {
+        String recordStr = getNonSecrets().getWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new RetrieveRecordOptions(false, true, false));
+        if (recordStr != null && !recordStr.isEmpty()) {
+            JSONObject r = new JSONObject(recordStr);
+            JSONObject v = new JSONObject(r.opt("value").toString());
+            if (v.has("endpoint")) {
+                return v.optString("endpoint");
+            }
+        }
+        return null;
+    }
+
+    private void saveEndpoint(String mediatorRecipientKey, String myDid, String endpoint) {
+        getNonSecrets().addWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new JSONObject().
+                put("my_did", myDid).
+                put("endpoint", endpoint).
+                toString());
     }
 
     public boolean askForMediation() {
@@ -76,6 +123,8 @@ public class MobileContext extends Context {
                     MediateGrant grant = (MediateGrant) res.second;
                     Endpoint endpoint = new Endpoint(grant.getEndpointAddress(), grant.getRoutingKeys());
                     getEndpoints().add(endpoint);
+                    Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
+                    saveEndpoint(invitation.recipientKeys().get(0), mediatorPw.getMe().getDid(), endpoint.getAddress());
                     return true;
                 }
             }
