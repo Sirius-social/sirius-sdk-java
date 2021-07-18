@@ -87,7 +87,8 @@ public class NonSecretsMobile extends AbstractNonSecrets {
         try {
             return WalletRecord.get(wallet,type,id,options.serialize()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
-            e.printStackTrace();
+            if (!e.getMessage().contains("WalletItemNotFoundException"))
+                e.printStackTrace();
         }
         return null;
     }

@@ -1,6 +1,8 @@
 package com.sirius.sdk.hub;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
+import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdate;
+import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdateResponse;
 import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.MediateGrant;
 import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.MediateRequest;
 import com.sirius.sdk.agent.connections.Endpoint;
@@ -13,6 +15,8 @@ import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MobileContext extends Context {
 
@@ -132,5 +136,27 @@ public class MobileContext extends Context {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean addMediatorKeys(List<String> keys) {
+        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(
+                this, mediatorPw.getMe().getVerkey(), mediatorPw.getTheir(), new ArrayList<>(), timeToLiveSec)) {
+            KeylistUpdate keylistUpdate = KeylistUpdate.builder().
+                    addKeys(keys).
+                    build();
+            Pair<Boolean, Message> res = cp.sendAndWait(keylistUpdate);
+            if (res.first) {
+                if (res.second instanceof KeylistUpdateResponse) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean addMediatorKey(String key) {
+        return addMediatorKeys(Arrays.asList(key));
     }
 }

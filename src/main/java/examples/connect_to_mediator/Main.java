@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.UUID;
 
 
 public class Main {
@@ -137,8 +138,8 @@ public class Main {
         lab.start();
 
         Scanner in = new Scanner(System.in);
-        System.out.println("Enter your Name");
-        String fullName = in.nextLine();
+
+        String fullName = "Mike" + UUID.randomUUID();
 
         boolean loop = true;
         while (loop) {

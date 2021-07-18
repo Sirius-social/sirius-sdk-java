@@ -34,6 +34,7 @@ public class Smartphone {
             context = new MobileContext(config);
             Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
             me = new Pairwise.Me(didVk.first, didVk.second);
+            //context.addMediatorKey(me.getVerkey());
             loop = true;
             new Thread(() -> routine()).start();
         }
