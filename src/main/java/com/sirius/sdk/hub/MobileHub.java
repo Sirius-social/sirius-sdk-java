@@ -22,8 +22,7 @@ public class MobileHub extends AbstractHub {
         Config mobileConfig = (Config) config;
         agent = new MobileAgent(
                 mobileConfig.walletConfig,
-                mobileConfig.walletCredentials,
-                mobileConfig.mediatorInvitation.endpoint());
+                mobileConfig.walletCredentials);
         agent.open();
     }
 }

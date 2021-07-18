@@ -24,9 +24,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +39,7 @@ public class MobileAgent extends AbstractAgent {
     String mediatorAddress;
 
     Wallet indyWallet;
-    WebSocketConnector webSocket;
+    Map<String, WebSocketConnector> webSockets = new HashMap<>();
 
     class MobileAgentEvents implements AgentEvents {
 
@@ -55,11 +53,9 @@ public class MobileAgent extends AbstractAgent {
 
     List<MobileAgentEvents> events = new ArrayList<>();
 
-    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials, String mediatorAddress) {
+    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
         this.walletCredentials = walletCredentials;
-        this.mediatorAddress = mediatorAddress;
-        webSocket = new WebSocketConnector(this.mediatorAddress, "", null);
     }
 
     @Override
@@ -78,16 +74,6 @@ public class MobileAgent extends AbstractAgent {
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
-
-        final MobileAgent fAgent = this;
-        webSocket.readCallback = new Function<byte[], Void>() {
-            @Override
-            public Void apply(byte[] bytes) {
-                fAgent.receiveMsg(bytes);
-                return null;
-            }
-        };
-        webSocket.open();
     }
 
     @Override
@@ -118,9 +104,31 @@ public class MobileAgent extends AbstractAgent {
                 e.printStackTrace();
             }
         } else if (endpoint.startsWith("ws")) {
+            WebSocketConnector webSocket = getWebSocket(endpoint);
+            if (!webSocket.isOpen())
+                webSocket.open();
             webSocket.write(cryptoMsg);
         } else {
             throw new RuntimeException("Not yet supported!");
+        }
+    }
+
+    WebSocketConnector getWebSocket(String endpoint) {
+        if (webSockets.containsKey(endpoint)) {
+            return webSockets.get(endpoint);
+        } else {
+            WebSocketConnector webSocket = new WebSocketConnector(endpoint, "", null);
+            final MobileAgent fAgent = this;
+            webSocket.readCallback = new Function<byte[], Void>() {
+                @Override
+                public Void apply(byte[] bytes) {
+                    fAgent.receiveMsg(bytes);
+                    return null;
+                }
+            };
+            webSocket.open();
+            webSockets.put(endpoint, webSocket);
+            return webSocket;
         }
     }
 
@@ -171,8 +179,8 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public void close() {
-        if (webSocket != null) {
-            webSocket.close();
+        for (Map.Entry<String, WebSocketConnector> ws : webSockets.entrySet()) {
+            ws.getValue().close();
         }
     }
 
