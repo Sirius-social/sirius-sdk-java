@@ -78,12 +78,12 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public boolean isOpen() {
-        return false;
+        return indyWallet != null;
     }
 
     @Override
     public String getName() {
-        return null;
+        return "Mobile agent";
     }
 
     @Override
@@ -181,6 +181,11 @@ public class MobileAgent extends AbstractAgent {
     public void close() {
         for (Map.Entry<String, WebSocketConnector> ws : webSockets.entrySet()) {
             ws.getValue().close();
+        }
+        try {
+            indyWallet.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
