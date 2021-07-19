@@ -1,8 +1,6 @@
 package com.sirius.sdk.agent;
 
-import com.sirius.sdk.agent.connections.CloudAgentEvents;
-import com.sirius.sdk.agent.connections.AgentRPC;
-import com.sirius.sdk.agent.connections.BaseAgentConnection;
+import com.sirius.sdk.agent.connections.*;
 import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -15,7 +13,6 @@ import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
 import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.agent.wallet.CloudWallet;
-import com.sirius.sdk.agent.connections.RemoteCallWrapper;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.*;
 import com.sirius.sdk.messaging.Message;
@@ -183,7 +180,11 @@ public class CloudAgent extends AbstractAgent {
         } catch (SiriusFieldValueError siriusFieldValueError) {
             siriusFieldValueError.printStackTrace();
         }
-        return new Listener(events, pairwiseList);
+        return new Listener(events, this);
+    }
+
+    @Override
+    public void unsubscribe(Listener listener) {
 
     }
 

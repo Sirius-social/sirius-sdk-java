@@ -51,7 +51,7 @@ public class MobileAgent extends AbstractAgent {
         }
     }
 
-    List<MobileAgentEvents> events = new ArrayList<>();
+    List<Pair<MobileAgentEvents, Listener>> events = new ArrayList<>();
 
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
@@ -170,8 +170,8 @@ public class MobileAgent extends AbstractAgent {
                         put("message", unpackedMessage);
             }
 
-            for (MobileAgentEvents e : events)
-                e.future.complete(new Message(eventMessage));
+            for (Pair<MobileAgentEvents, Listener> e : events)
+                e.first.future.complete(new Message(eventMessage));
         } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
             e.printStackTrace();
         }
@@ -197,8 +197,19 @@ public class MobileAgent extends AbstractAgent {
     @Override
     public Listener subscribe() {
         MobileAgentEvents e = new MobileAgentEvents();
-        events.add(e);
-        return new Listener(e, pairwiseList);
+        Listener listener = new Listener(e, this);
+        events.add(new Pair<>(e, listener));
+        return new Listener(e, this);
+    }
+
+    @Override
+    public void unsubscribe(Listener listener) {
+        for (Pair<MobileAgentEvents, Listener> e : events) {
+            if (e.second == listener) {
+                events.remove(e);
+                break;
+            }
+        }
     }
 
     @Override

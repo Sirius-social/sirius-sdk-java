@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.listener;
 
+import com.sirius.sdk.agent.AbstractAgent;
 import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
 import com.sirius.sdk.agent.connections.CloudAgentEvents;
@@ -17,10 +18,11 @@ public class Listener {
 
     AgentEvents source;
     AbstractPairwiseList pairwiseResolver;
+    AbstractAgent agent;
 
-    public Listener(AgentEvents source, AbstractPairwiseList pairwiseResolver) {
+    public Listener(AgentEvents source, AbstractAgent agent) {
         this.source = source;
-        this.pairwiseResolver = pairwiseResolver;
+        this.pairwiseResolver = agent.getPairwiseList();
     }
 
     public CompletableFuture<Event> getOne() {
@@ -38,5 +40,9 @@ public class Listener {
         }
 
         return null;
+    }
+
+    public void unsubscribe() {
+        agent.unsubscribe(this);
     }
 }
