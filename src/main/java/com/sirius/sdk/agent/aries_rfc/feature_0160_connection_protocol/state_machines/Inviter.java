@@ -9,6 +9,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
@@ -64,59 +65,73 @@ public class Inviter extends BaseConnectionStateMachine {
 
         // Allocate transport channel between self and theirs by verkeys factor
         try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, me.getVerkey(), inviteeEndpoint, protocols(), timeToLiveSec)) {
-            // Step 2: build connection response
-            ConnResponse response = ConnResponse.builder().
-                    setDid(this.me.getDid()).
-                    setVerkey(this.me.getVerkey()).
-                    setEndpoint(this.myEndpoint.getAddress()).
-                    setDocUri(docUri).
-                    setDidDocExtra(didDoc).
-                    build();
-            if (request.hasPleaseAck()) {
-                response.setThreadId(request.getAckMessageId());
-            }
-            DidDoc myDidDoc = response.didDoc();
-            response.signConnection(context.getCrypto(), this.connectionKey);
-
-            log.info("80% - Step-2: Connection response");
-            Pair<Boolean, Message> okMsg = cp.sendAndWait(response);
-            if (okMsg.first) {
-                if (okMsg.second instanceof Ack || okMsg.second instanceof Ping) {
-                    // Step 3: store their did
-                    log.info("90% - Step-3: Ack received, store their DID");
-                    context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
-                    // Step 4: create pairwise
-                    Pairwise.Their their = new Pairwise.Their(theirInfo.did, request.getLabel(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
-                    JSONObject theirDidDoc = request.didDoc().getPayload();
-                    JSONObject metadata = (new JSONObject()).
-                            put("me", (new JSONObject()).
-                                    put("did", this.me.getDid()).
-                                    put("verkey", this.me.getVerkey()).
-                                    put("did_doc", myDidDoc.getPayload())).
-                            put("their", (new JSONObject().
-                                    put("did", theirInfo.did).
-                                    put("verkey", theirInfo.verkey).
-                                    put("label", request.getLabel()).
-                                    put("endpoint", (new JSONObject()).
-                                            put("address", theirInfo.endpoint).
-                                            put("routing_keys", theirInfo.routingKeys)).
-                                    put("did_doc", theirDidDoc)));
-                    Pairwise pairwise = new Pairwise(this.me, their, metadata);
-                    pairwise.getMe().setDidDoc(myDidDoc.getPayload());
-                    pairwise.getTheir().setDidDoc(theirDidDoc);
-                    log.info("100% - Pairwise established");
-                    return pairwise;
-                } else if (okMsg.second instanceof ConnProblemReport) {
-                    log.info("100% - Terminated with error");
-                    return null;
+            try {
+                // Step 2: build connection response
+                ConnResponse response = ConnResponse.builder().
+                        setDid(this.me.getDid()).
+                        setVerkey(this.me.getVerkey()).
+                        setEndpoint(this.myEndpoint.getAddress()).
+                        setDocUri(docUri).
+                        setDidDocExtra(didDoc).
+                        build();
+                if (request.hasPleaseAck()) {
+                    response.setThreadId(request.getAckMessageId());
                 }
-            }else{
+                DidDoc myDidDoc = response.didDoc();
+                response.signConnection(context.getCrypto(), this.connectionKey);
+
+                log.info("80% - Step-2: Connection response");
+                Pair<Boolean, Message> okMsg = cp.sendAndWait(response);
+                if (okMsg.first) {
+                    if (okMsg.second instanceof Ack || okMsg.second instanceof Ping) {
+                        // Step 3: store their did
+                        log.info("90% - Step-3: Ack received, store their DID");
+                        context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
+                        // Step 4: create pairwise
+                        Pairwise.Their their = new Pairwise.Their(theirInfo.did, request.getLabel(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
+                        JSONObject theirDidDoc = request.didDoc().getPayload();
+                        JSONObject metadata = (new JSONObject()).
+                                put("me", (new JSONObject()).
+                                        put("did", this.me.getDid()).
+                                        put("verkey", this.me.getVerkey()).
+                                        put("did_doc", myDidDoc.getPayload())).
+                                put("their", (new JSONObject().
+                                        put("did", theirInfo.did).
+                                        put("verkey", theirInfo.verkey).
+                                        put("label", request.getLabel()).
+                                        put("endpoint", (new JSONObject()).
+                                                put("address", theirInfo.endpoint).
+                                                put("routing_keys", theirInfo.routingKeys)).
+                                        put("did_doc", theirDidDoc)));
+                        Pairwise pairwise = new Pairwise(this.me, their, metadata);
+                        pairwise.getMe().setDidDoc(myDidDoc.getPayload());
+                        pairwise.getTheir().setDidDoc(theirDidDoc);
+                        log.info("100% - Pairwise established");
+                        return pairwise;
+                    } else if (okMsg.second instanceof ConnProblemReport) {
+                        this.problemReport = (ConnProblemReport) okMsg.second;
+                        log.info("100% - Terminated with error. " + problemReport.getMessageObj().toString());
+                        return null;
+                    } else {
+                        throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR, "Expect for connection response ack. Unexpected message type" + okMsg.second.getType());
+                    }
+                } else {
+                    log.info("100% - Terminated with error");
+                }
+            } catch (StateMachineTerminatedWithError e) {
+                this.problemReport = ConnProblemReport.builder().
+                        setProblemCode(e.getProblemCode()).
+                        setExplain(e.getExplain()).
+                        build();
+                if (e.isNotify()) {
+                    cp.send(problemReport);
+                    log.info("100% - Terminated with error. " + e.getMessage());
+                }
+            } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
+                siriusPendingOperation.printStackTrace();
                 log.info("100% - Terminated with error");
+                return null;
             }
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
-            siriusPendingOperation.printStackTrace();
-            log.info("100% - Terminated with error");
-            return null;
         }
         return null;
     }
