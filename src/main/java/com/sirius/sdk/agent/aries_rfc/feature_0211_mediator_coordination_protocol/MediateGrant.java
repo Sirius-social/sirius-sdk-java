@@ -11,7 +11,7 @@ import java.util.List;
 public class MediateGrant extends CoordinateMediationMessage {
 
     static {
-        Message.registerMessageClass(MediateGrant.class, CoordinateMediationMessage.PROTOCOL, "mediate-request");
+        Message.registerMessageClass(MediateGrant.class, CoordinateMediationMessage.PROTOCOL, "mediate-grant");
     }
 
     public MediateGrant(String message) {

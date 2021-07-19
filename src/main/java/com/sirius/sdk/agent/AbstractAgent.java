@@ -79,7 +79,6 @@ public abstract class AbstractAgent extends TransportLayer {
         return ledgers;
     }
 
-
     public AbstractMicroledgerList getMicroledgers() {
         checkIsOpen();
         return microledgers;

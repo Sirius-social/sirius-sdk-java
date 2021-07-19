@@ -77,7 +77,11 @@ public abstract class AbstractHub implements Closeable {
     }
 
     public AbstractMicroledgerList getMicroledgers() {
-        return config.microledgers;
+        if (config.microledgers != null) {
+            return config.microledgers;
+        } else {
+            return getAgentConnectionLazy().getMicroledgers();
+        }
     }
 
     public AbstractAgent getAgentConnectionLazy() {

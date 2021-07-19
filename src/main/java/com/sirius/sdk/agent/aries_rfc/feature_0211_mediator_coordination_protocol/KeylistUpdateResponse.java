@@ -3,19 +3,18 @@ package com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protoc
 import com.sirius.sdk.messaging.Message;
 import org.json.JSONObject;
 
-
-public class MediateDeny extends CoordinateMediationMessage {
+public class KeylistUpdateResponse extends CoordinateMediationMessage {
 
     static {
-        Message.registerMessageClass(MediateDeny.class, CoordinateMediationMessage.PROTOCOL, "mediate-deny");
+        Message.registerMessageClass(KeylistUpdateResponse.class, CoordinateMediationMessage.PROTOCOL, "keylist-update-response");
     }
 
-    public MediateDeny(String message) {
+    public KeylistUpdateResponse(String message) {
         super(message);
     }
 
     public static Builder<?> builder() {
-        return new MediateDenyMessageBuilder();
+        return new KeylistResponseMessageBuilder();
     }
 
     public static abstract class Builder<B extends Builder<B>> extends CoordinateMediationMessage.Builder<B> {
@@ -26,14 +25,14 @@ public class MediateDeny extends CoordinateMediationMessage {
             return jsonObject;
         }
 
-        public MediateDeny build() {
-            return new MediateDeny(generateJSON().toString());
+        public KeylistUpdateResponse build() {
+            return new KeylistUpdateResponse(generateJSON().toString());
         }
     }
 
-    private static class MediateDenyMessageBuilder extends Builder<MediateDenyMessageBuilder> {
+    private static class KeylistResponseMessageBuilder extends Builder<KeylistResponseMessageBuilder> {
         @Override
-        protected MediateDenyMessageBuilder self() {
+        protected KeylistResponseMessageBuilder self() {
             return this;
         }
     }

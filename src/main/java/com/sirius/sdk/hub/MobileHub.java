@@ -38,8 +38,7 @@ public class MobileHub extends AbstractHub {
         Config mobileConfig = (Config) config;
         agent = new MobileAgent(
                 mobileConfig.walletConfig,
-                mobileConfig.walletCredentials,
-                mobileConfig.mediatorInvitation.invitationUrl());
+                mobileConfig.walletCredentials);
         List<Endpoint> points = new ArrayList<>();
         points.add(new Endpoint(((Config) config).indyEndpoint, new ArrayList<>(), true));
         getAgent().setEndpoints(points);

@@ -1,7 +1,11 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages;
 
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConnRequest extends ConnProtocolMessage {
 
@@ -27,6 +31,12 @@ public class ConnRequest extends ConnProtocolMessage {
         String verkey = null;
         String endpoint = null;
         JSONObject didDocExtra = null;
+        List<JSONObject> connectionServices = new ArrayList<>();
+
+        public B addConnectionService(JSONObject service) {
+            connectionServices.add(service);
+            return self();
+        };
 
         public B setLabel(String label) {
             this.label = label;
@@ -68,6 +78,9 @@ public class ConnRequest extends ConnProtocolMessage {
                 jsonObject.put("connection", (new JSONObject().
                         put("DID", did).
                         put("DIDDoc", buildDidDoc(did, verkey, endpoint, extra))));
+                for (JSONObject s : connectionServices) {
+                    jsonObject.getJSONObject("connection").getJSONObject("DIDDoc").getJSONArray("service").put(s);
+                }
             }
 
             return jsonObject;

@@ -39,7 +39,6 @@ public abstract class AbstractCloudCoProtocolTransport extends AbstractCoProtoco
     List<String> routingKeys;
     boolean isSetup;
     boolean started = false;
-    List<String> protocols = new ArrayList<>();
     int timeToLiveSec = 30;
     Date dieTimestamp = null;
     List<String> pleaseAckIds = new ArrayList<>();
@@ -71,7 +70,6 @@ public abstract class AbstractCloudCoProtocolTransport extends AbstractCoProtoco
     @Override
     public void start() {
         this.dieTimestamp = null;
-        this.protocols = new ArrayList<>();
         this.checkProtocols = false;
         started = true;
     }
@@ -85,7 +83,6 @@ public abstract class AbstractCloudCoProtocolTransport extends AbstractCoProtoco
     }
 
     public void start(int timeToLiveSec) {
-        this.protocols = new ArrayList<>();
         this.checkProtocols = false;
         this.timeToLiveSec = timeToLiveSec;
         this.dieTimestamp = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);

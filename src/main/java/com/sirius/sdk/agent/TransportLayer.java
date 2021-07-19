@@ -11,13 +11,13 @@ public abstract class TransportLayer {
 
     public abstract AbstractCoProtocolTransport spawn(String my_verkey, TheirEndpoint endpoint);
 
-    public abstract AbstractCoProtocolTransport spawn(Pairwise pairwise );
+    public abstract AbstractCoProtocolTransport spawn(Pairwise pairwise);
 
-    public abstract AbstractCoProtocolTransport spawn(String thid,Pairwise pairwise);
+    public abstract AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise);
 
     public abstract AbstractCoProtocolTransport spawn(String thid);
 
-    public abstract AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise , String pthid);
+    public abstract AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise, String pthid);
 
     public abstract AbstractCoProtocolTransport spawn(String thid,  String pthid);
 

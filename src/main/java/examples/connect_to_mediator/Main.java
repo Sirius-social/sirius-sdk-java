@@ -6,6 +6,10 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.*;
 import examples.covid.*;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -14,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.UUID;
 
 
 public class Main {
@@ -49,7 +54,7 @@ public class Main {
 
     public static MobileHub.Config mobileConfig = new MobileHub.Config();
 
-    public static final String MEDIATOR_ADDRESS = "wss://mediator.socialsirius.com:8000/";
+    public static final String MEDIATOR_ADDRESS = "ws://mediator.socialsirius.com:8000";
     public static final JSONObject walletConfig = new JSONObject().
             put("id", "Wallet1").
             put("storage_type", "default");
@@ -89,7 +94,9 @@ public class Main {
         mobileConfig.walletConfig = walletConfig;
         mobileConfig.walletCredentials = walletCredentials;
         mobileConfig.mediatorInvitation = Invitation.builder().
-                setEndpoint(MEDIATOR_ADDRESS).
+                setLabel("Mediator").
+                setEndpoint("ws://mediator.socialsirius.com:8000/ws").
+                setRecipientKeys(Collections.singletonList("DjgWN49cXQ6M6JayBkRCwFsywNhomn8gdAXHJ4bb98im")).
                 build();
     }
 
@@ -131,8 +138,8 @@ public class Main {
         lab.start();
 
         Scanner in = new Scanner(System.in);
-        System.out.println("Enter your Name");
-        String fullName = in.nextLine();
+
+        String fullName = "Mike" + UUID.randomUUID();
 
         boolean loop = true;
         while (loop) {

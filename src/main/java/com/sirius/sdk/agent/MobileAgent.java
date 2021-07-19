@@ -1,10 +1,7 @@
 package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.connections.AgentEvents;
-import com.sirius.sdk.agent.coprotocols.AbstractCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.PairwiseCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.TheirEndpointMobileCoProtocolTransport;
-import com.sirius.sdk.agent.coprotocols.ThreadBasedCoProtocolTransport;
+import com.sirius.sdk.agent.coprotocols.*;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
@@ -21,14 +18,13 @@ import org.apache.http.impl.client.HttpClients;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.wallet.Wallet;
+import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,56 +43,58 @@ public class MobileAgent extends AbstractAgent {
     }
 
     BaseSender sender = new BaseSender() {
-        WebSocketConnector webSocket;
+
 
         @Override
-        public boolean sendTo(String endpoint, byte[] data) {
+        public boolean sendTo(String endpoint, byte[] cryptoMsg) {
+
             if (endpoint.startsWith("http")) {
-                HttpClient httpClient = HttpClients.createDefault();
-                HttpPost httpPost = new HttpPost(endpoint);
-                httpPost.setHeader("content-type", "application/ssi-agent-wire");
-                httpPost.setEntity(new ByteArrayEntity(data));
-                HttpResponse response = null;
                 try {
-                    response = httpClient.execute(httpPost);
-                    int status = response.getStatusLine().getStatusCode();
-                    return status == 200 || status == 202;
+                    HttpClient httpClient = HttpClients.createDefault();
+                    HttpPost httpPost = new HttpPost(endpoint);
+                    httpPost.setHeader("content-type", "application/ssi-agent-wire");
+                    httpPost.setEntity(new ByteArrayEntity(cryptoMsg));
+                    httpClient.execute(httpPost);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return false;
-            }else if(endpoint.startsWith("ws")){
-                return webSocket.write(data);
+            } else if (endpoint.startsWith("ws")) {
+                WebSocketConnector webSocket = getWebSocket(endpoint);
+                if (!webSocket.isOpen())
+                    webSocket.open();
+                webSocket.write(cryptoMsg);
+            } else {
+                throw new RuntimeException("Not yet supported!");
             }
-            return false;
+            return true;
         }
 
         @Override
         public void open() {
-            webSocket.readCallback = new Function<byte[], Void>() {
+         /*   webSocket.readCallback = new Function<byte[], Void>() {
                 @Override
                 public Void apply(byte[] bytes) {
                     receiveMsg(bytes);
                     return null;
                 }
             };
-            webSocket.open();
+            webSocket.open();*/
         }
 
         @Override
         public void close() {
-            if (webSocket != null) {
-                webSocket.close();
+            for (Map.Entry<String, WebSocketConnector> ws : webSockets.entrySet()) {
+                ws.getValue().close();
             }
         }
 
         @Override
         public void create() {
-            webSocket = new WebSocketConnector(mediatorAddress, "", null);
+           // webSocket = new WebSocketConnector(mediatorAddress, "", null);
         }
     };
     Wallet indyWallet;
-
+    Map<String, WebSocketConnector> webSockets = new HashMap<>();
 
     class MobileAgentEvents implements AgentEvents {
 
@@ -110,41 +108,37 @@ public class MobileAgent extends AbstractAgent {
 
     List<MobileAgentEvents> events = new ArrayList<>();
 
-    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials, String mediatorAddress) {
+    public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
         this.walletCredentials = walletCredentials;
-        this.mediatorAddress = mediatorAddress;
-
     }
 
     @Override
     public void open() {
         try {
             Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            if (!e.getMessage().contains("WalletExistsException"))
+                e.printStackTrace();
         }
         try {
             this.indyWallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            if (!e.getMessage().contains("WalletAlreadyOpenedException"))
+                e.printStackTrace();
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
-
-        final MobileAgent fAgent = this;
-        sender.open();
-
     }
 
     @Override
     public boolean isOpen() {
-        return this.indyWallet!=null;
+        return indyWallet != null;
     }
 
     @Override
     public String getName() {
-        return null;
+        return "Mobile agent";
     }
 
     @Override
@@ -154,36 +148,33 @@ public class MobileAgent extends AbstractAgent {
 
         byte[] cryptoMsg = packMessage(message, my_vk,their_vk);
 
-                if(sender!=null){
-                  boolean isSend = sender.sendTo(endpoint,cryptoMsg);
-                  //return new Pair<>(isSend, null);
-                }
-              /*  HttpClient httpClient = HttpClients.createDefault();
-        if (endpoint.startsWith("http")) {
-            try {
-                HttpClient httpClient = HttpClients.createDefault();
-                HttpPost httpPost = new HttpPost(endpoint);
-                httpPost.setHeader("content-type", "application/ssi-agent-wire");
-                httpPost.setEntity(new ByteArrayEntity(cryptoMsg));
-                httpClient.execute(httpPost);
-                HttpResponse response = httpClient.execute(httpPost);
-                int status = response.getStatusLine().getStatusCode();
-                if (status == 200 || status == 202) {
-                    return;
-                }*/
-           /* } catch (IOException e) {
-                e.printStackTrace();
-            }*/
-       /* } else if (endpoint.startsWith("ws")) {
-            webSocket.write(cryptoMsg);
-        } else {
-            throw new RuntimeException("Not yet supported!");
+        if(sender!=null){
+            boolean isSend = sender.sendTo(endpoint,cryptoMsg);
+            //return new Pair<>(isSend, null);
         }
-        return;*/
+
     }
 
+    WebSocketConnector getWebSocket(String endpoint) {
+        if (webSockets.containsKey(endpoint)) {
+            return webSockets.get(endpoint);
+        } else {
+            WebSocketConnector webSocket = new WebSocketConnector(endpoint, "", null);
+            final MobileAgent fAgent = this;
+            webSocket.readCallback = new Function<byte[], Void>() {
+                @Override
+                public Void apply(byte[] bytes) {
+                    fAgent.receiveMsg(bytes);
+                    return null;
+                }
+            };
+            webSocket.open();
+            webSockets.put(endpoint, webSocket);
+            return webSocket;
+        }
+    }
 
-    public byte[] packMessage(Message msg, String myVk,List<String> theirVk) {
+    public byte[] packMessage(Message msg,String myVk, List<String> theirVk) {
         JSONArray receivers = new JSONArray(theirVk.toArray());
         try {
             return Crypto.packMessage(
@@ -197,51 +188,30 @@ public class MobileAgent extends AbstractAgent {
 
     public void receiveMsg(byte[] bytes) {
         try {
-
-           /* try {
-                JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
-                if (payload.has("protected")) {
-                    String message = p2p.unpack(payload.toString());
-                    return new Message(message);
-                } else {
-
-                    return new Message(payload.toString());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-
-            }*/
-            Object message = null;
-            String recipient_verkey = null;
-            String sender_verkey = null;
-            JSONObject payload = new JSONObject(new String(bytes, StandardCharsets.US_ASCII));
-            if (payload.has("protected")) {
-                byte[] unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
+            byte[] unpackedMessageBytes;
+            JSONObject eventMessage;
+            if (new JSONObject(new String(bytes)).has("protected")) {
+                unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
                 JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
-                message = unpackedMessage.opt("message");
-                recipient_verkey = unpackedMessage.optString("recipient_verkey");
-                sender_verkey = unpackedMessage.optString("sender_verkey");
+                eventMessage = new JSONObject().
+                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                        put("content_type", "application/ssi-agent-wire").
+                        put("@id", UUID.randomUUID()).
+                        put("message", new JSONObject(unpackedMessage.optString("message"))).
+                        put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
+                if (unpackedMessage.has("sender_verkey")) {
+                    eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+                }
             } else {
-                message = payload;
+                unpackedMessageBytes = bytes;
+                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                eventMessage = new JSONObject().
+                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                        put("content_type", "application/ssi-agent-wire").
+                        put("@id", UUID.randomUUID()).
+                        put("message", unpackedMessage);
             }
-            JSONObject messageObj = null;
-            if(message!=null){
-                if(message instanceof JSONObject){
-                    messageObj = (JSONObject)message;
-                }
-                if(message instanceof String){
-                    messageObj = new JSONObject((String)message);
-                }
-            }
-            JSONObject eventMessage = new JSONObject().
-                    put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
-                    put("content_type", "application/ssi-agent-wire").
-                    put("@id", UUID.randomUUID()).
-                    put("message", messageObj).
-                    put("recipient_verkey",recipient_verkey );
-            if (sender_verkey!=null) {
-                eventMessage.put("sender_verkey", sender_verkey);
-            }
+
             for (MobileAgentEvents e : events)
                 e.future.complete(new Message(eventMessage));
         } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
@@ -252,17 +222,10 @@ public class MobileAgent extends AbstractAgent {
     @Override
     public void close() {
         sender.close();
-        if(checkIsOpen()){
-            try {
-                indyWallet.close();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (IndyException e) {
-                e.printStackTrace();
-            }
-            indyWallet = null;
+        try {
+            indyWallet.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -299,27 +262,27 @@ public class MobileAgent extends AbstractAgent {
     }
 
     @Override
-    public PairwiseCoProtocolTransport spawn(Pairwise pairwise) {
+    public AbstractCoProtocolTransport spawn(Pairwise pairwise) {
+        return new PairwiseMobileCoProtocolTransport(this, pairwise);
+    }
+
+    @Override
+    public AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, Pairwise pairwise) {
+    public AbstractCoProtocolTransport spawn(String thid) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid) {
+    public AbstractCoProtocolTransport spawn(String thid, Pairwise pairwise, String pthid) {
         return null;
     }
 
     @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, Pairwise pairwise, String pthid) {
-        return null;
-    }
-
-    @Override
-    public ThreadBasedCoProtocolTransport spawn(String thid, String pthid) {
+    public AbstractCoProtocolTransport spawn(String thid, String pthid) {
         return null;
     }
 }

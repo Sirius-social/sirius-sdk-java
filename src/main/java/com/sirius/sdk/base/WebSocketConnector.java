@@ -5,6 +5,8 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.StringUtils;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -192,6 +194,8 @@ public class WebSocketConnector extends BaseConnector {
 
     public void initWebSocket() {
         String url = serverAddress + "/" + path;
+        while (url.endsWith("/"))
+            url = url.substring(0, url.length()-1);
         try {
             webSocket = new WebSocketFactory()
                     .setVerifyHostname(false)

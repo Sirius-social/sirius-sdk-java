@@ -82,11 +82,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        HttpClient httpClient = HttpClients.createDefault();
-        HttpGet get = new HttpGet("http://mediator.socialsirius.com:8000/invitation");
-        HttpResponse response = httpClient.execute(get);
-        response.getEntity().toString();
-
         CredInfo medCredInfo;
         try (Context c = new CloudContext(labConfig)) {
             medCredInfo = Laboratory.createMedCreds(c, LAB_DID, DKMS_NAME);
