@@ -23,6 +23,7 @@ public class Listener {
     public Listener(AgentEvents source, AbstractAgent agent) {
         this.source = source;
         this.pairwiseResolver = agent.getPairwiseList();
+        this.agent = agent;
     }
 
     public CompletableFuture<Event> getOne() {
