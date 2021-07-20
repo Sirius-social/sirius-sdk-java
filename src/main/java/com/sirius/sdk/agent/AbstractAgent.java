@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent;
 
+import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -61,6 +62,8 @@ public abstract class AbstractAgent extends TransportLayer {
     public abstract boolean checkIsOpen();
 
     public abstract Listener subscribe();
+
+    public abstract void unsubscribe(Listener listener);
 
     public abstract String generateQrCode(String value);
 

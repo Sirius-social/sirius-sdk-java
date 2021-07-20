@@ -28,7 +28,7 @@ public class PairwiseMobileCoProtocolTransport extends AbstractCoProtocolTranspo
 
     @Override
     public void stop() {
-
+        listener.unsubscribe();
     }
 
     @Override

@@ -36,7 +36,7 @@ public class TheirEndpointMobileCoProtocolTransport extends AbstractCoProtocolTr
 
     @Override
     public void stop() {
-
+        listener.unsubscribe();
     }
 
     @Override
