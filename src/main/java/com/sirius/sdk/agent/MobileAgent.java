@@ -132,6 +132,10 @@ public class MobileAgent extends AbstractAgent {
         }
     }
 
+    public void connect(String endpoint) {
+        getWebSocket(endpoint);
+    }
+
     public byte[] packMessage(Message msg,String myVk, List<String> theirVk) {
         JSONArray receivers = new JSONArray(theirVk.toArray());
         try {

@@ -1,7 +1,5 @@
 package com.sirius.sdk.agent.pairwise;
 
-import com.sirius.sdk.agent.pairwise.Pairwise;
-
 public abstract class AbstractPairwiseList {
     public abstract void create(Pairwise pairwise);
     public abstract void update(Pairwise pairwise);

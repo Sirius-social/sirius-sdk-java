@@ -6,10 +6,6 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.*;
 import examples.covid.*;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -56,7 +52,7 @@ public class Main {
 
     public static final String MEDIATOR_ADDRESS = "ws://mediator.socialsirius.com:8000";
     public static final JSONObject walletConfig = new JSONObject().
-            put("id", "Wallet1").
+            put("id", "Wallet6").
             put("storage_type", "default");
     public static final JSONObject walletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").

@@ -37,7 +37,13 @@ public class WalletPairwiseList extends AbstractPairwiseList {
             meVerKey = meObj.getString("verkey");
         }
         Pairwise.Me me = new Pairwise.Me(meDid, meVerKey);
+        if (meObj != null) {
+            me.setDidDoc(meObj.optJSONObject("did_doc"));
+        }
         JSONObject theirObj = metadata.optJSONObject("their");
+        if (theirObj == null && meObj != null) {
+            theirObj = meObj.optJSONObject("their");
+        }
         String theirDid = null;
         String theirVerKey = null;
         String theirLabel = null;
@@ -60,6 +66,9 @@ public class WalletPairwiseList extends AbstractPairwiseList {
             }
         }
         Pairwise.Their their = new Pairwise.Their(theirDid, theirLabel, theirEndpoint, theirVerKey, theirRoutingKeys);
+        if (theirObj != null) {
+            their.setDidDoc(theirObj.optJSONObject("did_doc"));
+        }
         return new Pairwise(me, their, metadata);
     }
 
@@ -94,7 +103,7 @@ public class WalletPairwiseList extends AbstractPairwiseList {
         if (isExists(theirDid)) {
             String raw = apiPairwise.getPairwise(theirDid);
             JSONObject metadataObj = new JSONObject(raw);
-            JSONObject metadata = metadataObj.getJSONObject("metadata");
+            JSONObject metadata = new JSONObject(metadataObj.get("metadata").toString());
             return restorePairwise(metadata);
         } else {
             return null;

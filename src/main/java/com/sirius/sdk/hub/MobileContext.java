@@ -1,4 +1,5 @@
 package com.sirius.sdk.hub;
+import com.sirius.sdk.agent.MobileAgent;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
 import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdate;
@@ -12,6 +13,7 @@ import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -28,15 +30,6 @@ public class MobileContext extends Context {
     public MobileContext(MobileHub.Config config) {
         super(new MobileHub(config));
         connectToMediator();
-
-        Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
-        String myEndpoint = getMyEndpoint(invitation.recipientKeys().get(0));
-        if (myEndpoint != null) {
-            Endpoint endpoint = new Endpoint(myEndpoint);
-            getEndpoints().add(endpoint);
-        } else {
-            askForMediation();
-        }
     }
 
     public static class MobileContextBuilder {
@@ -69,51 +62,67 @@ public class MobileContext extends Context {
     public void connectToMediator() {
         Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
 
-        Pair<String, String> didVk = getDidVkForMediator(invitation.recipientKeys().get(0));
-        if (didVk == null) {
-            didVk = getDid().createAndStoreMyDid();
-        }
-        Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
-        Endpoint endpoint = new Endpoint("ws://");
-        Invitee invitee = new Invitee(this, me, endpoint);
-        Pairwise pw = invitee.createConnection(invitation, "Edge agent");
+        String mediatorDid = getMediatorDid(invitation.recipientKeys().get(0));
+        if (mediatorDid == null) {
+            Pair<String, String> didVk = getDid().createAndStoreMyDid();
+            Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
+            Endpoint endpoint = new Endpoint("ws://");
+            Invitee invitee = new Invitee(this, me, endpoint);
+            Pairwise pw = invitee.createConnection(invitation, "Edge agent");
 
-        if (pw != null) {
-            getPairwiseList().ensureExists(pw);
-            mediatorPw = pw;
+            if (pw != null) {
+                getPairwiseList().ensureExists(pw);
+                mediatorPw = pw;
+            }
+
+            askForMediation();
+        } else {
+            mediatorPw = getPairwiseList().loadForDid(mediatorDid);
+            getEndpoints().add(getMyMediatorEndpoint(invitation.recipientKeys().get(0)));
         }
+
+        JSONArray services = mediatorPw.getTheir().getDidDoc().optJSONArray("service");
+        JSONObject mediatorService = new JSONObject();
+        for (Object o : services) {
+            JSONObject service = (JSONObject) o;
+            if (service.optString("type").equals("MediatorService")) {
+                mediatorService = service;
+                break;
+            }
+        }
+
+        String myWsEndpoint = mediatorService.optString("serviceEndpoint");
+        ((MobileAgent) currentHub.getAgentConnectionLazy()).connect(myWsEndpoint);
     }
 
-    private Pair<String, String> getDidVkForMediator(String mediatorRecipientKey) {
+    private String getMediatorDid(String mediatorRecipientKey) {
         String recordStr = getNonSecrets().getWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new RetrieveRecordOptions(false, true, false));
         if (recordStr != null && !recordStr.isEmpty()) {
             JSONObject r = new JSONObject(recordStr);
             JSONObject v = new JSONObject(r.opt("value").toString());
-            if (v.has("my_did")) {
-                String myDid = v.optString("my_did");
-                String myVk = getDid().keyForLocalDid(myDid);
-                return new Pair<>(myDid, myVk);
+            if (v.has("their_did")) {
+                return v.optString("their_did");
             }
         }
         return null;
     }
 
-    private String getMyEndpoint(String mediatorRecipientKey) {
+    private Endpoint getMyMediatorEndpoint(String mediatorRecipientKey) {
         String recordStr = getNonSecrets().getWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new RetrieveRecordOptions(false, true, false));
         if (recordStr != null && !recordStr.isEmpty()) {
             JSONObject r = new JSONObject(recordStr);
             JSONObject v = new JSONObject(r.opt("value").toString());
-            if (v.has("endpoint")) {
-                return v.optString("endpoint");
+            if (v.has("endpoint_address")) {
+                return new Endpoint(v.optString("endpoint_address"));
             }
         }
         return null;
     }
 
-    private void saveEndpoint(String mediatorRecipientKey, String myDid, String endpoint) {
+    private void saveMediatorInfo(String mediatorRecipientKey, String theirDid, Endpoint endpoint) {
         getNonSecrets().addWalletRecord(MEDIATOR_ENDPOINTS, mediatorRecipientKey, new JSONObject().
-                put("my_did", myDid).
-                put("endpoint", endpoint).
+                put("their_did", theirDid).
+                put("endpoint_address", endpoint.getAddress()).
                 toString());
     }
 
@@ -128,7 +137,7 @@ public class MobileContext extends Context {
                     Endpoint endpoint = new Endpoint(grant.getEndpointAddress(), grant.getRoutingKeys());
                     getEndpoints().add(endpoint);
                     Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
-                    saveEndpoint(invitation.recipientKeys().get(0), mediatorPw.getMe().getDid(), endpoint.getAddress());
+                    saveMediatorInfo(invitation.recipientKeys().get(0), mediatorPw.getTheir().getDid(), endpoint);
                     return true;
                 }
             }

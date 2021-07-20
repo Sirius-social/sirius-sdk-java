@@ -44,9 +44,9 @@ public class TheirEndpointMobileCoProtocolTransport extends AbstractCoProtocolTr
         send(message);
         GetOneResult r = getOne();
         if (r != null) {
-            if (r.senderVerkey.equals(endpoint.getVerkey())) {
+            //if (r.senderVerkey.equals(endpoint.getVerkey())) {
                 return new Pair<>(true, r.message);
-            }
+            //}
         }
         return new Pair<>(false, null);
     }

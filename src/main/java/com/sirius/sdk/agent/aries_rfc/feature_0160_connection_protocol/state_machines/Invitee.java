@@ -126,10 +126,11 @@ public class Invitee extends BaseConnectionStateMachine {
                         return null;
                     }
                 } else if (okMsg.second instanceof ConnProblemReport) {
-                    log.info("100% - Terminated with error");
+                    this.problemReport = (ConnProblemReport) okMsg.second;
+                    log.info("100% - Terminated with error. " + this.problemReport.getMessageObj());
                     return null;
                 }
-            }else{
+            } else {
                 log.info("100% - Terminated with error");
             }
 
