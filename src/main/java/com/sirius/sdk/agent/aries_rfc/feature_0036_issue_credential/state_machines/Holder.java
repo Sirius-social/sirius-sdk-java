@@ -66,6 +66,7 @@ public class Holder extends BaseIssuingStateMachine {
                     build();
             ack.setThreadId(issueMsg.getAckMessageId());
             coprotocol.send(ack);
+            log.info("100% - Credential stored successfully");
             return new Pair<>(true, credId);
         } catch (StateMachineTerminatedWithError ex) {
             problemReport = IssueProblemReport.builder().

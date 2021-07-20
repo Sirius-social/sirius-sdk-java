@@ -17,6 +17,7 @@ import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.Pair;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class Smartphone {
@@ -62,7 +63,9 @@ public class Smartphone {
                 if (event.message() instanceof OfferCredentialMessage && event.getPairwise() != null) {
                     OfferCredentialMessage offer = (OfferCredentialMessage) event.message();
                     Holder holder = new Holder(context, event.getPairwise());
-                    Pair<Boolean, String> res = holder.accept(offer, "prover_master_secret_name", "", "en");
+                    String masterSecret = UUID.randomUUID().toString();
+                    context.getAnonCreds().proverCreateMasterSecret(masterSecret);
+                    Pair<Boolean, String> res = holder.accept(offer, masterSecret, "", "en");
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
                 } else if (event.message() instanceof Message && event.getPairwise() != null) {

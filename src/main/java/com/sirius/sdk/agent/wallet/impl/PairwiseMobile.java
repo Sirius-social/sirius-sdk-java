@@ -130,7 +130,7 @@ public class PairwiseMobile extends AbstractPairwise {
         RetrieveRecordOptions opts = new RetrieveRecordOptions(false, false, true);
         String record = nonSecretsMobile.getWalletRecord(type, id, opts);
         if (record == null) {
-            nonSecretsMobile.addWalletRecord(type, id, tags.toString());
+            nonSecretsMobile.addWalletRecord(type, id, CONST_VALUE, tags.toString());
         } else {
             nonSecretsMobile.updateWalletRecordTags(type, id, tags.toString());
         }
