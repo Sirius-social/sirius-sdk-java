@@ -3,6 +3,7 @@ package examples.connect_to_mediator;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.OfferCredentialMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Holder;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.Prover;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
@@ -68,6 +69,10 @@ public class Smartphone {
                     Pair<Boolean, String> res = holder.accept(offer, masterSecret, "", "en");
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
+                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get("default"));
+                    String masterSecret = UUID.randomUUID().toString();
+                    context.getAnonCreds().proverCreateMasterSecret(masterSecret);
+                    prover.prove(request, masterSecret);
                 } else if (event.message() instanceof Message && event.getPairwise() != null) {
                     Message message = (Message) event.message();
                     System.out.println("Received new message: " + message.getContent());
