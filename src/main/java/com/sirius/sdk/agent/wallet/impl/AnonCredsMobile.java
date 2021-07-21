@@ -191,6 +191,11 @@ public class AnonCredsMobile extends AbstractAnonCreds {
 
     @Override
     public String proverGetCredentialsForProofReq(String proofRequest) {
+        try {
+            Anoncreds.proverGetCredentialsForProofReq(wallet, proofRequest).get(timeoutSec, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

@@ -106,6 +106,8 @@ public class Prover extends BaseVerifyStateMachine {
         res.credInfos.put("requested_attributes", new JSONObject());
         res.credInfos.put("requested_predicates", new JSONObject());
 
+        if (proofResponse == null)
+            return res;
         List<JSONObject> allInfos = new ArrayList<JSONObject>();
         JSONObject requestedAttributes = proofResponse.getJSONObject("requested_attributes");
         for (String referentId : requestedAttributes.keySet()) {

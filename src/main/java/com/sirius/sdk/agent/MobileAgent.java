@@ -93,7 +93,7 @@ public class MobileAgent extends AbstractAgent {
             JSONArray arr = new JSONArray(str);
             List<String> networks = new ArrayList<>();
             for (Object o : arr)
-                networks.add(o.toString());
+                networks.add(((JSONObject) o).optString("pool"));
             return networks;
         } catch (Exception e) {
             e.printStackTrace();
