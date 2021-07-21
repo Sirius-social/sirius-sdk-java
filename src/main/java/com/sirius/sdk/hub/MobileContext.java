@@ -9,16 +9,20 @@ import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protoco
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
+import com.sirius.sdk.agent.wallet.impl.PoolMobile;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import org.hyperledger.indy.sdk.pool.Pool;
+import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MobileContext extends Context {
 
@@ -26,6 +30,10 @@ public class MobileContext extends Context {
 
     Pairwise mediatorPw = null;
     int timeToLiveSec = 60;
+
+    public static void addPool(String name, String txnPath) {
+        PoolMobile.registerPool(name, txnPath);
+    }
 
     public MobileContext(MobileHub.Config config) {
         super(new MobileHub(config));

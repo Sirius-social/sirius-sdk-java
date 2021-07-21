@@ -9,12 +9,12 @@ import examples.covid.*;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 
 
 public class Main {
@@ -97,7 +97,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Smartphone smartphone = new Smartphone(mobileConfig);
+        Smartphone smartphone = new Smartphone(mobileConfig, DKMS_NAME, "src\\main\\java\\examples\\connect_to_mediator\\pool_transactions_genesis");
         smartphone.start();
 
         CredInfo medCredInfo;

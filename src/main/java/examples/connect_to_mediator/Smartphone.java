@@ -26,9 +26,12 @@ public class Smartphone {
     MobileContext context = null;
     Pairwise.Me me = null;
     boolean loop = false;
+    String networkName;
 
-    public Smartphone(MobileHub.Config config) {
+    public Smartphone(MobileHub.Config config, String networkName, String genesisPath) {
+        MobileContext.addPool(networkName, genesisPath);
         this.config = config;
+        this.networkName = networkName;
     }
 
     public void start() {
@@ -69,7 +72,7 @@ public class Smartphone {
                     Pair<Boolean, String> res = holder.accept(offer, masterSecret, "", "en");
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
-                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get("default"));
+                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName));
                     String masterSecret = UUID.randomUUID().toString();
                     context.getAnonCreds().proverCreateMasterSecret(masterSecret);
                     prover.prove(request, masterSecret);

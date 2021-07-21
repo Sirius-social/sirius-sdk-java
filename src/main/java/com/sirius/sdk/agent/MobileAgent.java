@@ -2,10 +2,12 @@ package com.sirius.sdk.agent;
 
 import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.coprotocols.*;
+import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.agent.pairwise.WalletPairwiseList;
+import com.sirius.sdk.agent.storages.InWalletImmutableCollection;
 import com.sirius.sdk.agent.wallet.MobileWallet;
 import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.messaging.Message;
@@ -17,6 +19,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.crypto.Crypto;
+import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.json.JSONArray;
@@ -74,6 +77,28 @@ public class MobileAgent extends AbstractAgent {
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());
+
+        if (storage == null) {
+            storage = new InWalletImmutableCollection(wallet.getNonSecrets());
+        }
+
+        for (String network : getNetworks()) {
+            ledgers.put(network, new Ledger(network, wallet.getLedger(), wallet.getAnoncreds(), wallet.getCache(), storage));
+        }
+    }
+
+    private List<String> getNetworks() {
+        try {
+            String str = Pool.listPools().get(timeoutSec, TimeUnit.SECONDS);
+            JSONArray arr = new JSONArray(str);
+            List<String> networks = new ArrayList<>();
+            for (Object o : arr)
+                networks.add(o.toString());
+            return networks;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
