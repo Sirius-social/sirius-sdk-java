@@ -10,6 +10,7 @@ import com.sirius.sdk.utils.Triple;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
 import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults;
+import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -201,6 +202,47 @@ public class AnonCredsMobile extends AbstractAnonCreds {
 
     @Override
     public JSONObject proverSearchCredentialsForProofReq(JSONObject proofRequest, String extraQuery, int limitReferents) {
+        if (extraQuery == null)
+            extraQuery = "";
+        try {
+            CredentialsSearchForProofReq credSearch = CredentialsSearchForProofReq.open(wallet, proofRequest.toString(), extraQuery).get(timeoutSec, TimeUnit.SECONDS);
+
+            JSONObject requestedAttributes = proofRequest.optJSONObject("requested_attributes");
+            requestedAttributes = requestedAttributes != null ? requestedAttributes : new JSONObject();
+
+            JSONObject requestedPredicates = proofRequest.optJSONObject("requested_predicates");
+            requestedPredicates = requestedPredicates != null ? requestedPredicates : new JSONObject();
+
+            JSONObject result = new JSONObject().
+                    put("self_attested_attributes", new JSONObject()).
+                    put("requested_attributes", new JSONObject()).
+                    put("requested_predicates", new JSONObject());
+
+            for (String attrReferent : requestedAttributes.keySet()) {
+                String credForAttrStr = credSearch.fetchNextCredentials(attrReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
+                JSONArray credForAttr = new JSONArray(credForAttrStr);
+                JSONArray collection = result.optJSONObject("requested_attributes").optJSONArray(attrReferent);
+                collection = collection != null ? collection : new JSONArray();
+                for (Object o : credForAttr)
+                    collection.put(o);
+                result.optJSONObject("requested_attributes").put(attrReferent, collection);
+            }
+
+            for (String predicateReferent : requestedPredicates.keySet()) {
+                String credForPredStr = credSearch.fetchNextCredentials(predicateReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
+                JSONArray credForPred = new JSONArray(credForPredStr);
+                JSONArray collection = result.optJSONObject("requested_predicates").optJSONArray(predicateReferent);
+                collection = collection != null ? collection : new JSONArray();
+                for (Object o : credForPred)
+                    collection.put(o);
+                result.optJSONObject("requested_predicates").put(predicateReferent, collection);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
