@@ -52,7 +52,7 @@ public class Main {
 
     public static final String MEDIATOR_ADDRESS = "ws://mediator.socialsirius.com:8000";
     public static final JSONObject walletConfig = new JSONObject().
-            put("id", "Wallet6").
+            put("id", "Wallet9").
             put("storage_type", "default");
     public static final JSONObject walletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
