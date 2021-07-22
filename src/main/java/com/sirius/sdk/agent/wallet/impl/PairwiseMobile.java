@@ -25,9 +25,9 @@ public class PairwiseMobile extends AbstractPairwise {
     final String STORAGE_TYPE = "pairwise";
     final String CONST_VALUE = "pairwise";
     final int DEFAULT_FETCH_LIMIT = 1000;
-    AbstractNonSecrets nonSecretsMobile;
+    NonSecretsMobile nonSecretsMobile;
 
-    public PairwiseMobile(Wallet wallet, AbstractNonSecrets nonSecretsMobile) {
+    public PairwiseMobile(Wallet wallet, NonSecretsMobile nonSecretsMobile) {
         this.wallet = wallet;
         this.nonSecretsMobile = nonSecretsMobile;
     }
@@ -130,7 +130,7 @@ public class PairwiseMobile extends AbstractPairwise {
         RetrieveRecordOptions opts = new RetrieveRecordOptions(false, false, true);
         String record = nonSecretsMobile.getWalletRecord(type, id, opts);
         if (record == null) {
-            nonSecretsMobile.addWalletRecord(type, id, CONST_VALUE);
+            nonSecretsMobile.addWalletRecord(type, id, CONST_VALUE, tags.toString());
         } else {
             nonSecretsMobile.updateWalletRecordTags(type, id, tags.toString());
         }

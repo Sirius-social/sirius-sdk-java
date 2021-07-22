@@ -3,6 +3,7 @@ package examples.connect_to_mediator;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.OfferCredentialMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines.Holder;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines.Prover;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
@@ -17,6 +18,7 @@ import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.Pair;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class Smartphone {
@@ -24,9 +26,12 @@ public class Smartphone {
     MobileContext context = null;
     Pairwise.Me me = null;
     boolean loop = false;
+    String networkName;
 
-    public Smartphone(MobileHub.Config config) {
+    public Smartphone(MobileHub.Config config, String networkName, String genesisPath) {
+        MobileContext.addPool(networkName, genesisPath);
         this.config = config;
+        this.networkName = networkName;
     }
 
     public void start() {
@@ -62,9 +67,15 @@ public class Smartphone {
                 if (event.message() instanceof OfferCredentialMessage && event.getPairwise() != null) {
                     OfferCredentialMessage offer = (OfferCredentialMessage) event.message();
                     Holder holder = new Holder(context, event.getPairwise());
-                    Pair<Boolean, String> res = holder.accept(offer, "prover_master_secret_name", "", "en");
+                    String masterSecret = UUID.randomUUID().toString();
+                    context.getAnonCreds().proverCreateMasterSecret(masterSecret);
+                    Pair<Boolean, String> res = holder.accept(offer, masterSecret, "", "en");
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
+                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName));
+                    String masterSecret = UUID.randomUUID().toString();
+                    context.getAnonCreds().proverCreateMasterSecret(masterSecret);
+                    prover.prove(request, masterSecret);
                 } else if (event.message() instanceof Message && event.getPairwise() != null) {
                     Message message = (Message) event.message();
                     System.out.println("Received new message: " + message.getContent());

@@ -20,7 +20,7 @@ public class MobileWallet implements AbstractWallet {
         cache = new CacheMobile(wallet);
         ledger = new LedgerMobile(wallet);
         nonSecrets = new NonSecretsMobile(wallet);
-        pairwise = new PairwiseMobile(wallet,nonSecrets);
+        pairwise = new PairwiseMobile(wallet, (NonSecretsMobile) nonSecrets);
 
     }
 

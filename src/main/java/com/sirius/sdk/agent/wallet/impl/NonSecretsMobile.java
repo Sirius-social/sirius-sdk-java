@@ -30,7 +30,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void addWalletRecord(String type, String id, String value, String tags) {
         try {
-            WalletRecord.add(wallet,type,id,value,tags).get(timeoutSec, TimeUnit.SECONDS);
+            WalletRecord.add(wallet, type, id, value, tags).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -39,7 +39,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void updateWalletRecordValue(String type, String id, String value) {
         try {
-            WalletRecord.updateValue(wallet,type,id,value).get(timeoutSec, TimeUnit.SECONDS);
+            WalletRecord.updateValue(wallet, type, id, value).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -48,7 +48,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void updateWalletRecordTags(String type, String id, String tags) {
         try {
-            WalletRecord.updateTags(wallet,type,id,tags).get(timeoutSec, TimeUnit.SECONDS);
+            WalletRecord.updateTags(wallet, type, id, tags).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -57,7 +57,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void addWalletRecordTags(String type, String id, String tags) {
         try {
-            WalletRecord.addTags(wallet,type,id,tags).get(timeoutSec, TimeUnit.SECONDS);
+            WalletRecord.addTags(wallet, type, id, tags).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,8 +66,8 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void deleteWalletRecord(String type, String id, List<String> tagNames) {
         try {
-            String arrayTag =  new  JSONArray(tagNames).toString();
-            WalletRecord.deleteTags(wallet,type,id,arrayTag).get(timeoutSec, TimeUnit.SECONDS);
+            String arrayTag = new JSONArray(tagNames).toString();
+            WalletRecord.deleteTags(wallet, type, id, arrayTag).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,7 +76,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public void deleteWalletRecord(String type, String id) {
         try {
-            WalletRecord.delete(wallet,type,id).get(timeoutSec, TimeUnit.SECONDS);
+            WalletRecord.delete(wallet, type, id).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -85,7 +85,7 @@ public class NonSecretsMobile extends AbstractNonSecrets {
     @Override
     public String getWalletRecord(String type, String id, RetrieveRecordOptions options) {
         try {
-            return WalletRecord.get(wallet,type,id,options.serialize()).get(timeoutSec, TimeUnit.SECONDS);
+            return WalletRecord.get(wallet, type, id, options.serialize()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             if (!e.getMessage().contains("WalletItemNotFoundException"))
                 e.printStackTrace();
@@ -100,36 +100,28 @@ public class NonSecretsMobile extends AbstractNonSecrets {
         options.setRetrieveTotalCount(true);
         String optionStr = options.serialize();
         try {
-            WalletSearch search =  WalletSearch.open(wallet,type,query,optionStr).get(timeoutSec, TimeUnit.SECONDS);
-           String searchListString =  WalletSearch.searchFetchNextRecords(wallet,search,limit).get(timeoutSec, TimeUnit.SECONDS);
+            WalletSearch search = WalletSearch.open(wallet, type, query, optionStr).get(timeoutSec, TimeUnit.SECONDS);
+            String searchListString = search.fetchNextRecords(wallet, limit).get(timeoutSec, TimeUnit.SECONDS);
+            WalletSearch.closeSearch(search);
 
-           WalletSearch.closeSearch(search);
-
-            if(searchListString == null){
-                return new Pair<>(new ArrayList<>(),0);
-            }else{
+            if (searchListString == null) {
+                return new Pair<>(new ArrayList<>(), 0);
+            } else {
                 JSONObject searchObj = new JSONObject(searchListString);
                 JSONArray records = searchObj.optJSONArray("records");
                 List<String> lis = new ArrayList<>();
-                if(records!=null){
-                    for(int i=0;i<records.length();i++){
-                        Object object =  records.get(i);
-                        if(object instanceof String){
-                            lis.add((String) object);
-                        }
-                        if(object instanceof JSONObject){
-                            lis.add(((JSONObject) object).toString());
-                        }
+                if (records != null) {
+                    for (Object rec : records) {
+                        lis.add(rec.toString());
                     }
                 }
                 Integer totalCount = searchObj.optInt("totalCount");
-                return new Pair<>(lis,totalCount);
+                return new Pair<>(lis, totalCount);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new Pair<>(new ArrayList<>(),0);
-
+        return new Pair<>(new ArrayList<>(), 0);
     }
 }
