@@ -148,11 +148,10 @@ public class TestAriesFeature0037 {
                     build()) {
                 Ledger verLedger = context.getLedgers().get("default");
                 Verifier machine = new Verifier(context, v2p, verLedger);
-                Verifier.VerifyParams params = new Verifier.VerifyParams();
-                params.proofRequest = finalProofRequest;
-                params.comment = "I am Verifier";
-                params.protoVersion = "1.0";
-                return machine.verify(params);
+                return machine.verify(new Verifier.VerifyParams().
+                        setProofRequest(finalProofRequest).
+                        setComment("I am Verifier").
+                        setProtocolVersion("1.0"));
             }
         }, r -> new Thread(r).start());
 
@@ -175,8 +174,8 @@ public class TestAriesFeature0037 {
                 RequestPresentationMessage requestPresentationMessage = (RequestPresentationMessage) event.message();
                 int ttl = 60;
                 Ledger proverLedger = context.getLedgers().get("default");
-                Prover machine = new Prover(context, p2v, proverLedger);
-                return machine.prove(requestPresentationMessage, proverSecretId);
+                Prover machine = new Prover(context, p2v, proverLedger, proverSecretId);
+                return machine.prove(requestPresentationMessage);
             }
         }, r -> new Thread(r).start());
 

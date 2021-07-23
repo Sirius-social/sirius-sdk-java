@@ -114,11 +114,10 @@ public class Airport extends BaseParticipant {
 
         Ledger verLedger = c.getLedgers().get(dkmsName);
         Verifier machine = new Verifier(c, pw, verLedger);
-        Verifier.VerifyParams params = new Verifier.VerifyParams();
-        params.proofRequest = proofRequest;
-        params.comment = "Verify covid test and boarding pass";
-        params.protoVersion = "1.0";
-        boolean ok = machine.verify(params);
+        boolean ok = machine.verify(new Verifier.VerifyParams().
+                setProofRequest(proofRequest).
+                setComment("Verify covid test and boarding pass").
+                setProtocolVersion("1.0"));
         if (ok) {
             System.out.println(machine.getRequestedProof().toString());
             boolean hasCovid = machine.getRequestedProof().

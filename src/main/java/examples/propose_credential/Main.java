@@ -188,9 +188,13 @@ public class Main {
                     Issuer issuerMachine = new Issuer(context, p2p, 60);
                     String credId = "cred-id-" + UUID.randomUUID().toString();
 
-                    boolean ok = issuerMachine.issue(
-                            vals, credInfo.schema, credInfo.credentialDefinition, "Here is your passport", "en",
-                            proposedAttribs, new ArrayList<AttribTranslation>(), credId);
+                    boolean ok = issuerMachine.issue(new Issuer.IssueParams().
+                                    setValues(vals).
+                                    setSchema(credInfo.schema).
+                                    setCredDef(credInfo.credentialDefinition).
+                                    setComment("Here is your passport").
+                                    setPreview(proposedAttribs).
+                                    setCredId(credId));
                     if (ok) {
                         System.out.println("Pasport was successfully issued");
                     } else {

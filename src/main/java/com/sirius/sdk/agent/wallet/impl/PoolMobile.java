@@ -29,6 +29,7 @@ public class PoolMobile {
             return openedPoolRegistry.get(name);
         try {
             Pool pool = Pool.openPoolLedger(name, null).get();
+            openedPoolRegistry.put(name, pool);
             return pool;
         } catch (Exception e) {
             e.printStackTrace();

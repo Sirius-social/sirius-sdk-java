@@ -17,8 +17,7 @@ public class CoordinateMediationMessage extends AriesProtocolMessage {
         @Override
         protected JSONObject generateJSON() {
             setVersion("1.0");
-            JSONObject jsonObject = super.generateJSON();
-            return jsonObject;
+            return super.generateJSON();
         }
     }
 }

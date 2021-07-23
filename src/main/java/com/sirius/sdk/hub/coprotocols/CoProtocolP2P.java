@@ -25,6 +25,7 @@ public class CoProtocolP2P extends AbstractP2PCoProtocol {
         super(context);
         this.pairwise = pairwise;
         this.protocols = propocols;
+        this.timeToLiveSec = timeToLiveSec;
     }
 
     @Override

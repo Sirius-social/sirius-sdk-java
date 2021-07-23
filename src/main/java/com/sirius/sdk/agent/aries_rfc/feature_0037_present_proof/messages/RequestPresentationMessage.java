@@ -93,7 +93,7 @@ public class RequestPresentationMessage extends BasePresentProofMessage {
                 byte[] base64 = Base64.getEncoder().encode(proofRequest.toString().getBytes(StandardCharsets.UTF_8));
                 jsonObject.put("request_presentations~attach", (new JSONArray()).
                         put((new JSONObject()).
-                                put("@id", "libindy-request-presentation-" + UUID.randomUUID().toString()).
+                                put("@id", "libindy-request-presentation-" + UUID.randomUUID()).
                                 put("mime-type", "application/json").
                                 put("data", (new JSONObject().
                                         put("base64", new String(base64))))));

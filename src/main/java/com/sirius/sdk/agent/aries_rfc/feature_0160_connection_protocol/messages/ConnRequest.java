@@ -36,7 +36,7 @@ public class ConnRequest extends ConnProtocolMessage {
         public B addConnectionService(JSONObject service) {
             connectionServices.add(service);
             return self();
-        };
+        }
 
         public B setLabel(String label) {
             this.label = label;

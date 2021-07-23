@@ -11,8 +11,6 @@ import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
@@ -20,8 +18,6 @@ import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.logging.Logger;
 
 public class Inviter extends BaseConnectionStateMachine {
@@ -116,7 +112,8 @@ public class Inviter extends BaseConnectionStateMachine {
                         throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR, "Expect for connection response ack. Unexpected message type" + okMsg.second.getType());
                     }
                 } else {
-                    log.info("100% - Terminated with error");
+                    throw new StateMachineTerminatedWithError(REQUEST_PROCESSING_ERROR,
+                            "Response ack awaiting was terminated by timeout", false);
                 }
             } catch (StateMachineTerminatedWithError e) {
                 this.problemReport = ConnProblemReport.builder().
@@ -127,7 +124,7 @@ public class Inviter extends BaseConnectionStateMachine {
                     cp.send(problemReport);
                     log.info("100% - Terminated with error. " + e.getMessage());
                 }
-            } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage siriusPendingOperation) {
+            } catch (Exception siriusPendingOperation) {
                 siriusPendingOperation.printStackTrace();
                 log.info("100% - Terminated with error");
                 return null;

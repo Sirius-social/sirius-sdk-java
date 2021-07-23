@@ -75,8 +75,7 @@ public abstract class ConnProtocolMessage extends AriesProtocolMessage {
 
         @Override
         protected JSONObject generateJSON() {
-            JSONObject jsonObject = super.generateJSON();
-            return jsonObject;
+            return super.generateJSON();
         }
     }
 

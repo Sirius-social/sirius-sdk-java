@@ -191,9 +191,14 @@ public class AirCompany extends BaseParticipant {
         for (String key : boardingPass.keySet()) {
             preview.add(new ProposedAttrib(key, boardingPass.get(key).toString()));
         }
-        boolean ok = issuerMachine.issue(
-                boardingPass, boardingPassCredInfo.schema, boardingPassCredInfo.credentialDefinition, "Here is your boarding pass", "en",
-                preview, translations, credId);
+        boolean ok = issuerMachine.issue(new Issuer.IssueParams().
+                        setValues(boardingPass).
+                        setSchema(boardingPassCredInfo.schema).
+                        setCredDef(boardingPassCredInfo.credentialDefinition).
+                        setComment("Here is your boarding pass").
+                        setPreview(preview).
+                        setTranslation(translations).
+                        setCredId(credId));
         if (ok) {
             System.out.println("Boarding pass was successfully issued");
             c.getPairwiseList().create(p2p);

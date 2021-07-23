@@ -40,9 +40,7 @@ public class TestAriesFeature0160 {
                     ConnRequest request = (ConnRequest) event.message();
                     Inviter machine = new Inviter(context, me, expectedConnectionKey, myEndpoint);
                     Pairwise pairwise = machine.createConnection(request);
-                    if (pairwise == null) {
-                        Assert.fail();
-                    }
+                    Assert.assertNotEquals(null, pairwise);
                     context.getPairwiseList().ensureExists(pairwise);
                 } else {
                     Assert.fail("Wrong request message type");
@@ -60,9 +58,7 @@ public class TestAriesFeature0160 {
         // Create and start machine
         Invitee machine = new Invitee(context, me, myEndpoint);
         Pairwise pairwise = machine.createConnection(invitation, myLabel);
-        if (pairwise == null) {
-            Assert.fail();
-        }
+        Assert.assertNotEquals(null, pairwise);
         context.getPairwiseList().ensureExists(pairwise);
     }
 

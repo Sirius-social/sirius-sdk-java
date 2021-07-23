@@ -113,7 +113,8 @@ public class AnonCredsMobile extends AbstractAnonCreds {
         try {
             return Anoncreds.proverCreateMasterSecret(wallet, masterSecretName).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
-            e.printStackTrace();
+            if (!e.getMessage().contains("DuplicateMasterSecretNameException"))
+                e.printStackTrace();
         }
         return null;
     }
@@ -202,44 +203,44 @@ public class AnonCredsMobile extends AbstractAnonCreds {
 
     @Override
     public JSONObject proverSearchCredentialsForProofReq(JSONObject proofRequest, String extraQuery, int limitReferents) {
-        if (extraQuery == null)
-            extraQuery = "";
         try {
-            CredentialsSearchForProofReq credSearch = CredentialsSearchForProofReq.open(wallet, proofRequest.toString(), extraQuery).get(timeoutSec, TimeUnit.SECONDS);
+                CredentialsSearchForProofReq credSearch = CredentialsSearchForProofReq.open(wallet, proofRequest.toString(), extraQuery).get(timeoutSec, TimeUnit.SECONDS);
+            try {
+                JSONObject requestedAttributes = proofRequest.optJSONObject("requested_attributes");
+                requestedAttributes = requestedAttributes != null ? requestedAttributes : new JSONObject();
 
-            JSONObject requestedAttributes = proofRequest.optJSONObject("requested_attributes");
-            requestedAttributes = requestedAttributes != null ? requestedAttributes : new JSONObject();
+                JSONObject requestedPredicates = proofRequest.optJSONObject("requested_predicates");
+                requestedPredicates = requestedPredicates != null ? requestedPredicates : new JSONObject();
 
-            JSONObject requestedPredicates = proofRequest.optJSONObject("requested_predicates");
-            requestedPredicates = requestedPredicates != null ? requestedPredicates : new JSONObject();
+                JSONObject result = new JSONObject().
+                        put("self_attested_attributes", new JSONObject()).
+                        put("requested_attributes", new JSONObject()).
+                        put("requested_predicates", new JSONObject());
 
-            JSONObject result = new JSONObject().
-                    put("self_attested_attributes", new JSONObject()).
-                    put("requested_attributes", new JSONObject()).
-                    put("requested_predicates", new JSONObject());
+                for (String attrReferent : requestedAttributes.keySet()) {
+                    String credForAttrStr = credSearch.fetchNextCredentials(attrReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
+                    JSONArray credForAttr = new JSONArray(credForAttrStr);
+                    JSONArray collection = result.optJSONObject("requested_attributes").optJSONArray(attrReferent);
+                    collection = collection != null ? collection : new JSONArray();
+                    for (Object o : credForAttr)
+                        collection.put(o);
+                    result.optJSONObject("requested_attributes").put(attrReferent, collection);
+                }
 
-            for (String attrReferent : requestedAttributes.keySet()) {
-                String credForAttrStr = credSearch.fetchNextCredentials(attrReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
-                JSONArray credForAttr = new JSONArray(credForAttrStr);
-                JSONArray collection = result.optJSONObject("requested_attributes").optJSONArray(attrReferent);
-                collection = collection != null ? collection : new JSONArray();
-                for (Object o : credForAttr)
-                    collection.put(o);
-                result.optJSONObject("requested_attributes").put(attrReferent, collection);
+                for (String predicateReferent : requestedPredicates.keySet()) {
+                    String credForPredStr = credSearch.fetchNextCredentials(predicateReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
+                    JSONArray credForPred = new JSONArray(credForPredStr);
+                    JSONArray collection = result.optJSONObject("requested_predicates").optJSONArray(predicateReferent);
+                    collection = collection != null ? collection : new JSONArray();
+                    for (Object o : credForPred)
+                        collection.put(o);
+                    result.optJSONObject("requested_predicates").put(predicateReferent, collection);
+                }
+
+                return result;
+            } finally {
+                credSearch.closeSearch().get(timeoutSec, TimeUnit.SECONDS);
             }
-
-            for (String predicateReferent : requestedPredicates.keySet()) {
-                String credForPredStr = credSearch.fetchNextCredentials(predicateReferent, limitReferents).get(timeoutSec, TimeUnit.SECONDS);
-                JSONArray credForPred = new JSONArray(credForPredStr);
-                JSONArray collection = result.optJSONObject("requested_predicates").optJSONArray(predicateReferent);
-                collection = collection != null ? collection : new JSONArray();
-                for (Object o : credForPred)
-                    collection.put(o);
-                result.optJSONObject("requested_predicates").put(predicateReferent, collection);
-            }
-
-            return result;
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -248,6 +249,12 @@ public class AnonCredsMobile extends AbstractAnonCreds {
 
     @Override
     public JSONObject proverCreateProof(JSONObject proofReq, JSONObject requestedCredentials, String masterSecretName, JSONObject schemas, JSONObject credentialDefs, JSONObject revStates) {
+        try {
+            String resStr = Anoncreds.proverCreateProof(wallet, proofReq.toString(), requestedCredentials.toString(), masterSecretName, schemas.toString(), credentialDefs.toString(), revStates.toString()).get(timeoutSec, TimeUnit.SECONDS);
+            return new JSONObject(resStr);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

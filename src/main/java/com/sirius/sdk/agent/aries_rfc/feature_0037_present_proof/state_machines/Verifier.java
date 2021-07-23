@@ -10,9 +10,6 @@ import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.Presen
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
@@ -54,103 +51,130 @@ public class Verifier extends BaseVerifyStateMachine {
         /**
          * proof_request: Hyperledger Indy compatible proof-request
          */
-        public JSONObject proofRequest = null;
+        JSONObject proofRequest = null;
 
         /**
          * human readable attributes translations
          */
-        public List<AttribTranslation> translation = null;
+        List<AttribTranslation> translation = null;
 
         /**
          * human readable comment from Verifier to Prover
          */
-        public String comment = null;
+        String comment = null;
 
         /**
          * locale, for example "en" or "ru"
          */
-        public String locale = BasePresentProofMessage.DEF_LOCALE;
+        String locale = BasePresentProofMessage.DEF_LOCALE;
 
         /**
          * 0037 protocol version, for example 1.0 or 1.1
          */
-        public String protoVersion = null;
+        String protocolVersion = null;
+
+        public VerifyParams setProofRequest(JSONObject proofRequest) {
+            this.proofRequest = proofRequest;
+            return this;
+        }
+
+        public VerifyParams setTranslation(List<AttribTranslation> translation) {
+            this.translation = translation;
+            return this;
+        }
+
+        public VerifyParams setComment(String comment) {
+            this.comment = comment;
+            return this;
+        }
+
+        public VerifyParams setLocale(String locale) {
+            this.locale = locale;
+            return this;
+        }
+
+        public VerifyParams setProtocolVersion(String protoVersion) {
+            this.protocolVersion = protoVersion;
+            return this;
+        }
     }
 
     public boolean verify(VerifyParams params) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, prover, protocols(), timeToLiveSec)) {
-            // Step-1: Send proof request
-            Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
-            RequestPresentationMessage requestPresentationMessage = RequestPresentationMessage.builder().
-                    setProofRequest(params.proofRequest).
-                    setTranslation(params.translation).
-                    setComment(params.comment).
-                    setLocale(params.locale).
-                    //setExpiresTime(expiresTime).
-                    setVersion(params.protoVersion).
-                    build();
-            requestPresentationMessage.setPleaseAck(true);
+            try {
+                // Step-1: Send proof request
+                Date expiresTime = new Date(System.currentTimeMillis() + this.timeToLiveSec * 1000L);
+                RequestPresentationMessage requestPresentationMessage = RequestPresentationMessage.builder().
+                        setProofRequest(params.proofRequest).
+                        setTranslation(params.translation).
+                        setComment(params.comment).
+                        setLocale(params.locale).
+                        //setExpiresTime(expiresTime).
+                                setVersion(params.protocolVersion).
+                                build();
+                requestPresentationMessage.setPleaseAck(true);
 
-            log.log(Level.INFO, "30% - Send request");
+                log.log(Level.INFO, "30% - Send request");
 
-            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(requestPresentationMessage);
-            if (!(okMsg.second instanceof PresentationMessage)) {
-                throw new StateMachineTerminatedWithError("response_not_accepted", "Unexpected @type: " + okMsg.second.getType());
-            }
-
-            log.log(Level.INFO, "60% - Presentation received");
-            // Step-2 Verify
-            PresentationMessage presentationMessage = (PresentationMessage) okMsg.second;
-            JSONArray identifiers = presentationMessage.proof().optJSONArray("identifiers");
-            if (identifiers == null)
-                identifiers = new JSONArray();
-
-            JSONObject schemas = new JSONObject();
-            JSONObject credentialDefs = new JSONObject();
-            JSONObject revRegDefs = new JSONObject();
-            JSONObject revRegs = new JSONObject();
-
-            CacheOptions opts = new CacheOptions();
-
-            for (Object o : identifiers) {
-                JSONObject identifier = (JSONObject) o;
-                String schemaId = identifier.optString("schema_id", "");
-                String credDefId = identifier.optString("cred_def_id", "");
-                String revRegId = identifier.optString("rev_reg_id", "");
-
-                if (!schemaId.isEmpty() && !schemas.has(schemaId)) {
-                    schemas.put(schemaId, new JSONObject(
-                            context.getCache().getSchema(poolname, prover.getMe().getDid(), schemaId, opts)));
+                Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(requestPresentationMessage);
+                if (!(okMsg.second instanceof PresentationMessage)) {
+                    throw new StateMachineTerminatedWithError(RESPONSE_NOT_ACCEPTED, "Unexpected @type: " + okMsg.second.getType());
                 }
 
-                if (!credDefId.isEmpty() && !credentialDefs.has(credDefId)) {
-                    credentialDefs.put(credDefId, new JSONObject(
-                            context.getCache().getCredDef(poolname, prover.getMe().getDid(), credDefId, opts)));
+                log.log(Level.INFO, "60% - Presentation received");
+                // Step-2 Verify
+                PresentationMessage presentationMessage = (PresentationMessage) okMsg.second;
+                JSONArray identifiers = presentationMessage.proof().optJSONArray("identifiers");
+                if (identifiers == null)
+                    identifiers = new JSONArray();
+
+                JSONObject schemas = new JSONObject();
+                JSONObject credentialDefs = new JSONObject();
+                JSONObject revRegDefs = new JSONObject();
+                JSONObject revRegs = new JSONObject();
+
+                CacheOptions opts = new CacheOptions();
+
+                for (Object o : identifiers) {
+                    JSONObject identifier = (JSONObject) o;
+                    String schemaId = identifier.optString("schema_id", "");
+                    String credDefId = identifier.optString("cred_def_id", "");
+                    String revRegId = identifier.optString("rev_reg_id", "");
+
+                    if (!schemaId.isEmpty() && !schemas.has(schemaId)) {
+                        schemas.put(schemaId, new JSONObject(
+                                context.getCache().getSchema(poolname, prover.getMe().getDid(), schemaId, opts)));
+                    }
+
+                    if (!credDefId.isEmpty() && !credentialDefs.has(credDefId)) {
+                        credentialDefs.put(credDefId, new JSONObject(
+                                context.getCache().getCredDef(poolname, prover.getMe().getDid(), credDefId, opts)));
+                    }
                 }
+
+                boolean success = context.getAnonCreds().verifierVerifyProof(
+                        params.proofRequest, presentationMessage.proof(), schemas, credentialDefs, revRegDefs, revRegs);
+
+                if (success) {
+                    this.requestedProof = presentationMessage.proof().getJSONObject("requested_proof");
+                    Ack ack = Ack.builder().setStatus(Ack.Status.OK).build();
+                    ack.setThreadId(presentationMessage.hasPleaseAck() ? presentationMessage.getAckMessageId() : presentationMessage.getId());
+
+                    log.log(Level.INFO, "100% - Verifying terminated successfully");
+                    coprotocol.send(ack);
+                    return true;
+                } else {
+                    throw new StateMachineTerminatedWithError(VERIFY_ERROR, "Verifying return false");
+                }
+            } catch (StateMachineTerminatedWithError ex) {
+                problemReport = PresentProofProblemReport.builder().
+                        setProblemCode(ex.getProblemCode()).
+                        setExplain(ex.getExplain()).
+                        build();
+                log.info("100% - Terminated with error. " + ex.getProblemCode() + " " + ex.getExplain());
+                if (ex.isNotify())
+                    coprotocol.send(problemReport);
             }
-
-            boolean success = context.getAnonCreds().verifierVerifyProof(
-                    params.proofRequest, presentationMessage.proof(), schemas, credentialDefs, revRegDefs, revRegs);
-
-            if (success) {
-                this.requestedProof = presentationMessage.proof().getJSONObject("requested_proof");
-                Ack ack = Ack.builder().setStatus(Ack.Status.OK).build();
-                ack.setThreadId(presentationMessage.hasPleaseAck() ? presentationMessage.getAckMessageId() : presentationMessage.getId());
-
-                log.log(Level.INFO, "100% - Verifying terminated successfully");
-                coprotocol.send(ack);
-                return true;
-            } else {
-                log.log(Level.INFO, "100% - Verifying terminated with ERROR");
-                throw new StateMachineTerminatedWithError("verify_error", "Verifying return false");
-            }
-
-
-        } catch (StateMachineTerminatedWithError e) {
-            this.problemReport = PresentProofProblemReport.builder().
-                    setProblemCode(e.getProblemCode()).
-                    setExplain(e.getExplain()).
-                    build();
         } catch (Exception e) {
             e.printStackTrace();
         }

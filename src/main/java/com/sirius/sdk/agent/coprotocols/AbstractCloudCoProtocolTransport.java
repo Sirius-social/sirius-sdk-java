@@ -39,7 +39,6 @@ public abstract class AbstractCloudCoProtocolTransport extends AbstractCoProtoco
     List<String> routingKeys;
     boolean isSetup;
     boolean started = false;
-    int timeToLiveSec = 30;
     Date dieTimestamp = null;
     List<String> pleaseAckIds = new ArrayList<>();
     boolean checkVerkeys = false;

@@ -21,8 +21,7 @@ public class KeylistUpdateResponse extends CoordinateMediationMessage {
 
         @Override
         protected JSONObject generateJSON() {
-            JSONObject jsonObject = super.generateJSON();
-            return jsonObject;
+            return super.generateJSON();
         }
 
         public KeylistUpdateResponse build() {

@@ -160,8 +160,14 @@ public class Laboratory extends BaseParticipant {
             preview.add(new ProposedAttrib(key, testRes.get(key).toString()));
         }
         boolean ok = issuerMachine.issue(
-                testRes, medCredInfo.schema, medCredInfo.credentialDefinition, "Here is your covid test results", "en",
-                preview, translations, credId);
+                new Issuer.IssueParams().
+                        setCredId(credId).
+                        setTranslation(translations).
+                        setPreview(preview).
+                        setValues(testRes).
+                        setSchema(medCredInfo.schema).
+                        setCredDef(medCredInfo.credentialDefinition).
+                        setComment("Here is your covid test results"));
         if (ok) {
             System.out.println("Covid test confirmation was successfully issued");
             if (testRes.hasCovid()) {
