@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueProblemReport;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -29,63 +30,74 @@ import java.util.logging.Logger;
 public class Prover extends BaseVerifyStateMachine {
     Pairwise verifier = null;
     String poolName;
+    String masterSecretId;
     Logger log = Logger.getLogger(Prover.class.getName());
 
-    public Prover(Context context, Pairwise verifier, Ledger ledger, int timeToLiveSec) {
+    public Prover(Context context, Pairwise verifier, Ledger ledger, String masterSecretId, int timeToLiveSec) {
         this.context = context;
         this.verifier = verifier;
         this.poolName = ledger.getName();
+        this.masterSecretId = masterSecretId;
         this.timeToLiveSec = timeToLiveSec;
     }
 
-    public Prover(Context context, Pairwise verifier, Ledger ledger) {
-        this.context = context;
-        this.verifier = verifier;
-        this.poolName = ledger.getName();
+    public Prover(Context context, Pairwise verifier, Ledger ledger,  String masterSecretId) {
+        this(context, verifier, ledger, masterSecretId, 60);
     }
 
-    public boolean prove(RequestPresentationMessage request, String masterSecretId) {
+    public boolean prove(RequestPresentationMessage request) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, verifier, protocols(), timeToLiveSec)) {
-            // Step-1: Process proof-request
-            log.log(Level.INFO, "10% - Received proof request");
             try {
-                request.validate();
-            } catch (SiriusValidationError e) {
-                throw new StateMachineTerminatedWithError("request_not_accepted", e.getMessage());
+                // Step-1: Process proof-request
+                log.log(Level.INFO, "10% - Received proof request");
+                try {
+                    request.validate();
+                } catch (SiriusValidationError e) {
+                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, e.getMessage());
+                }
+
+                ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
+
+                // Step-2: Build proof
+                JSONObject proof = context.getAnonCreds().proverCreateProof(
+                        request.proofRequest(), credInfoRes.credInfos, masterSecretId, credInfoRes.schemas,
+                        credInfoRes.credentialDefs, credInfoRes.revStates);
+
+                // Step-3: Send proof and wait Ack to check success from Verifier side
+                PresentationMessage presentationMessage = PresentationMessage.builder()
+                        .setProof(proof)
+                        .setVersion(request.getVersion())
+                        .build();
+                presentationMessage.setPleaseAck(true);
+                if (request.hasPleaseAck()) {
+                    presentationMessage.setThreadId(request.getAckMessageId());
+                }
+
+                // Step-3: Wait ACK
+                log.log(Level.INFO, "50% - Send presentation");
+
+                // Switch to await participant action
+                Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(presentationMessage);
+
+                if (okMsg.second instanceof Ack) {
+                    log.log(Level.INFO, "100% - Verify OK!");
+                    return true;
+                } else if (okMsg.second instanceof PresentProofProblemReport) {
+                    log.log(Level.INFO, "100% - Verify ERROR!");
+                    return false;
+                } else {
+                    throw new StateMachineTerminatedWithError(RESPONSE_FOR_UNKNOWN_REQUEST, "Unexpected response @type:" + okMsg.second.getType().toString());
+                }
+            } catch (StateMachineTerminatedWithError ex) {
+                problemReport = PresentProofProblemReport.builder().
+                        setProblemCode(ex.getProblemCode()).
+                        setExplain(ex.getExplain()).
+                        build();
+                log.info("100% - Terminated with error. " + ex.getProblemCode() + " " + ex.getExplain());
+                if (ex.isNotify())
+                    coprotocol.send(problemReport);
             }
-
-            ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
-
-            // Step-2: Build proof
-            JSONObject proof = context.getAnonCreds().proverCreateProof(
-                    request.proofRequest(), credInfoRes.credInfos, masterSecretId, credInfoRes.schemas, credInfoRes.credentialDefs, credInfoRes.revStates);
-
-            // Step-3: Send proof and wait Ack to check success from Verifier side
-            PresentationMessage presentationMessage = PresentationMessage.builder()
-                    .setProof(proof)
-                    .setVersion(request.getVersion())
-                    .build();
-            presentationMessage.setPleaseAck(true);
-            if (request.hasPleaseAck()) {
-                presentationMessage.setThreadId(request.getAckMessageId());
-            }
-
-            // Step-3: Wait ACK
-            log.log(Level.INFO, "50% - Send presentation");
-
-            // Switch to await participant action
-            Pair<Boolean, Message> okMsg = coprotocol.sendAndWait(presentationMessage);
-
-            if (okMsg.second instanceof Ack) {
-                log.log(Level.INFO, "100% - Verify OK!");
-                return true;
-            } else if (okMsg.second instanceof PresentProofProblemReport) {
-                log.log(Level.INFO, "100% - Verify ERROR!");
-                return false;
-            } else {
-                throw new StateMachineTerminatedWithError("response_for_unknown_request", "Unexpected response @type:" + okMsg.second.getType().toString());
-            }
-        } catch (SiriusPendingOperation | SiriusInvalidPayloadStructure | SiriusInvalidMessage | StateMachineTerminatedWithError e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;

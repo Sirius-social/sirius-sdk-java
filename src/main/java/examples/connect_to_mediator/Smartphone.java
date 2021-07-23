@@ -77,8 +77,8 @@ public class Smartphone {
                     Pair<Boolean, String> res = holder.accept(offer);
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
-                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName));
-                    prover.prove(request, masterSecret);
+                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName), masterSecret);
+                    prover.prove(request);
                 } else if (event.message() instanceof Message && event.getPairwise() != null) {
                     Message message = (Message) event.message();
                     System.out.println("Received new message: " + message.getContent());
