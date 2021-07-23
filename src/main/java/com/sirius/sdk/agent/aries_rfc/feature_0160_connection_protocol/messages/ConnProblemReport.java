@@ -22,8 +22,7 @@ public class ConnProblemReport extends AriesProblemReport {
 
         @Override
         protected JSONObject generateJSON() {
-            JSONObject jsonObject = super.generateJSON();
-            return jsonObject;
+            return super.generateJSON();
         }
 
         public ConnProblemReport build() {

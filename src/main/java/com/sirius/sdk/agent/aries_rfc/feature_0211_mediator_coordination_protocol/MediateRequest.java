@@ -22,8 +22,7 @@ public class MediateRequest extends CoordinateMediationMessage {
 
         @Override
         protected JSONObject generateJSON() {
-            JSONObject jsonObject = super.generateJSON();
-            return jsonObject;
+            return super.generateJSON();
         }
 
         public MediateRequest build() {
