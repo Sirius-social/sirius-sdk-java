@@ -10,6 +10,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class BaseIssuingStateMachine extends AbstractStateMachine {
+    public static final String PROPOSE_NOT_ACCEPTED = "propose_not_accepted";
+    public static final String OFFER_PROCESSING_ERROR = "offer_processing_error";
+    public static final String REQUEST_NOT_ACCEPTED = "request_not_accepted";
+    public static final String ISSUE_PROCESSING_ERROR = "issue_processing_error";
+    public static final String RESPONSE_FOR_UNKNOWN_REQUEST = "response_for_unknown_request";
 
     IssueProblemReport problemReport = null;
 

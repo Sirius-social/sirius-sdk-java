@@ -73,9 +73,8 @@ public class Smartphone {
                 Event event = listener.getOne().get();
                 if (event.message() instanceof OfferCredentialMessage && event.getPairwise() != null) {
                     OfferCredentialMessage offer = (OfferCredentialMessage) event.message();
-                    Holder holder = new Holder(context, event.getPairwise());
-
-                    Pair<Boolean, String> res = holder.accept(offer, masterSecret, "", "en");
+                    Holder holder = new Holder(context, event.getPairwise(), masterSecret);
+                    Pair<Boolean, String> res = holder.accept(offer);
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
                     Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName));

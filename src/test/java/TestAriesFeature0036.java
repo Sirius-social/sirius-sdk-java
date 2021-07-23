@@ -99,9 +99,14 @@ public class TestAriesFeature0036 {
                             build()) {
                         Issuer issuerMachine = new Issuer(context, i2h, 60);
                         Thread.sleep(10);
-                        return issuerMachine.issue(
-                                values, schema, credDef, "Hello Iam issuer", "en",
-                                preview, new ArrayList<AttribTranslation>(), credId);
+                        return issuerMachine.issue(new Issuer.IssueParams().
+                                        setValues(values).
+                                        setSchema(schema).
+                                        setCredDef(credDef).
+                                        setComment("Hello Iam issuer").
+                                        setLocale("en").
+                                        setPreview(preview).
+                                        setCredId(credId));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -124,8 +129,8 @@ public class TestAriesFeature0036 {
                         }
                         Message offer = event.message();
                         Assert.assertTrue(offer instanceof OfferCredentialMessage);
-                        Holder holderMachine = new Holder(context, h2i);
-                        Pair<Boolean, String> okCredId = holderMachine.accept((OfferCredentialMessage) offer, holderSecretId, "Hello, Iam holder", "en");
+                        Holder holderMachine = new Holder(context, h2i, holderSecretId, "en");
+                        Pair<Boolean, String> okCredId = holderMachine.accept((OfferCredentialMessage) offer, "Hello, Iam holder");
                         if (okCredId.first) {
                             String cred = context.getAnonCreds().proverGetCredential(okCredId.second);
                             System.out.println(cred);

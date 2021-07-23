@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.sirius.sdk.errors.indy_exceptions.WalletItemNotFoundException;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2P;
@@ -23,62 +24,87 @@ import org.json.JSONObject;
 public class Holder extends BaseIssuingStateMachine {
     Logger log = Logger.getLogger(Holder.class.getName());
     Pairwise issuer;
+    String masterSecretId;
+    String locale;
 
-    public Holder(Context context, Pairwise issuer) {
+    public Holder(Context context, Pairwise issuer, String masterSecretId, String locale) {
         this.context = context;
         this.issuer = issuer;
+        this.masterSecretId = masterSecretId;
+        this.locale = locale;
     }
 
-    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String masterSecretId, String comment, String locale) {
-        String docUri = "";
+    public Holder(Context context, Pairwise issuer, String masterSecretId) {
+        this(context, issuer, masterSecretId, BaseIssueCredentialMessage.DEF_LOCALE);
+    }
+
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, issuer, protocols(), timeToLiveSec)) {
-            docUri = Type.fromStr(offer.getType()).getDocUri();
-            OfferCredentialMessage offerMsg = offer;
+            String docUri = Type.fromStr(offer.getType()).getDocUri();
+            try {
+                try {
+                    offer.validate();
+                } catch (SiriusValidationError e) {
+                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, e.getMessage());
+                }
+                // Step-1: Process Issuer Offer
+                Pair<JSONObject, JSONObject> createCredReqRes = context.getAnonCreds().proverCreateCredentialReq(
+                        issuer.getMe().getDid(), offer.offer(), offer.credDef(), masterSecretId);
 
-            // Step-1: Process Issuer Offer
-            Pair<JSONObject, JSONObject> createCredReqRes = context.getAnonCreds().proverCreateCredentialReq(
-                    issuer.getMe().getDid(), offerMsg.offer(), offer.credDef(), masterSecretId);
+                JSONObject credRequest = createCredReqRes.first;
+                JSONObject credMetadata = createCredReqRes.second;
 
-            JSONObject credRequest = createCredReqRes.first;
-            JSONObject credMetadata = createCredReqRes.second;
+                // Step-2: Send request to Issuer
+                RequestCredentialMessage requestMsg = RequestCredentialMessage.builder().
+                        setComment(comment).
+                        setLocale(locale).
+                        setCredRequest(credRequest).
+                        build();
 
-            // Step-2: Send request to Issuer
-            RequestCredentialMessage requestMsg = RequestCredentialMessage.builder().
-                    setComment(comment).
-                    setLocale(locale).
-                    setCredRequest(credRequest).
-                    build();
+                Pair<Boolean, Message> okResp = coprotocol.sendAndWait(requestMsg);
+                if (!(okResp.second instanceof IssueCredentialMessage)) {
+                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, "Unexpected @type:" + okResp.second.getType());
+                }
 
-            Pair<Boolean, Message> okResp = coprotocol.sendAndWait(requestMsg);
-            if (!(okResp.second instanceof IssueCredentialMessage)) {
-                throw new StateMachineTerminatedWithError("request_not_accepted", "Unexpected @type:" + okResp.second.getType());
+                IssueCredentialMessage issueMsg = (IssueCredentialMessage) okResp.second;
+                try {
+                    issueMsg.validate();
+                } catch (SiriusValidationError e) {
+                    throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, e.getMessage());
+                }
+
+                // Step-3: Store credential
+                String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
+                storeMimeTypes(credId, offer.getCredentialPreview());
+
+                Ack ack = Ack.builder().
+                        setStatus(Ack.Status.OK).
+                        setDocUri(docUri).
+                        build();
+                ack.setThreadId(issueMsg.getAckMessageId());
+                coprotocol.send(ack);
+                log.info("100% - Credential stored successfully");
+                return new Pair<>(true, credId);
+            } catch (StateMachineTerminatedWithError ex) {
+                problemReport = IssueProblemReport.builder().
+                        setProblemCode(ex.getProblemCode()).
+                        setExplain(ex.getExplain()).
+                        setDocUri(docUri).
+                        build();
+                log.info("100% - Terminated with error. " + ex.getProblemCode() + " " + ex.getExplain());
+                if (ex.isNotify())
+                    coprotocol.send(problemReport);
             }
-
-            IssueCredentialMessage issueMsg = (IssueCredentialMessage) okResp.second;
-
-            // Step-3: Store credential
-            String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
-            storeMimeTypes(credId, offer.getCredentialPreview());
-
-            Ack ack = Ack.builder().
-                    setStatus(Ack.Status.OK).
-                    setDocUri(docUri).
-                    build();
-            ack.setThreadId(issueMsg.getAckMessageId());
-            coprotocol.send(ack);
-            log.info("100% - Credential stored successfully");
-            return new Pair<>(true, credId);
-        } catch (StateMachineTerminatedWithError ex) {
-            problemReport = IssueProblemReport.builder().
-                    setProblemCode(ex.getProblemCode()).
-                    setExplain(ex.getExplain()).
-                    setDocUri(docUri).
-                    build();
         } catch (Exception e) {
             e.printStackTrace();
+            log.info("100% - Terminated with error");
         }
 
         return new Pair<>(false, "");
+    }
+
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer) {
+        return accept(offer, null);
     }
 
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {

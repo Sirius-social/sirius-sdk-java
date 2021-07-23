@@ -1,7 +1,5 @@
 package com.sirius.sdk.errors;
 
-import com.sirius.sdk.errors.BaseSiriusException;
-
 public class StateMachineTerminatedWithError extends BaseSiriusException {
 
     String problemCode;
@@ -16,7 +14,7 @@ public class StateMachineTerminatedWithError extends BaseSiriusException {
     }
 
     public StateMachineTerminatedWithError(String problemCode, String explain) {
-        this(problemCode,explain,true);
+        this(problemCode, explain, true);
     }
 
     public String getProblemCode() {
