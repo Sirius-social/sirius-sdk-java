@@ -3,6 +3,7 @@ package com.sirius.sdk.agent.wallet.impl;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -19,10 +20,16 @@ public class PoolMobile {
                     = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(genesisFilePath);
             Pool.createPoolLedgerConfig(name, createPoolLedgerConfigJSONParameter.toJson()).get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
-            if (!e.getMessage().contains("PoolLedgerConfigExists"))
+            if(e.getMessage()!=null){
+                if (!e.getMessage().contains("PoolLedgerConfigExists")){
+                    e.printStackTrace();
+                }
+            }else{
                 e.printStackTrace();
+            }
         }
     }
+
 
     public Pool getPoolHandle(String name) {
         if (openedPoolRegistry.containsKey(name))

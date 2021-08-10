@@ -46,8 +46,6 @@ public class MobileAgent extends AbstractAgent {
     }
 
     BaseSender sender = new BaseSender() {
-
-
         @Override
         public boolean sendTo(String endpoint, byte[] cryptoMsg) {
 
@@ -73,15 +71,8 @@ public class MobileAgent extends AbstractAgent {
         }
 
         @Override
-        public void open() {
-         /*   webSocket.readCallback = new Function<byte[], Void>() {
-                @Override
-                public Void apply(byte[] bytes) {
-                    receiveMsg(bytes);
-                    return null;
-                }
-            };
-            webSocket.open();*/
+        public void open(String endpoint) {
+            getWebSocket(endpoint);
         }
 
         @Override
@@ -91,10 +82,6 @@ public class MobileAgent extends AbstractAgent {
             }
         }
 
-        @Override
-        public void create() {
-           // webSocket = new WebSocketConnector(mediatorAddress, "", null);
-        }
     };
     Wallet indyWallet;
     Map<String, WebSocketConnector> webSockets = new HashMap<>();
@@ -116,14 +103,17 @@ public class MobileAgent extends AbstractAgent {
         this.walletCredentials = walletCredentials;
     }
 
-    @Override
-    public void open() {
+    public void create(){
         try {
             Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
             if (!e.getMessage().contains("WalletExistsException"))
                 e.printStackTrace();
         }
+    }
+
+    @Override
+    public void open() {
         try {
             this.indyWallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
@@ -200,7 +190,7 @@ public class MobileAgent extends AbstractAgent {
     }
 
     public void connect(String endpoint) {
-        getWebSocket(endpoint);
+        sender.open(endpoint);
     }
 
     public byte[] packMessage(Message msg,String myVk, List<String> theirVk) {

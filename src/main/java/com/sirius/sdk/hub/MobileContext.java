@@ -15,6 +15,8 @@ import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+
+import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
 import org.json.JSONArray;
@@ -23,6 +25,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class MobileContext extends Context {
@@ -31,14 +34,19 @@ public class MobileContext extends Context {
 
     Pairwise mediatorPw = null;
     int timeToLiveSec = 60;
-
+    public static final int PROTOCOL_VERSION = 2;
     public static void addPool(String name, String txnPath) {
+        try {
+            Pool.setProtocolVersion(PROTOCOL_VERSION).get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         PoolMobile.registerPool(name, txnPath);
     }
 
     public MobileContext(MobileHub.Config config) {
         super(new MobileHub(config));
-        connectToMediator();
+        //connectToMediator();
     }
 
     @Override
@@ -107,19 +115,20 @@ public class MobileContext extends Context {
             mediatorPw = getPairwiseList().loadForDid(mediatorDid);
             getEndpoints().add(getMyMediatorEndpoint(invitation.recipientKeys().get(0)));
         }
-
-        JSONArray services = mediatorPw.getTheir().getDidDoc().optJSONArray("service");
-        JSONObject mediatorService = new JSONObject();
-        for (Object o : services) {
-            JSONObject service = (JSONObject) o;
-            if (service.optString("type").equals("MediatorService")) {
-                mediatorService = service;
-                break;
+        if(mediatorPw!=null){
+            JSONArray services = mediatorPw.getTheir().getDidDoc().optJSONArray("service");
+            JSONObject mediatorService = new JSONObject();
+            for (Object o : services) {
+                JSONObject service = (JSONObject) o;
+                if (service.optString("type").equals("MediatorService")) {
+                    mediatorService = service;
+                    break;
+                }
             }
-        }
 
-        String myWsEndpoint = mediatorService.optString("serviceEndpoint");
-        ((MobileAgent) currentHub.getAgentConnectionLazy()).connect(myWsEndpoint);
+            String myWsEndpoint = mediatorService.optString("serviceEndpoint");
+            ((MobileAgent) currentHub.getAgentConnectionLazy()).connect(myWsEndpoint);
+        }
     }
 
     private String getMediatorDid(String mediatorRecipientKey) {

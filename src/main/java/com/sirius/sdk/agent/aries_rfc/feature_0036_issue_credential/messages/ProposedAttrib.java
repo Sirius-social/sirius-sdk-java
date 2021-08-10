@@ -22,4 +22,17 @@ public class ProposedAttrib extends JSONObject {
         put("value", value);
         put("mime-type", mimeType);
     }
+
+
+    public String getName(){
+        return optString("name");
+    }
+
+    public String getValue(){
+        return optString("value");
+    }
+
+    public String getMimeType(){
+        return optString("mime-type");
+    }
 }

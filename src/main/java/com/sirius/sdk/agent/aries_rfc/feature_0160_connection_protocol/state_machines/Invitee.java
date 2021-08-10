@@ -106,7 +106,7 @@ public class Invitee extends BaseConnectionStateMachine {
                                             put("their", (new JSONObject().
                                                     put("did", theirInfo.did).
                                                     put("verkey", theirInfo.verkey).
-                                                    put("label", request.getLabel()).
+                                                    put("label", their.getLabel()).
                                                     put("endpoint", (new JSONObject()).
                                                             put("address", theirInfo.endpoint).
                                                             put("routing_keys", theirInfo.routingKeys)).

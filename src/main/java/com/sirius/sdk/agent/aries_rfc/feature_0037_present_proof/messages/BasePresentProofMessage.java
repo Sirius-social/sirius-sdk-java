@@ -13,6 +13,10 @@ public class BasePresentProofMessage extends AriesProtocolMessage {
         super(msg);
     }
 
+    public String getComment() {
+        return this.getMessageObj().getString("comment");
+    }
+
     public static abstract class Builder<B extends Builder<B>> extends AriesProtocolMessage.Builder<B> {
         protected String locale = DEF_LOCALE;
         String comment = null;
