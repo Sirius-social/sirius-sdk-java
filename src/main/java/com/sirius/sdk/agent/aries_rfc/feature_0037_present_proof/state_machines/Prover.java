@@ -2,6 +2,8 @@ package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueProblemReport;
 import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.ledger.Schema;
+import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentProofProblemReport;
@@ -22,7 +24,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,16 +37,15 @@ public class Prover extends BaseVerifyStateMachine {
     String masterSecretId;
     Logger log = Logger.getLogger(Prover.class.getName());
 
-    public Prover(Context context, Pairwise verifier, Ledger ledger, String masterSecretId, int timeToLiveSec) {
+    public Prover(Context context, Pairwise verifier, String masterSecretId, String poolName) {
         this.context = context;
         this.verifier = verifier;
-        this.poolName = ledger.getName();
+        this.poolName = poolName;
         this.masterSecretId = masterSecretId;
-        this.timeToLiveSec = timeToLiveSec;
     }
 
-    public Prover(Context context, Pairwise verifier, Ledger ledger,  String masterSecretId) {
-        this(context, verifier, ledger, masterSecretId, 60);
+    public Prover(Context context, Pairwise verifier, String masterSecretId) {
+        this(context, verifier, masterSecretId, null);
     }
 
     public boolean prove(RequestPresentationMessage request) {
@@ -145,13 +148,40 @@ public class Prover extends BaseVerifyStateMachine {
         for (JSONObject credInfo : allInfos) {
             String schemaId = credInfo.getString("schema_id");
             String credDefId = credInfo.getString("cred_def_id");
-            JSONObject schema = new JSONObject(context.getCache().getSchema(poolName, this.verifier.getMe().getDid(), schemaId, opts));
+            JSONObject schema = null;
+            if (poolName != null) {
+                schema = new JSONObject(context.getCache().getSchema(poolName, this.verifier.getMe().getDid(), schemaId, opts));
+            } else {
+                schema = getCredSchemaNonSecret(schemaId);
+            }
             res.schemas.put(schemaId, schema);
-            JSONObject credDef = new JSONObject(context.getCache().getCredDef(poolName, this.verifier.getMe().getDid(), credDefId, opts));
+
+            JSONObject credDef = null;
+            if (poolName != null) {
+                credDef = new JSONObject(context.getCache().getCredDef(poolName, this.verifier.getMe().getDid(), credDefId, opts));
+            } else {
+                credDef = getCredDefNonSecret(credDefId);
+            }
             res.credentialDefs.put(credDefId, credDef);
         }
 
         return res;
+    }
+
+    private JSONObject getCredSchemaNonSecret(String id) {
+        String record = context.getNonSecrets().getWalletRecord("schemas", id, new RetrieveRecordOptions(true, true, false));
+        if (record != null) {
+            return new JSONObject(record);
+        }
+        return new JSONObject();
+    }
+
+    public JSONObject getCredDefNonSecret(String id) {
+        String record = context.getNonSecrets().getWalletRecord("credDefs", id, new RetrieveRecordOptions(true, true, false));
+        if (record != null) {
+            return new JSONObject(record);
+        }
+        return new JSONObject();
     }
 
 }

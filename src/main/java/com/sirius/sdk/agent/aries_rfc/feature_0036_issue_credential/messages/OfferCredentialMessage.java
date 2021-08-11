@@ -84,6 +84,17 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         return parse().credDefBody;
     }
 
+    public JSONObject schema() {
+        JSONArray attaches = getMessageObj().getJSONArray("~attach");
+        for (Object o : attaches) {
+            JSONObject item = (JSONObject) o;
+            if (item.optString("@type").equals(ISSUER_SCHEMA_TYPE)) {
+                return item.getJSONObject("data").getJSONObject("json");
+            }
+        }
+        return null;
+    }
+
     public List<ProposedAttrib> getCredentialPreview() {
         List<ProposedAttrib> res = new ArrayList<>();
         JSONObject credentialPreview = getMessageObj().optJSONObject("credential_preview");

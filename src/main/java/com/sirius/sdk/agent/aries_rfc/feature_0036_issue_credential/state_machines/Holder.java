@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
+import com.sirius.sdk.agent.ledger.CredentialDefinition;
+import com.sirius.sdk.agent.ledger.Schema;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -76,6 +78,8 @@ public class Holder extends BaseIssuingStateMachine {
                 // Step-3: Store credential
                 String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
                 storeMimeTypes(credId, offer.getCredentialPreview());
+                storeCredSchemaNonSecret(offer.schema());
+                storeCredDefNonSecret(offer.credDef());
 
                 Ack ack = Ack.builder().
                         setStatus(Ack.Status.OK).
@@ -143,5 +147,13 @@ public class Holder extends BaseIssuingStateMachine {
             return new JSONObject(vals);
         }
         return new JSONObject();
+    }
+
+    private void storeCredSchemaNonSecret(JSONObject schema) {
+        context.getNonSecrets().addWalletRecord("schemas", schema.optString("id"), schema.toString());
+    }
+
+    private void storeCredDefNonSecret(JSONObject credDef) {
+        context.getNonSecrets().addWalletRecord("credDefs", credDef.getString("id"), credDef.toString());
     }
 }
