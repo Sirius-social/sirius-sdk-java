@@ -32,7 +32,8 @@ public class NonSecretsMobile extends AbstractNonSecrets {
         try {
             WalletRecord.add(wallet, type, id, value, tags).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
-            e.printStackTrace();
+            if (!e.getMessage().contains("WalletItemAlreadyExists"))
+                e.printStackTrace();
         }
     }
 

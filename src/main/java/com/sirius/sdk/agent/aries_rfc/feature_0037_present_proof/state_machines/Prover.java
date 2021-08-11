@@ -1,9 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines;
 
-import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.IssueProblemReport;
-import com.sirius.sdk.agent.ledger.Ledger;
-import com.sirius.sdk.agent.ledger.Schema;
-import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
+import com.sirius.sdk.agent.aries_rfc.SchemasNonSecretStorage;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentProofProblemReport;
@@ -11,9 +8,6 @@ import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.Presen
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusPendingOperation;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusValidationError;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
@@ -23,10 +17,7 @@ import com.sirius.sdk.utils.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -152,7 +143,7 @@ public class Prover extends BaseVerifyStateMachine {
             if (poolName != null) {
                 schema = new JSONObject(context.getCache().getSchema(poolName, this.verifier.getMe().getDid(), schemaId, opts));
             } else {
-                schema = getCredSchemaNonSecret(schemaId);
+                schema = SchemasNonSecretStorage.getCredSchemaNonSecret(context.getNonSecrets(), schemaId);
             }
             res.schemas.put(schemaId, schema);
 
@@ -160,28 +151,11 @@ public class Prover extends BaseVerifyStateMachine {
             if (poolName != null) {
                 credDef = new JSONObject(context.getCache().getCredDef(poolName, this.verifier.getMe().getDid(), credDefId, opts));
             } else {
-                credDef = getCredDefNonSecret(credDefId);
+                credDef = SchemasNonSecretStorage.getCredDefNonSecret(context.getNonSecrets(), credDefId);
             }
             res.credentialDefs.put(credDefId, credDef);
         }
 
         return res;
     }
-
-    private JSONObject getCredSchemaNonSecret(String id) {
-        String record = context.getNonSecrets().getWalletRecord("schemas", id, new RetrieveRecordOptions(true, true, false));
-        if (record != null) {
-            return new JSONObject(record);
-        }
-        return new JSONObject();
-    }
-
-    public JSONObject getCredDefNonSecret(String id) {
-        String record = context.getNonSecrets().getWalletRecord("credDefs", id, new RetrieveRecordOptions(true, true, false));
-        if (record != null) {
-            return new JSONObject(record);
-        }
-        return new JSONObject();
-    }
-
 }
