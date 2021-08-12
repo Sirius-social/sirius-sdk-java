@@ -45,6 +45,7 @@ public class TestAriesFeature0113 {
                         setValidResponses(Arrays.asList("Yes", "No")).
                         setQuestionText("Test question").
                         setQuestionDetail("Question detail").
+                        setTtl(40).
                         build();
                 AnswerMessage answer = Recipes.askAndWaitAnswer(context, question, requester2responder);
                 Assert.assertNotNull(answer);

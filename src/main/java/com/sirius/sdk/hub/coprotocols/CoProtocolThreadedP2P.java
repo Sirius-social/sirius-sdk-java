@@ -29,6 +29,13 @@ public class CoProtocolThreadedP2P extends AbstractP2PCoProtocol {
         this.to = to;
     }
 
+    public CoProtocolThreadedP2P(Context context, String thid, Pairwise to, int timeToLiveSec) {
+        super(context);
+        this.thid = thid;
+        this.to = to;
+        this.timeToLiveSec = timeToLiveSec;
+    }
+
     public String getThid() {
         return thid;
     }

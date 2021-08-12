@@ -9,6 +9,9 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,18 +22,13 @@ public class QuestionMessage extends AriesProtocolMessage {
         com.sirius.sdk.messaging.Message.registerMessageClass(QuestionMessage.class, "questionanswer", "question");
     }
 
-    /* "question_text": "Alice, are you on the phone with Bob from Faber Bank right now?",
-         "question_detail": "This is optional fine-print giving context to the question and its various answers.",
-         "nonce": "<valid_nonce>",
-         "signature_required": true,
-         "valid_responses" : [
-    {"text": "Yes, it's me"},
-    {"text": "No, that's not me!"}],
-            "~timing": {
-        "expires_time": "2018-12-13T17:29:06+0000"
-    }*/
+    public QuestionMessage(String msg) {
+        super(msg);
+    }
 
-    private static final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    public static Builder<?> builder() {
+        return new MessageBuilder();
+    }
 
     public String getQuestionText() {
         return getMessageObj().optString("question_text");
@@ -63,33 +61,19 @@ public class QuestionMessage extends AriesProtocolMessage {
         return responsesLis;
     }
 
-    public Date expiresTime() {
-        JSONObject timing = getMessageObj().optJSONObject("~timing");
-        if (timing != null) {
-            String dateTimeStr = timing.optString("expires_time", "");
-            if (!dateTimeStr.isEmpty()) {
-                DateFormat df = new SimpleDateFormat(TIME_FORMAT);
-                try {
-                    return df.parse(dateTimeStr);
-                } catch (ParseException ignored) {
-                }
-            }
-        }
-        return null;
-    }
-
-    public QuestionMessage(String msg) {
-        super(msg);
-    }
-
     public String getContent() {
         return getMessageObj().optString("content");
     }
 
-    public static Builder<?> builder() {
-        return new MessageBuilder();
+    public ZonedDateTime getExpiresTime() {
+        JSONObject timing = getMessageObj().optJSONObject("~timing");
+        if (timing != null) {
+            String expiresTimeStr = timing.optString("expires_time");
+            if (!expiresTimeStr.isEmpty())
+                return ZonedDateTime.parse(expiresTimeStr);
+        }
+        return null;
     }
-
 
     public static abstract class Builder<B extends QuestionMessage.Builder<B>> extends AriesProtocolMessage.Builder<B> {
         String questionText = null;
@@ -98,6 +82,7 @@ public class QuestionMessage extends AriesProtocolMessage {
         boolean signatureRequired = false;
         List<String> validResponses = null;
         Date expiresTime = null;
+        Integer ttlSec = null;
 
         public B setQuestionText(String text) {
             this.questionText = text;
@@ -111,6 +96,11 @@ public class QuestionMessage extends AriesProtocolMessage {
 
         public B setExpiresTime(Date expiresTime) {
             this.expiresTime = expiresTime;
+            return self();
+        }
+
+        public B setTtl(int seconds) {
+            this.ttlSec = seconds;
             return self();
         }
 
@@ -148,11 +138,21 @@ public class QuestionMessage extends AriesProtocolMessage {
 
             jsonObject.put("signature_required", signatureRequired);
 
+            if (ttlSec != null) {
+                JSONObject timing = jsonObject.optJSONObject("~timing");
+                if (timing == null) {
+                    timing = new JSONObject();
+                    jsonObject.put("~timing", timing);
+                }
+                String expiresTimeIso = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(ttlSec).format(DateTimeFormatter.ISO_INSTANT);
+                timing.put("expires_time", expiresTimeIso);
+            }
+
             if (validResponses != null) {
-                JSONArray validArray =  new JSONArray(validResponses);
-                for(int i=0;i<validResponses.size();i++){
-                    JSONObject responseObj =  new JSONObject();
-                    responseObj.put("text",validResponses.get(i));
+                JSONArray validArray = new JSONArray(validResponses);
+                for (int i = 0; i < validResponses.size(); i++) {
+                    JSONObject responseObj = new JSONObject();
+                    responseObj.put("text", validResponses.get(i));
                     validArray.put(responseObj);
                 }
                 jsonObject.put("valid_responses", validArray);

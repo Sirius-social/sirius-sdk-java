@@ -6,10 +6,20 @@ import com.sirius.sdk.hub.coprotocols.CoProtocolThreadedP2P;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
 public class Recipes {
 
     public static AnswerMessage askAndWaitAnswer(Context context, QuestionMessage question, Pairwise to) {
-        try (CoProtocolThreadedP2P cp = new CoProtocolThreadedP2P(context, question.getId(), to)) {
+        int ttlSec = 60;
+        if (question.getExpiresTime() != null) {
+            ttlSec = (int) ChronoUnit.SECONDS.between(ZonedDateTime.now(), question.getExpiresTime());
+            if (ttlSec < 0)
+                ttlSec = 60;
+        }
+        try (CoProtocolThreadedP2P cp = new CoProtocolThreadedP2P(context, question.getId(), to, ttlSec)) {
             Pair<Boolean, Message> res = cp.sendAndWait(question);
             if (res.first) {
                 if (res.second instanceof AnswerMessage) {
@@ -25,6 +35,7 @@ public class Recipes {
     public static void makeAnswer(Context context, String response, QuestionMessage question, Pairwise to) {
         AnswerMessage answer = AnswerMessage.builder().setResponse(response).build();
         answer.setThreadId(question.getId());
+        answer.setOutTime();
         context.sendTo(answer, to);
     }
 }

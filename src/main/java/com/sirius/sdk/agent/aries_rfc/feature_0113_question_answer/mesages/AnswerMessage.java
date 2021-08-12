@@ -3,6 +3,10 @@ package com.sirius.sdk.agent.aries_rfc.feature_0113_question_answer.mesages;
 import com.sirius.sdk.agent.aries_rfc.AriesProtocolMessage;
 import org.json.JSONObject;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class AnswerMessage extends AriesProtocolMessage {
 
     static {
@@ -17,13 +21,15 @@ public class AnswerMessage extends AriesProtocolMessage {
         return getMessageObj().optString("response");
     }
 
-//    public void setOutTime() {
-//        JSONObject timing = getMessageObj().optJSONObject("~timing");
-//        if (timing == null) {
-//            timing = new JSONObject();
-//            getMessageObj().put("~timing", timing);
-//        }
-//    }
+    public void setOutTime() {
+        JSONObject timing = getMessageObj().optJSONObject("~timing");
+        if (timing == null) {
+            timing = new JSONObject();
+            getMessageObj().put("~timing", timing);
+        }
+        String timeIso = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+        timing.put("out_time", timeIso);
+    }
 
     public static Builder<?> builder() {
         return new MessageBuilder();
