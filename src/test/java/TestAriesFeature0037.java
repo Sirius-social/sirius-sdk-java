@@ -174,7 +174,7 @@ public class TestAriesFeature0037 {
                 RequestPresentationMessage requestPresentationMessage = (RequestPresentationMessage) event.message();
                 int ttl = 60;
                 Ledger proverLedger = context.getLedgers().get("default");
-                Prover machine = new Prover(context, p2v, proverLedger, proverSecretId);
+                Prover machine = new Prover(context, p2v, proverSecretId, proverLedger.getName());
                 return machine.prove(requestPresentationMessage);
             }
         }, r -> new Thread(r).start());

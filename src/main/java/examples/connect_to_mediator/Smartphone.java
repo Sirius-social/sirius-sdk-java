@@ -31,9 +31,13 @@ public class Smartphone {
     String masterSecret = "masterSecret";
 
     public Smartphone(MobileHub.Config config, String networkName, String genesisPath) {
-        MobileContext.addPool(networkName, genesisPath);
         this.config = config;
         this.networkName = networkName;
+        MobileContext.addPool(networkName, genesisPath);
+    }
+
+    public Smartphone(MobileHub.Config config) {
+        this.config = config;
     }
 
     public void start() {
@@ -78,7 +82,12 @@ public class Smartphone {
                     Pair<Boolean, String> res = holder.accept(offer);
                 } else if (event.message() instanceof RequestPresentationMessage && event.getPairwise() != null) {
                     RequestPresentationMessage request = (RequestPresentationMessage) event.message();
-                    Prover prover = new Prover(context, event.getPairwise(), context.getLedgers().get(networkName), masterSecret);
+                    Prover prover = null;
+                    if (networkName == null) {
+                        prover = new Prover(context, event.getPairwise(), masterSecret);
+                    } else {
+                        prover = new Prover(context, event.getPairwise(), masterSecret, networkName);
+                    }
                     prover.prove(request);
                 } else if (event.message() instanceof Message && event.getPairwise() != null) {
                     Message message = (Message) event.message();

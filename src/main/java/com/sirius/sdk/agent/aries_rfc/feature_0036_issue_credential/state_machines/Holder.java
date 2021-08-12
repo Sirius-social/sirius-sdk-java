@@ -1,5 +1,6 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machines;
 
+import com.sirius.sdk.agent.aries_rfc.SchemasNonSecretStorage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
@@ -76,6 +77,8 @@ public class Holder extends BaseIssuingStateMachine {
                 // Step-3: Store credential
                 String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
                 storeMimeTypes(credId, offer.getCredentialPreview());
+                SchemasNonSecretStorage.storeCredSchemaNonSecret(context.getNonSecrets(), offer.schema());
+                SchemasNonSecretStorage.storeCredDefNonSecret(context.getNonSecrets(), offer.credDef());
 
                 Ack ack = Ack.builder().
                         setStatus(Ack.Status.OK).

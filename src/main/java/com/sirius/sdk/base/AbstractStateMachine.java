@@ -12,4 +12,12 @@ public abstract class AbstractStateMachine {
     protected List<AbstractCoProtocol> coprotocols = new ArrayList<>();
 
     public abstract List<String> protocols();
+
+    public int getTimeToLiveSec() {
+        return timeToLiveSec;
+    }
+
+    public void setTimeToLiveSec(int timeToLiveSec) {
+        this.timeToLiveSec = timeToLiveSec;
+    }
 }
