@@ -95,7 +95,7 @@ public class MobileContext extends Context {
         return new MobileContext.MobileContextBuilder();
     }
 
-    public void connectToMediator() {
+    public void connectToMediator(String label) {
         Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
         String mediatorDid = getMediatorDid(invitation.recipientKeys().get(0));
         if (mediatorDid == null) {
@@ -103,7 +103,7 @@ public class MobileContext extends Context {
             Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
             Endpoint endpoint = new Endpoint("ws://");
             Invitee invitee = new Invitee(this, me, endpoint);
-            Pairwise pw = invitee.createConnection(invitation, "Edge agent");
+            Pairwise pw = invitee.createConnection(invitation, label);
 
             if (pw != null) {
                 getPairwiseList().ensureExists(pw);
