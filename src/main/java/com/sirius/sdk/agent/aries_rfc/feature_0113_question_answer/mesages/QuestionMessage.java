@@ -99,8 +99,8 @@ public class QuestionMessage extends AriesProtocolMessage {
         List<String> validResponses = null;
         Date expiresTime = null;
 
-        public B setQuestionText(String locale) {
-            this.questionText = locale;
+        public B setQuestionText(String text) {
+            this.questionText = text;
             return self();
         }
 
