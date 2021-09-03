@@ -1,6 +1,8 @@
 package com.sirius.sdk.hub;
+
 import com.sirius.sdk.agent.BaseSender;
 import com.sirius.sdk.agent.MobileAgent;
+import com.sirius.sdk.agent.MobileContextConnection;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
 import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdate;
@@ -35,6 +37,7 @@ public class MobileContext extends Context {
     Pairwise mediatorPw = null;
     int timeToLiveSec = 60;
     public static final int PROTOCOL_VERSION = 2;
+
     public static void addPool(String name, String txnPath) {
         try {
             Pool.setProtocolVersion(PROTOCOL_VERSION).get();
@@ -61,6 +64,7 @@ public class MobileContext extends Context {
             config.walletConfig = walletConfig;
             return this;
         }
+
         public MobileContextBuilder setIndyEndpoint(String indyEndpoint) {
             config.indyEndpoint = indyEndpoint;
             return this;
@@ -96,26 +100,45 @@ public class MobileContext extends Context {
     }
 
     public void connectToMediator(String label) {
+        connectToMediator(label,null);
+    }
+
+    public void connectToMediator(String label, List<MobileContextConnection>  connections) {
         Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
         String mediatorDid = getMediatorDid(invitation.recipientKeys().get(0));
         if (mediatorDid == null) {
-            Pair<String, String> didVk = getDid().createAndStoreMyDid();
-            Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
-            Endpoint endpoint = new Endpoint("ws://");
-            Invitee invitee = new Invitee(this, me, endpoint);
-            Pairwise pw = invitee.createConnection(invitation, label);
+        Pair<String, String> didVk = getDid().createAndStoreMyDid();
+        Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);
+        Endpoint endpoint = new Endpoint("ws://");
+        Invitee invitee = new Invitee(this, me, endpoint);
+        JSONArray connectionArray = null;
 
-            if (pw != null) {
-                getPairwiseList().ensureExists(pw);
-                mediatorPw = pw;
+        if (connections!=null) {
+            for(MobileContextConnection connection: connections){
+                connectionArray = new JSONArray();
+                JSONObject fcmServiceObject = (new JSONObject()).
+                        put("id", "did:peer:" + me.getDid() + ";indy").
+                        put("type", connection.getType()).
+                        put("priority", connection.getPriority()).
+                        put("recipientKeys", (new JSONArray(connection.getRecipientKeys()))).
+                        put("serviceEndpoint", connection.getServiceEndpoint());
+                connectionArray.put(fcmServiceObject);
             }
+        }
 
-            askForMediation();
+        Pairwise pw = invitee.createConnection(invitation, label, null, connectionArray);
+
+        if (pw != null) {
+            getPairwiseList().ensureExists(pw);
+            mediatorPw = pw;
+        }
+
+        askForMediation();
         } else {
             mediatorPw = getPairwiseList().loadForDid(mediatorDid);
             getEndpoints().add(getMyMediatorEndpoint(invitation.recipientKeys().get(0)));
         }
-        if(mediatorPw!=null){
+        if (mediatorPw != null) {
             JSONArray services = mediatorPw.getTheir().getDidDoc().optJSONArray("service");
             JSONObject mediatorService = new JSONObject();
             for (Object o : services) {
@@ -204,4 +227,5 @@ public class MobileContext extends Context {
     public boolean addMediatorKey(String key) {
         return addMediatorKeys(Arrays.asList(key));
     }
+
 }

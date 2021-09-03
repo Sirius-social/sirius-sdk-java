@@ -14,7 +14,10 @@ import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.util.logging.Logger;
 
 public class Invitee extends BaseConnectionStateMachine {
@@ -26,7 +29,7 @@ public class Invitee extends BaseConnectionStateMachine {
         this.myEndpoint = myEndpoint;
     }
 
-    public Pairwise createConnection(Invitation invitation, String myLabel, DidDoc didDoc) {
+    public Pairwise createConnection(Invitation invitation, String myLabel, DidDoc didDoc, JSONArray additionalConnectiion) {
         // Validate invitation
         log.info("0% - Invitation validate");
         try {
@@ -47,15 +50,24 @@ public class Invitee extends BaseConnectionStateMachine {
         // Allocate transport channel between self and theirs by verkeys factor
         try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, me.getVerkey(), inviterEndpoint, protocols(), timeToLiveSec)) {
             try {
-                ConnRequest request = ConnRequest.builder().
+                ConnRequest.Builder<?> requestBuidler = ConnRequest.builder().
                         setLabel(myLabel).
                         setDid(this.me.getDid()).
                         setVerkey(this.me.getVerkey()).
                         setEndpoint(this.myEndpoint.getAddress()).
                         setDocUri(docUri).
-                        setDidDocExtra(didDoc != null ? didDoc.getPayload() : null).
-                        build();
+                        setDidDocExtra(didDoc != null ? didDoc.getPayload() : null);
+                if (additionalConnectiion != null) {
+                    for (int i = 0; i < additionalConnectiion.length(); i++) {
+                        JSONObject connectionObject = additionalConnectiion.optJSONObject(i);
+                        requestBuidler.addConnectionService(connectionObject);
+                    }
+                }
 
+
+                ConnRequest request = requestBuidler.
+                        build();
+                log.info("30% - Step-1: send connection request to request+"+request.serialize());
                 log.info("30% - Step-1: send connection request to Inviter");
                 Pair<Boolean, Message> okMsg = cp.sendAndWait(request);
                 if (okMsg.first) {
@@ -149,8 +161,12 @@ public class Invitee extends BaseConnectionStateMachine {
         return null;
     }
 
+    public Pairwise createConnection(Invitation invitation, String myLabel, DidDoc didDoc) {
+        return createConnection(invitation, myLabel, didDoc, null);
+    }
+
     public Pairwise createConnection(Invitation invitation, String myLabel) {
-        return createConnection(invitation, myLabel, null);
+        return createConnection(invitation, myLabel, null, null);
     }
 
 }

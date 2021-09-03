@@ -96,6 +96,9 @@ public class MobileAgent extends AbstractAgent {
         }
     }
 
+
+
+
     List<Pair<MobileAgentEvents, Listener>> events = new ArrayList<>();
 
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
