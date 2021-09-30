@@ -75,48 +75,53 @@ public class Invitee extends BaseConnectionStateMachine {
                             ConnProtocolMessage.ExtractTheirInfoRes theirInfo = response.extractTheirInfo();
                             context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
 
-                            // Step 4: Send ack to Inviter
-                            if (response.hasPleaseAck()) {
-                                Ack ack = Ack.builder().
-                                        setStatus(Ack.Status.OK).
-                                        build();
-                                ack.setThreadId(response.getAckMessageId());
-                                cp.send(ack);
-                                log.info("90% - Step-4: Send ack to Inviter");
-                            } else {
-                                Ping ping = Ping.builder().
-                                        setComment("Connection established").
-                                        setResponseRequested(false).
-                                        build();
-                                cp.send(ping);
-                                log.info("90% - Step-4: Send ping to Inviter");
+                            TheirEndpoint actualEndpoint = new TheirEndpoint(theirInfo.endpoint, theirInfo.verkey);
+
+                            try (AbstractP2PCoProtocol cpInternal = new CoProtocolP2PAnon(context, me.getVerkey(), actualEndpoint, protocols(), timeToLiveSec)) {
+
+                                // Step 4: Send ack to Inviter
+                                if (response.hasPleaseAck()) {
+                                    Ack ack = Ack.builder().
+                                            setStatus(Ack.Status.OK).
+                                            build();
+                                    ack.setThreadId(response.getAckMessageId());
+                                    cpInternal.send(ack);
+                                    log.info("90% - Step-4: Send ack to Inviter");
+                                } else {
+                                    Ping ping = Ping.builder().
+                                            setComment("Connection established").
+                                            setResponseRequested(false).
+                                            build();
+                                    cpInternal.send(ping);
+                                    log.info("90% - Step-4: Send ping to Inviter");
+                                }
+
+                                // Step 5: Make Pairwise instance
+                                Pairwise.Their their = new Pairwise.Their(theirInfo.did,
+                                        invitation.label(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
+                                JSONObject myDidDoc = request.didDoc().getPayload();
+                                JSONObject theirDidDoc = response.didDoc().getPayload();
+
+                                JSONObject metadata = (new JSONObject()).
+                                        put("me", (new JSONObject()).
+                                                put("did", this.me.getDid()).
+                                                put("verkey", this.me.getVerkey()).
+                                                put("did_doc", myDidDoc).
+                                                put("their", (new JSONObject().
+                                                        put("did", theirInfo.did).
+                                                        put("verkey", theirInfo.verkey).
+                                                        put("label", request.getLabel()).
+                                                        put("endpoint", (new JSONObject()).
+                                                                put("address", theirInfo.endpoint).
+                                                                put("routing_keys", theirInfo.routingKeys)).
+                                                        put("did_doc", theirDidDoc))));
+
+                                Pairwise pairwise = new Pairwise(this.me, their, metadata);
+                                pairwise.getMe().setDidDoc(myDidDoc);
+                                pairwise.getTheir().setDidDoc(theirDidDoc);
+                                log.info("100% - Pairwise established");
+                                return pairwise;
                             }
-
-                            // Step 5: Make Pairwise instance
-                            Pairwise.Their their = new Pairwise.Their(theirInfo.did,
-                                    invitation.label(), theirInfo.endpoint, theirInfo.verkey, theirInfo.routingKeys);
-                            JSONObject myDidDoc = request.didDoc().getPayload();
-                            JSONObject theirDidDoc = response.didDoc().getPayload();
-
-                            JSONObject metadata = (new JSONObject()).
-                                    put("me", (new JSONObject()).
-                                            put("did", this.me.getDid()).
-                                            put("verkey", this.me.getVerkey()).
-                                            put("did_doc", myDidDoc).
-                                            put("their", (new JSONObject().
-                                                    put("did", theirInfo.did).
-                                                    put("verkey", theirInfo.verkey).
-                                                    put("label", request.getLabel()).
-                                                    put("endpoint", (new JSONObject()).
-                                                            put("address", theirInfo.endpoint).
-                                                            put("routing_keys", theirInfo.routingKeys)).
-                                                    put("did_doc", theirDidDoc))));
-
-                            Pairwise pairwise = new Pairwise(this.me, their, metadata);
-                            pairwise.getMe().setDidDoc(myDidDoc);
-                            pairwise.getTheir().setDidDoc(theirDidDoc);
-                            log.info("100% - Pairwise established");
-                            return pairwise;
                         } else {
                             throw new StateMachineTerminatedWithError(RESPONSE_NOT_ACCEPTED,
                                     "Invalid connection response signature for connection_key: " + connectionKey);
