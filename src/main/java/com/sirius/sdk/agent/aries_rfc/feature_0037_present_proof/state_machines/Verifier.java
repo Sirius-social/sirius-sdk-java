@@ -208,7 +208,7 @@ public class Verifier extends BaseVerifyStateMachine {
             if (proofRequest.getJSONObject("requested_attributes").has(refId)) {
                 if (proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).has("name")) {
                     String attrName = proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).optString("name");
-                    revAttrs.put(attrName, selfAttestedAttrs.getJSONObject(refId).optString("raw"));
+                    revAttrs.put(attrName, revealedAttrs.getJSONObject(refId).optString("raw"));
                 }
             }
         }

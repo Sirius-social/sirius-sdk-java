@@ -124,7 +124,7 @@ public class Prover extends BaseVerifyStateMachine {
             return res;
         }
 
-        JSONObject requestedAttributes = proofResponse.getJSONObject("requested_attributes");
+        JSONObject requestedAttributes = proofRequest.getJSONObject("requested_attributes");
         for (String referentId : requestedAttributes.keySet()) {
             JSONObject data = requestedAttributes.getJSONObject(referentId);
             boolean hasRestrictions = data.has("restrictions");
@@ -138,6 +138,7 @@ public class Prover extends BaseVerifyStateMachine {
             }
         }
 
+        requestedAttributes = proofResponse.getJSONObject("requested_attributes");
         List<JSONObject> allInfos = new ArrayList<JSONObject>();
         for (String referentId : requestedAttributes.keySet()) {
             if (requestedAttributesWithNoRestrictions.has(referentId)) {
