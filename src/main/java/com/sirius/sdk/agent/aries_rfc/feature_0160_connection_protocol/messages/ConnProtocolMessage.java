@@ -125,7 +125,8 @@ public abstract class ConnProtocolMessage extends AriesProtocolMessage {
                                 put("id", "did:peer:" + did + ";indy").
                                 put("type", "IndyAgent").
                                 put("priority", 0).
-                                put("recipientKeys", (new JSONArray()).put(keyId)).
+                                //put("recipientKeys", (new JSONArray()).put(keyId)).
+                                put("recipientKeys", (new JSONArray()).put(verkey)).
                                 put("serviceEndpoint", endpoint)));
         for (String key : extra.keySet()) {
             doc.put(key, extra.get(key));
