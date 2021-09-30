@@ -66,7 +66,7 @@ public class Invitee extends BaseConnectionStateMachine {
                         try {
                             response.validate();
                         } catch (SiriusValidationError e) {
-                            throw new StateMachineTerminatedWithError(RESPONSE_NOT_ACCEPTED, e.getMessage());
+                            throw new StateMachineTerminatedWithError(RESPONSE_NOT_ACCEPTED, e.getMessage(), true);
                         }
                         boolean success = response.verifyConnection(context.getCrypto());
                         if (success && response.getMessageObj().getJSONObject("connection~sig").optString("signer").equals(connectionKey)) {
