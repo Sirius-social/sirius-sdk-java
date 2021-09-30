@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machi
 
 import com.sirius.sdk.agent.aries_rfc.SchemasNonSecretStorage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
+import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -39,7 +40,7 @@ public class Holder extends BaseIssuingStateMachine {
         this(context, issuer, masterSecretId, BaseIssueCredentialMessage.DEF_LOCALE);
     }
 
-    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment) {
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment, Ledger ledger) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, issuer, protocols(), timeToLiveSec)) {
             String docUri = Type.fromStr(offer.getType()).getDocUri();
             try {
@@ -107,7 +108,11 @@ public class Holder extends BaseIssuingStateMachine {
     }
 
     public Pair<Boolean, String> accept(OfferCredentialMessage offer) {
-        return accept(offer, null);
+        return accept(offer, null, null);
+    }
+
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, Ledger ledger) {
+        return accept(offer, null, ledger);
     }
 
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {

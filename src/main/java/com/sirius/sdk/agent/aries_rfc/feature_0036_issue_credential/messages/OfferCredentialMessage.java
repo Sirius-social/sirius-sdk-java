@@ -27,6 +27,10 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
     }
 
     public ParseResult parse() throws SiriusValidationError {
+        return parse(false);
+    }
+
+    public ParseResult parse(boolean muteErrors) throws SiriusValidationError {
         JSONArray offerAttaches = getMessageObj().getJSONArray("offers~attach");
         if (offerAttaches == null) {
             JSONObject att = getMessageObj().getJSONObject("offers~attach");
@@ -36,11 +40,15 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
             }
         }
 
+        ParseResult res = new ParseResult();
+
         if (offerAttaches == null) {
-            throw new SiriusValidationError("Expected attribute \"offer~attach\" must contains cred-Offer and cred-Def");
+            if (muteErrors)
+                return res;
+            else
+                throw new SiriusValidationError("Expected attribute \"offer~attach\" must contains cred-Offer and cred-Def");
         }
 
-        ParseResult res = new ParseResult();
         res.offer = offerAttaches.getJSONObject(0);
 
         for (int i = 0; i < offerAttaches.length(); i++) {
@@ -66,11 +74,13 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
         }
 
         if (res.offerBody == null) {
-            throw new SiriusValidationError("Expected offer~attach must contains Payload with offer");
+            if (!muteErrors)
+                throw new SiriusValidationError("Expected offer~attach must contains Payload with offer");
         }
 
         if (res.credDefBody == null) {
-            throw new SiriusValidationError("Expected offer~attach must contains Payload with cred_def data");
+            if (!muteErrors)
+                throw new SiriusValidationError("Expected offer~attach must contains Payload with cred_def data");
         }
 
         return res;
@@ -103,7 +113,11 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
                 JSONArray attribs = credentialPreview.optJSONArray("attributes");
                 if (attribs != null) {
                     for (Object o : attribs) {
-                        res.add(new ProposedAttrib((JSONObject) o));
+                        ProposedAttrib pa = new ProposedAttrib((JSONObject) o);
+                        if (!pa.has("mime-type")) {
+                            pa.put("mime-type", "text/plain");
+                        }
+                        res.add(pa);
                     }
                 }
             }
