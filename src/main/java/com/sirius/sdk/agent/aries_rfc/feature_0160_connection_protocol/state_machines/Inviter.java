@@ -72,6 +72,8 @@ public class Inviter extends BaseConnectionStateMachine {
                         build();
                 if (request.hasPleaseAck()) {
                     response.setThreadId(request.getAckMessageId());
+                } else {
+                    response.setThreadId(request.getId());
                 }
                 DidDoc myDidDoc = response.didDoc();
                 response.signConnection(context.getCrypto(), this.connectionKey);
