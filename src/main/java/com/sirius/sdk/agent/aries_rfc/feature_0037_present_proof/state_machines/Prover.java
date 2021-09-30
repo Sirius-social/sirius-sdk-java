@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines;
 
 import com.sirius.sdk.agent.aries_rfc.SchemasNonSecretStorage;
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentationAck;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentProofProblemReport;
@@ -39,7 +40,7 @@ public class Prover extends BaseVerifyStateMachine {
         this(context, verifier, masterSecretId, null);
     }
 
-    public boolean prove(RequestPresentationMessage request) {
+    public boolean prove(RequestPresentationMessage request, JSONObject selfAttestedAttributes) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, verifier, protocols(), timeToLiveSec)) {
             try {
                 // Step-1: Process proof-request
@@ -50,7 +51,7 @@ public class Prover extends BaseVerifyStateMachine {
                     throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, e.getMessage());
                 }
 
-                ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName);
+                ExtractCredentialsInfoResult credInfoRes = extractCredentialsInfo(request.proofRequest(), poolName, selfAttestedAttributes);
 
                 // Step-2: Build proof
                 JSONObject proof = context.getAnonCreds().proverCreateProof(
@@ -65,6 +66,8 @@ public class Prover extends BaseVerifyStateMachine {
                 presentationMessage.setPleaseAck(true);
                 if (request.hasPleaseAck()) {
                     presentationMessage.setThreadId(request.getAckMessageId());
+                } else {
+                    presentationMessage.setThreadId(request.getId());
                 }
 
                 // Step-3: Wait ACK
@@ -97,6 +100,10 @@ public class Prover extends BaseVerifyStateMachine {
         return false;
     }
 
+    public boolean prove(RequestPresentationMessage request) {
+        return prove(request, new JSONObject());
+    }
+
     static class ExtractCredentialsInfoResult {
         JSONObject credInfos = new JSONObject();
         JSONObject schemas = new JSONObject();
@@ -104,19 +111,47 @@ public class Prover extends BaseVerifyStateMachine {
         JSONObject revStates = new JSONObject();
     }
 
-    private ExtractCredentialsInfoResult extractCredentialsInfo(JSONObject proofRequest, String poolName) {
+    private ExtractCredentialsInfoResult extractCredentialsInfo(JSONObject proofRequest, String poolName, JSONObject selfAttestedAttrs) {
         JSONObject proofResponse = context.getAnonCreds().proverSearchCredentialsForProofReq(proofRequest, 1);
         ExtractCredentialsInfoResult res = new ExtractCredentialsInfoResult();
         CacheOptions opts = new CacheOptions();
         res.credInfos.put("self_attested_attributes", new JSONObject());
         res.credInfos.put("requested_attributes", new JSONObject());
         res.credInfos.put("requested_predicates", new JSONObject());
+        JSONObject requestedAttributesWithNoRestrictions = new JSONObject();
 
-        if (proofResponse == null)
+        if (proofResponse == null) {
             return res;
-        List<JSONObject> allInfos = new ArrayList<JSONObject>();
+        }
+
         JSONObject requestedAttributes = proofResponse.getJSONObject("requested_attributes");
         for (String referentId : requestedAttributes.keySet()) {
+            JSONObject data = requestedAttributes.getJSONObject(referentId);
+            boolean hasRestrictions = data.has("restrictions");
+            if (!hasRestrictions) {
+                if (data.has("names")) {
+                    requestedAttributesWithNoRestrictions.put(referentId, data.get("names"));
+                }
+                if (data.has("name")) {
+                    requestedAttributesWithNoRestrictions.put(referentId, new JSONArray().put(data.get("name")));
+                }
+            }
+        }
+
+        List<JSONObject> allInfos = new ArrayList<JSONObject>();
+        for (String referentId : requestedAttributes.keySet()) {
+            if (requestedAttributesWithNoRestrictions.has(referentId)) {
+                JSONArray attrNames = requestedAttributesWithNoRestrictions.getJSONArray(referentId);
+                for (Object o : attrNames) {
+                    String attrName = (String) o;
+                    if (selfAttestedAttrs.has(attrName)) {
+                        res.credInfos.getJSONObject("self_attested_attributes").put(referentId, selfAttestedAttrs.get(attrName));
+                    } else {
+                        res.credInfos.getJSONObject("self_attested_attributes").put(referentId, "");
+                    }
+                }
+            }
+
             JSONArray credInfos = requestedAttributes.getJSONArray(referentId);
             JSONObject credInfo = credInfos.getJSONObject(0).getJSONObject("cred_info");
             JSONObject info = new JSONObject();
@@ -129,11 +164,13 @@ public class Prover extends BaseVerifyStateMachine {
         JSONObject requestedPredicates = proofResponse.getJSONObject("requested_predicates");
         for (String referentId : requestedPredicates.keySet()) {
             JSONArray predicates = requestedPredicates.getJSONArray(referentId);
-            JSONObject predInfo = predicates.getJSONObject(0).getJSONObject("cred_info");
-            JSONObject info = new JSONObject();
-            info.put("cred_id", predInfo.getString("referent"));
-            res.credInfos.getJSONObject("requested_predicates").put(referentId, info);
-            allInfos.add(predInfo);
+            if (!predicates.isEmpty()) {
+                JSONObject predInfo = predicates.getJSONObject(0).getJSONObject("cred_info");
+                JSONObject info = new JSONObject();
+                info.put("cred_id", predInfo.getString("referent"));
+                res.credInfos.getJSONObject("requested_predicates").put(referentId, info);
+                allInfos.add(predInfo);
+            }
         }
 
         for (JSONObject credInfo : allInfos) {
