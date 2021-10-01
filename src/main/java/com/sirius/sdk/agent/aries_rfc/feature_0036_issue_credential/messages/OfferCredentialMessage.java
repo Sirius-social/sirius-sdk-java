@@ -17,9 +17,9 @@ public class OfferCredentialMessage extends BaseIssueCredentialMessage {
     }
 
     public static class ParseResult {
-        JSONObject offer = null;
-        JSONObject offerBody = null;
-        JSONObject credDefBody = null;
+        public JSONObject offer = null;
+        public JSONObject offerBody = null;
+        public JSONObject credDefBody = null;
     }
 
     public OfferCredentialMessage(String message) {
