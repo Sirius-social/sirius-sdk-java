@@ -111,9 +111,6 @@ public class TestAriesFeature0037 {
         AgentParams proverParams = testSuite.getAgentParams("agent2");
         AgentParams verifierParams = testSuite.getAgentParams("agent3");
 
-        String attrReferentId = "attr1_referent";
-        String predReferentId = "predicate1_referent";
-
         JSONObject proofRequest = null;
         try (Context context = CloudContext.builder().
                 setServerUri(verifierParams.getServerAddress()).
@@ -125,12 +122,14 @@ public class TestAriesFeature0037 {
                     put("name", "Test ProofRequest").
                     put("version", "0.1").
                     put("requested_attributes", (new JSONObject()).
-                            put(attrReferentId, (new JSONObject()).
+                            put("attr1_referent", (new JSONObject()).
                                     put("name", "attr1").
                                     put("restrictions", (new JSONObject()).
-                                            put("issuer_did", issuerDid)))).
+                                            put("issuer_did", issuerDid))).
+                            put("attr3_referent", (new JSONObject()).
+                                    put("name", "attr3"))).
                     put("requested_predicates", (new JSONObject()).
-                            put(predReferentId, (new JSONObject()).
+                            put("predicate1_referent", (new JSONObject()).
                                     put("name", "attr2").
                                     put("p_type", ">=").
                                     put("p_value", 100).
