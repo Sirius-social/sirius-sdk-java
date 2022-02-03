@@ -1,13 +1,10 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.state_machines;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.*;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.AttribTranslation;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.BasePresentProofMessage;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentProofProblemReport;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.PresentationMessage;
-import com.sirius.sdk.agent.aries_rfc.feature_0037_present_proof.messages.RequestPresentationMessage;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.CacheOptions;
 import com.sirius.sdk.hub.Context;
@@ -33,6 +30,7 @@ public class Verifier extends BaseVerifyStateMachine {
     Logger log = Logger.getLogger(Verifier.class.getName());
     String poolname;
     JSONObject requestedProof;
+    JSONObject revealedAttrs;
 
     public Verifier(Context context, Pairwise prover, Ledger ledger, int timeToLive) {
         this.context = context;
@@ -157,7 +155,9 @@ public class Verifier extends BaseVerifyStateMachine {
 
                 if (success) {
                     this.requestedProof = presentationMessage.proof().getJSONObject("requested_proof");
-                    Ack ack = Ack.builder().setStatus(Ack.Status.OK).build();
+                    this.revealedAttrs = revealAttrs(this.requestedProof, params.proofRequest);
+
+                    PresentationAck ack = PresentationAck.builder().setStatus(Ack.Status.OK).build();
                     ack.setThreadId(presentationMessage.hasPleaseAck() ? presentationMessage.getAckMessageId() : presentationMessage.getId());
 
                     log.log(Level.INFO, "100% - Verifying terminated successfully");
@@ -184,5 +184,35 @@ public class Verifier extends BaseVerifyStateMachine {
 
     public JSONObject getRequestedProof() {
         return requestedProof;
+    }
+
+    public JSONObject getRevealedAttrs() {
+        return revealedAttrs;
+    }
+
+    private static JSONObject revealAttrs(JSONObject requestedProof, JSONObject proofRequest) {
+        JSONObject revAttrs = new JSONObject();
+
+        JSONObject selfAttestedAttrs = requestedProof.getJSONObject("self_attested_attrs");
+        for (String refId : selfAttestedAttrs.keySet()) {
+            if (proofRequest.getJSONObject("requested_attributes").has(refId)) {
+                if (proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).has("name")) {
+                    String attrName = proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).optString("name");
+                    revAttrs.put(attrName, selfAttestedAttrs.get(refId));
+                }
+            }
+        }
+
+        JSONObject revealedAttrs = requestedProof.getJSONObject("revealed_attrs");
+        for (String refId : revealedAttrs.keySet()) {
+            if (proofRequest.getJSONObject("requested_attributes").has(refId)) {
+                if (proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).has("name")) {
+                    String attrName = proofRequest.getJSONObject("requested_attributes").getJSONObject(refId).optString("name");
+                    revAttrs.put(attrName, revealedAttrs.getJSONObject(refId).optString("raw"));
+                }
+            }
+        }
+
+        return revAttrs;
     }
 }

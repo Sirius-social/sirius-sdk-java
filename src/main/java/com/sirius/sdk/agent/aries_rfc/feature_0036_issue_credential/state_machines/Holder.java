@@ -2,6 +2,8 @@ package com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.state_machi
 
 import com.sirius.sdk.agent.aries_rfc.SchemasNonSecretStorage;
 import com.sirius.sdk.agent.aries_rfc.feature_0036_issue_credential.messages.*;
+import com.sirius.sdk.agent.ledger.CredentialDefinition;
+import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
 import com.sirius.sdk.errors.StateMachineTerminatedWithError;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
@@ -39,7 +41,7 @@ public class Holder extends BaseIssuingStateMachine {
         this(context, issuer, masterSecretId, BaseIssueCredentialMessage.DEF_LOCALE);
     }
 
-    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment) {
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment, Ledger ledger) {
         try (AbstractP2PCoProtocol coprotocol = new CoProtocolP2P(context, issuer, protocols(), timeToLiveSec)) {
             String docUri = Type.fromStr(offer.getType()).getDocUri();
             try {
@@ -49,8 +51,26 @@ public class Holder extends BaseIssuingStateMachine {
                     throw new StateMachineTerminatedWithError(REQUEST_NOT_ACCEPTED, e.getMessage());
                 }
                 // Step-1: Process Issuer Offer
+                OfferCredentialMessage.ParseResult parseResult = offer.parse(true);
+                if (parseResult.offerBody == null) {
+                    throw new StateMachineTerminatedWithError(OFFER_PROCESSING_ERROR, "Error while parsing cred_offer", true);
+                }
+
+                if (parseResult.credDefBody == null) {
+                    if (ledger != null) {
+                        CredentialDefinition credDef = ledger.loadCredDef(parseResult.offerBody.optString("cred_def_id"), this.issuer.getMe().getDid());
+                        if (credDef.getBody() != null)
+                            parseResult.credDefBody = new JSONObject(credDef.getBody().toString());
+                    }
+                }
+
+                if (parseResult.credDefBody == null) {
+                    throw new StateMachineTerminatedWithError(OFFER_PROCESSING_ERROR, "Error while parsing cred_def", true);
+                }
+
+
                 Pair<JSONObject, JSONObject> createCredReqRes = context.getAnonCreds().proverCreateCredentialReq(
-                        issuer.getMe().getDid(), offer.offer(), offer.credDef(), masterSecretId);
+                        issuer.getMe().getDid(), parseResult.offerBody, parseResult.credDefBody, masterSecretId);
 
                 JSONObject credRequest = createCredReqRes.first;
                 JSONObject credMetadata = createCredReqRes.second;
@@ -60,7 +80,14 @@ public class Holder extends BaseIssuingStateMachine {
                         setComment(comment).
                         setLocale(locale).
                         setCredRequest(credRequest).
+                        setVersion(offer.getVersion()).
                         build();
+
+                if (offer.hasPleaseAck()) {
+                    requestMsg.setThreadId(offer.getAckMessageId());
+                } else {
+                    requestMsg.setThreadId(offer.getId());
+                }
 
                 Pair<Boolean, Message> okResp = coprotocol.sendAndWait(requestMsg);
                 if (!(okResp.second instanceof IssueCredentialMessage)) {
@@ -75,14 +102,15 @@ public class Holder extends BaseIssuingStateMachine {
                 }
 
                 // Step-3: Store credential
-                String credId = storeCredential(credMetadata, issueMsg.cred(), offer.credDef(), null, issueMsg.credId());
+                String credId = storeCredential(credMetadata, issueMsg.cred(), parseResult.credDefBody, null, issueMsg.credId());
                 storeMimeTypes(credId, offer.getCredentialPreview());
                 SchemasNonSecretStorage.storeCredSchemaNonSecret(context.getNonSecrets(), offer.schema());
                 SchemasNonSecretStorage.storeCredDefNonSecret(context.getNonSecrets(), offer.credDef());
 
-                Ack ack = Ack.builder().
+                CredentialAck ack = CredentialAck.builder().
                         setStatus(Ack.Status.OK).
                         setDocUri(docUri).
+                        setVersion(offer.getVersion()).
                         build();
                 ack.setThreadId(issueMsg.getAckMessageId());
                 coprotocol.send(ack);
@@ -107,7 +135,15 @@ public class Holder extends BaseIssuingStateMachine {
     }
 
     public Pair<Boolean, String> accept(OfferCredentialMessage offer) {
-        return accept(offer, null);
+        return accept(offer, null, null);
+    }
+
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, Ledger ledger) {
+        return accept(offer, null, ledger);
+    }
+
+    public Pair<Boolean, String> accept(OfferCredentialMessage offer, String comment) {
+        return accept(offer, comment, null);
     }
 
     private String storeCredential(JSONObject credMetadata, JSONObject cred, JSONObject credDef, String revRegDef, String credId) {
@@ -132,8 +168,14 @@ public class Holder extends BaseIssuingStateMachine {
                     mimeTypes.put(attr.optString("name"), attr.optString("mime-type"));
                 }
             }
-            context.getNonSecrets().addWalletRecord("mime-types", credId,
-                    new String(Base64.getEncoder().encode(mimeTypes.toString().getBytes(StandardCharsets.UTF_8))));
+            if (!mimeTypes.isEmpty()) {
+                JSONObject record = getMimeTypes(context, credId);
+                if (!record.isEmpty()) {
+                    context.getNonSecrets().deleteWalletRecord("mime-types", credId);
+                }
+                context.getNonSecrets().addWalletRecord("mime-types", credId,
+                        new String(Base64.getEncoder().encode(mimeTypes.toString().getBytes(StandardCharsets.UTF_8))));
+            }
         }
     }
 

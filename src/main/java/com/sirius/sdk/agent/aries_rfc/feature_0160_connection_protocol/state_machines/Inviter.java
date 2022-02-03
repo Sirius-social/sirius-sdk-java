@@ -3,6 +3,7 @@ package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_ma
 import com.sirius.sdk.agent.aries_rfc.DidDoc;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Pong;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProblemReport;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnResponse;
@@ -72,6 +73,8 @@ public class Inviter extends BaseConnectionStateMachine {
                         build();
                 if (request.hasPleaseAck()) {
                     response.setThreadId(request.getAckMessageId());
+                } else {
+                    response.setThreadId(request.getId());
                 }
                 DidDoc myDidDoc = response.didDoc();
                 response.signConnection(context.getCrypto(), this.connectionKey);
@@ -102,6 +105,14 @@ public class Inviter extends BaseConnectionStateMachine {
                         Pairwise pairwise = new Pairwise(this.me, their, metadata);
                         pairwise.getMe().setDidDoc(myDidDoc.getPayload());
                         pairwise.getTheir().setDidDoc(theirDidDoc);
+                        if (okMsg.second instanceof Ping) {
+                            Ping ping = (Ping)okMsg.second;
+                            if (ping.getResponseRequested()) {
+                                cp.send(Pong.builder().
+                                        setPingId(ping.getId()).
+                                        build());
+                            }
+                        }
                         log.info("100% - Pairwise established");
                         return pairwise;
                     } else if (okMsg.second instanceof ConnProblemReport) {

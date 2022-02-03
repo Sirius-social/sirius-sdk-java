@@ -141,7 +141,7 @@ public class TestAriesFeature0036 {
                             Assert.assertEquals("image/png", mimeTypes.optString("attr4"));
                         }
                         return okCredId;
-                    } catch (WalletItemNotFoundException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         Assert.fail();
                     }
