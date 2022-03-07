@@ -20,6 +20,8 @@ jobs:
       - name: Start containers
         working-directory: ./test_suite
         run: docker-compose up -d
+
+      - run: sleep 60
         
       - name: Run tests
         run: mvn test
