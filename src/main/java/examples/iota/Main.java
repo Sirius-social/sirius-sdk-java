@@ -57,7 +57,7 @@ public class Main {
 
         MobileContext context = new MobileContext(mobileConfig);
 
-        IotaPublicDidDoc didDoc = new IotaPublicDidDoc(context.getCrypto());
+        IotaPublicDidDoc didDoc = new IotaPublicDidDoc(context);
         Endpoint endpoint = new Endpoint("address", Arrays.asList("key1"));
         didDoc.setEndpoint(endpoint);
         didDoc.submit();
