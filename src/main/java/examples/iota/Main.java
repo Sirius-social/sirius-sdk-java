@@ -58,18 +58,11 @@ public class Main {
         MobileContext context = new MobileContext(mobileConfig);
 
         IotaPublicDidDoc didDoc = new IotaPublicDidDoc(context.getCrypto());
+        Endpoint endpoint = new Endpoint("address", Arrays.asList("key1"));
+        didDoc.setEndpoint(endpoint);
         didDoc.submit();
 
-        IotaPublicDidDoc didDoc2 = IotaPublicDidDoc.load(didDoc.getDid(), context.getCrypto());
-        System.out.println(didDoc.getDidDoc());
-        System.out.println(didDoc2.getDidDoc());
-
-        Endpoint endpoint = new Endpoint("address", Arrays.asList("key1"));
-        didDoc2.setEndpoint(endpoint);
-        System.out.println(didDoc2.getDidDoc());
-        didDoc2.submit();
-
-        IotaPublicDidDoc didDoc3 = IotaPublicDidDoc.load(didDoc.getDid(), context.getCrypto());
-        System.out.println(didDoc3.getDidDoc());
+        IotaPublicDidDoc didDoc2 = IotaPublicDidDoc.load(didDoc.getDid());
+        assert didDoc.getPayload().equals(didDoc2.getPayload());
     }
 }
