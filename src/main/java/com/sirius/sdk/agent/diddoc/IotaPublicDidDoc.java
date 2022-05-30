@@ -1,16 +1,13 @@
-package examples.iota;
+package com.sirius.sdk.agent.diddoc;
 
 import com.danubetech.keyformats.crypto.ByteSigner;
 import com.goterl.lazycode.lazysodium.LazySodiumJava;
-import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Inviter;
-import com.sirius.sdk.agent.connections.Endpoint;
-import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
+import com.sirius.sdk.encryption.IndyWalletSigner;
+import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.StringUtils;
-import foundation.identity.jsonld.JsonLDException;
 import foundation.identity.jsonld.JsonLDObject;
-import info.weboftrust.ldsignatures.LdProof;
 import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
 import info.weboftrust.ldsignatures.signer.LdSigner;
 import info.weboftrust.ldsignatures.suites.JcsEd25519Signature2020SignatureSuite;
@@ -24,23 +21,18 @@ import org.iota.client.MessageMetadata;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.net.URI;
-import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class IotaPublicDidDoc {
+public class IotaPublicDidDoc extends PublicDidDoc {
 
     Logger log = Logger.getLogger(IotaPublicDidDoc.class.getName());
 
-    private JSONObject doc = new JSONObject();
     private JSONObject meta = new JSONObject();
-    AbstractCrypto crypto;
     String publicKeyBase58;
     String tag;
     String previousMessageId = "";
@@ -60,10 +52,9 @@ public class IotaPublicDidDoc {
     };
 
     public IotaPublicDidDoc(AbstractCrypto crypto) {
-        this.crypto = crypto;
         this.publicKeyBase58 = crypto.createKey();
         this.tag = generateTag(publicKeyBase58);
-        doc.put("id", "did:iota:" + tag);
+        payload.put("id", "did:iota:" + tag);
     }
 
     private static String generateTag(String publicKeyBase58) {
@@ -74,137 +65,111 @@ public class IotaPublicDidDoc {
         return StringUtils.bytesToBase58String(outputBytes);
     }
 
-    private IotaPublicDidDoc(Message msg, AbstractCrypto crypto) {
-        this.crypto = crypto;
+    private IotaPublicDidDoc(Message msg) {
         JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
-        this.doc = obj.optJSONObject("doc");
+        this.payload = obj.optJSONObject("doc");
         this.meta = obj.optJSONObject("meta");
         this.previousMessageId = msg.id().toString();
-        tag = this.doc.optString("id").substring("did:iota:".length());
-        JSONArray authentications = this.doc.getJSONArray("authentication");
+        tag = this.payload.optString("id").substring("did:iota:".length());
+        JSONArray authentications = this.payload.getJSONArray("authentication");
         JSONObject authentication = (JSONObject) authentications.get(0);
         this.publicKeyBase58 = authentication.optString("publicKeyBase58");
     }
 
     public JSONObject getDidDoc() {
-        return this.doc;
-    }
-
-    public String getDid() {
-        return this.doc.optString("id");
+        return this.payload;
     }
 
     public String getTag() {
         return this.tag;
     }
 
-    public static IotaPublicDidDoc load(String did, AbstractCrypto crypto) {
+    public static IotaPublicDidDoc load(String did) {
         Message msg = loadLastValidIntegrationMessage(did);
         if (msg == null || !msg.payload().isPresent())
             return null;
-        return new IotaPublicDidDoc(msg, crypto);
+        return new IotaPublicDidDoc(msg);
     }
 
     private static Message loadLastValidIntegrationMessage(String did) {
-        String tag = tagFromId(did);
-        MessageId[] fetchedMessageIds = node().getMessage().indexString(tag);
-        HashMap<String, List<Message>> map = new HashMap<>();
-        for (MessageId msgId : fetchedMessageIds) {
-            Message msg = node().getMessage().data(msgId);
-            if (msg.payload().isPresent()) {
-                JSONObject obj = new JSONObject(new String (msg.payload().get().asIndexation().data()));
-                String previousMessageId = obj.optJSONObject("meta").optString("previousMessageId", "");
-                if (!map.containsKey(previousMessageId))
-                    map.put(previousMessageId, Arrays.asList(msg));
-                else
-                    map.get(previousMessageId).add(msg);
-            }
-        }
-
-        if (!map.containsKey(""))
-            return null;
-
-        String prevMessageId = "";
-        Message prevMessage = null;
-
-        while (!map.isEmpty()) {
-            if (map.containsKey(prevMessageId)) {
-                Message finalPrevMessage = prevMessage;
-                List<Message> list = map.get(prevMessageId).stream().
-                        filter(m -> checkMessage(m, finalPrevMessage)).
-                        sorted(msgComparator).
-                        collect(Collectors.toList());
-                if (list.isEmpty()) {
-                    return prevMessage;
-                } else {
-                    map.remove(prevMessageId);
-                    prevMessage = list.get(list.size() - 1);
-                    prevMessageId = prevMessage.id().toString();
+        try {
+            String tag = tagFromId(did);
+            MessageId[] fetchedMessageIds = node().getMessage().indexString(tag);
+            HashMap<String, List<Message>> map = new HashMap<>();
+            for (MessageId msgId : fetchedMessageIds) {
+                Message msg = node().getMessage().data(msgId);
+                if (msg.payload().isPresent()) {
+                    JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
+                    String previousMessageId = obj.optJSONObject("meta").optString("previousMessageId", "");
+                    if (!map.containsKey(previousMessageId))
+                        map.put(previousMessageId, Arrays.asList(msg));
+                    else
+                        map.get(previousMessageId).add(msg);
                 }
-            } else {
-                break;
             }
-        }
-        return prevMessage;
-    }
 
-    public void setEndpoint(Endpoint endpoint) {
-        JSONArray services = new JSONArray();
-        this.doc.put("service", services);
-        JSONObject service = new JSONObject().
-                put("type", "DIDCommMessaging").
-                put("serviceEndpoint", endpoint.getAddress()).
-                put("routingKeys", endpoint.getRoutingKeys());
-        services.put(service);
-    }
+            if (!map.containsKey(""))
+                return null;
 
-    public Endpoint getEndpoint() {
-        if (this.doc.has("service")) {
-            JSONArray services = this.doc.getJSONArray("service");
-            for (Object o : services) {
-                JSONObject jo = (JSONObject) o;
-                if (jo.optString("type").equals("DIDCommMessaging")) {
-                    String uri = jo.optString("serviceEndpoint");
-                    List<String> routingKeys = new ArrayList<>();
-                    if (jo.has("routingKeys")) {
-                        JSONArray routingKeysJ = jo.getJSONArray("routingKeys");
-                        for (Object rko : routingKeysJ) {
-                            routingKeys.add((String) rko);
-                        }
+            String prevMessageId = "";
+            Message prevMessage = null;
+
+            while (!map.isEmpty()) {
+                if (map.containsKey(prevMessageId)) {
+                    Message finalPrevMessage = prevMessage;
+                    List<Message> list = map.get(prevMessageId).stream().
+                            filter(m -> checkMessage(m, finalPrevMessage)).
+                            sorted(msgComparator).
+                            collect(Collectors.toList());
+                    if (list.isEmpty()) {
+                        return prevMessage;
+                    } else {
+                        map.remove(prevMessageId);
+                        prevMessage = list.get(list.size() - 1);
+                        prevMessageId = prevMessage.id().toString();
                     }
-                    return new Endpoint(uri, routingKeys);
+                } else {
+                    break;
                 }
             }
+            return prevMessage;
+        } catch (Exception ex) {
+            return null;
         }
-        return null;
     }
 
-    public void submit() {
-        JSONObject o = generateIntegrationMessage();
+    @Override
+    public boolean submitToLedger(Context context) {
+        JSONObject o = generateIntegrationMessage(context.getCrypto());
         if (o == null)
-            return;
+            return false;
         Client iota = node();
-        Message message = iota.message().
-                withIndexString(tag).
-                withDataString(o.toString()).
-                finish();
-        previousMessageId = message.id().toString();
-        System.out.println(
-                "Did message sent: https://explorer.iota.org/mainnet/message/" + message.id());
+        Message message;
+        try {
+            message = iota.message().
+                    withIndexString(tag).
+                    withDataString(o.toString()).
+                    finish();
+            previousMessageId = message.id().toString();
+            saveToWallet(context.getNonSecrets());
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
-    private JSONObject generateIntegrationMessage() {
+    private JSONObject generateIntegrationMessage(AbstractCrypto crypto) {
         ByteSigner byteSigner = new IndyWalletSigner(crypto, publicKeyBase58);
 
         JSONArray authentication = new JSONArray();
         authentication.put(new JSONObject()
-                .put("id", this.doc.optString("id") + "#sign-0")
-                .put("controller", this.doc.optString("id"))
+                .put("id", this.payload.optString("id") + "#sign-0")
+                .put("controller", this.payload.optString("id"))
                 .put("type", "Ed25519VerificationKey2018")
                 .put("publicKeyBase58", this.publicKeyBase58));
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd'T'hh:mm:ss'Z'");
-        this.doc.put("authentication", authentication);
+        this.payload.put("authentication", authentication);
 
         if (previousMessageId.isEmpty()) {
             this.meta.put("created", dateFormat.format(new Date()));
@@ -214,10 +179,10 @@ public class IotaPublicDidDoc {
         this.meta.put("updated", dateFormat.format(new Date()));
 
         LdSigner ldSigner = new JcsEd25519Signature2020LdSigner(byteSigner);
-        ldSigner.setVerificationMethod(URI.create(this.doc.optString("id") + "#sign-0"));
+        ldSigner.setVerificationMethod(URI.create(this.payload.optString("id") + "#sign-0"));
 
         JSONObject resMsg = new JSONObject().
-                put("doc", doc).
+                put("doc", payload).
                 put("meta", meta);
         JsonLDObject jsonLdObject = JsonLDObject.fromJson(resMsg.toString());
         JSONObject proof = null;

@@ -1,4 +1,4 @@
-package examples.iota;
+package com.sirius.sdk.encryption;
 
 import com.danubetech.keyformats.crypto.ByteSigner;
 import com.danubetech.keyformats.jose.JWSAlgorithm;
