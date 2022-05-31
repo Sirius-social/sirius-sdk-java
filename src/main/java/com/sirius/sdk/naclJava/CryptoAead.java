@@ -51,7 +51,11 @@ public class CryptoAead {
     }
 
     public byte[] encrypt(String m, String additionalData, byte[] nSec, byte[] nPub, Key k, com.goterl.lazycode.lazysodium.interfaces.AEAD.Method method) {
+
+        //System.out.println("encrypt m="+m);
         byte[] messageBytes = m.getBytes(StandardCharsets.US_ASCII);
+
+       // System.out.println("encrypt messageBytes="+messageBytes);
         byte[] additionalDataBytes = additionalData == null ? new byte[0] : additionalData.getBytes(StandardCharsets.US_ASCII);
         long additionalBytesLen = additionalData == null ? 0L : (long)additionalDataBytes.length;
         byte[] keyBytes = k.getAsBytes();

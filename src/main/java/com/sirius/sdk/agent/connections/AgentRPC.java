@@ -79,7 +79,7 @@ public class AgentRPC extends BaseAgentConnection {
         String payload = request.serialize();
         Type msgTyp = Type.fromStr(msgType);
         boolean isEncryptes = !Arrays.asList("admin", "microledgers", "microledgers-batched").contains(msgTyp.getProtocol());
-
+     //   System.out.println("remoteCall request="+request.serialize());
         boolean isPosted = tunnelRpc.post(request, isEncryptes);
         if (!isPosted) {
             throw new SiriusRPCError();
@@ -220,7 +220,7 @@ public class AgentRPC extends BaseAgentConnection {
                response = remoteCall("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/send_message", paramsBuilder.build());
 
             } catch (Exception siriusRPCError) {
-                siriusRPCError.printStackTrace();
+                //siriusRPCError.printStackTrace();
             }
         } else {
             try {

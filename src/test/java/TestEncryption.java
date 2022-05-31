@@ -6,6 +6,9 @@ import com.sirius.sdk.encryption.Ed25519;
 import com.sirius.sdk.encryption.UnpackModel;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusCryptoError;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidType;
+import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.rpc.Future;
+import com.sirius.sdk.rpc.Parsing;
 import com.sirius.sdk.utils.StringUtils;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -13,6 +16,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TestEncryption {
@@ -26,6 +30,18 @@ public class TestEncryption {
         String message = enc_message.toString();
         return  StringUtils.escapeStringLikePython(message);
     }
+
+    public String getTestMessage2(){
+        Long  expirationTime = 1635520202L;
+        String  msgType = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/ping_agent";
+
+        Future.FuturePromise future = new Future.FuturePromise("12","redis://redis/23423423423-909", expirationTime);
+        Message request  = Parsing.buildRequest(msgType, future, null);
+        request.setId("a9ab256b-dd19-47fe-973a-55501443101e");
+        return request.serialize();
+    }
+
+
     @Test
     public void encrypt() throws SiriusCryptoError, SodiumException, SiriusInvalidType {
         //CREATE KEYPAIR
@@ -47,10 +63,10 @@ public class TestEncryption {
         List<String> verkeys = new ArrayList<>();
         verkeys.add(verkeyRecipient);
         String packedString = ed25519.packMessage(message, verkeys, verkeySender, sigkeySender);
-
+      //  String packedString  = "{\"protected\":\"eyJlbmMiOiJ4Y2hhY2hhMjBwb2x5MTMwNV9pZXRmIiwidHlwIjoiSldNLzEuMCIsImFsZyI6IkF1dGhjcnlwdCIsInJlY2lwaWVudHMiOlt7ImVuY3J5cHRlZF9rZXkiOiJ3M2RQVE5zbnUxQWk3dVo5U3VjQmpsLVJVYUtBd0oxUUVTSjZ4QlZkeUxBNkZudG5OdEdtS0NiZ05yNVhWc25pIiwiaGVhZGVyIjp7ImtpZCI6IjRQUXNYOGZ1Qmd1ZXJTYUJiVFF1R2h0UzhyZ0N6ODJYSm1lVEZNOVZHUEZqIiwic2VuZGVyIjoidjFfWlpNVFhDWm8xNXpPT1BOUUJxNTJRM3UyMHVfWDNWNDRJNS1aUUZDMEVBd2VscmJkdEZ0b0pXaF95Q05TRmJuZUxpYXVuZVc4VGZfUUdHUTdJMHdlZm1jRXdwcHJVX3BRZHdSeXNoVW9ZQS1SU0hwZG9wNUhIeGFRPSIsIml2IjoiclJrQTlvb2ZmRXc0bFc4OGt2SEhhNVF3ZUJhUzBoVnUifX1dfQ==\",\"iv\":\"W6sYp9kv38nVFdPdZvePz_62YrSyL36a\",\"ciphertext\":\"BGcejRmhN5BXykBhW0YlMB88I6TClOP4dSy9xSxO7ol-mmjQwXPQEqXGkfaoE1-fwbq94qhdB-r09thS7jp8IGDpRk7AK5ZOQFg4GlzUQ_6mMZceaF-OKuelBefnTwomf3nb222oqq_poGcPkWRyqXjcNrhEVV_KEH1EtSWbdlUO5hA8sj5_lyfz5jwiAf-kcHs1TG6JVYH7DIFq7Z_xYxlxgUOSWorU-DSkOfZLMmsIsroE4xpBxVR3jK_2r20lpS11PgLFHM_zO_fb-ffwha9MI9saKxgaAZNvnrr3HM3MzB9Vi1_e8XXxjjxs8JRJT9InLJqjoX2r3h4qLP7_IY_B84bIie_tlmeFHDqVwJYUHWQyQhjpNrOSFUJ65UYp49rE-Fa-jOOlB-H9baRW_T6I0DkCeQjInDEKmRKN2-9264IGVDxwKEUYPCbx5iITMYFpLZS2RwrY8G5PQurpSLJW2O2j1uCV4qZDnjk9aDmceIDf\",\"tag\":\"pg_WIq-2xeayvbjYT-BR6g==\"}";
         //UNPACK MESSAGE
         UnpackModel unpackedModel = ed25519.unpackMessage(packedString, verkeyRecipient, sigkeyRecipient);
-
+        System.out.println("unpackedModel.getMessage()="+unpackedModel.getMessage());
         //ASSERTING
         Assert.assertEquals(unpackedModel.getSender_vk(),verkeySender);
         Assert.assertEquals(unpackedModel.getRecip_vk(),verkeyRecipient);

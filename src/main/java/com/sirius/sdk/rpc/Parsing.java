@@ -61,6 +61,24 @@ public class Parsing {
         return new Message(jsonObject.toString());
     }
 
+    public static Message buildRequest(String msgType, Future.FuturePromise future, RemoteParams params) {
+        try {
+            Type type = Type.fromStr(msgType);
+            if (!Arrays.asList("sirius_rpc", "admin", "microledgers", "microledgers-batched").contains(type.getProtocol())) {
+                throw new SiriusInvalidType("Expect sirius_rpc protocol");
+            }
+        } catch (SiriusInvalidType siriusInvalidType) {
+            siriusInvalidType.printStackTrace();
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("@type", msgType);
+        jsonObject.put("@id", UUID.randomUUID().toString());
+        jsonObject.put("@promise", future.serializeToJSONObject());
+        JSONObject paramsObject = incapsulateParam(params);
+        jsonObject.put("params", paramsObject);
+        return new Message(jsonObject.toString());
+    }
+
     //  CLS_MAP_REVERT = {v: k for k, v in CLS_MAP.items()}
 
     public static JSONObject incapsulateParam(RemoteParams params) {

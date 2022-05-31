@@ -8,6 +8,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
+import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.consensus.simple.messages.ProposeTransactionsMessage;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
@@ -19,6 +20,7 @@ import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.Pair;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -56,6 +58,10 @@ public class Smartphone {
         if (context != null) {
             context.close();
         }
+    }
+
+    public Endpoint getEndpointAddress() {
+        return context.getEndpointWithEmptyRoutingKeys();
     }
 
     public void acceptInvitation(Invitation invitation) {

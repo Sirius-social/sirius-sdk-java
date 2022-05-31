@@ -110,8 +110,14 @@ public class MobileAgent extends AbstractAgent {
         try {
             Wallet.createWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
-            if (!e.getMessage().contains("WalletExistsException"))
+            if(e.getMessage()!=null){
+                if (!e.getMessage().contains("WalletExistsException"))
+                    e.printStackTrace();
+            }else{
                 e.printStackTrace();
+            }
+
+
         }
     }
 
@@ -120,8 +126,12 @@ public class MobileAgent extends AbstractAgent {
         try {
             this.indyWallet = Wallet.openWallet(walletConfig.toString(), walletCredentials.toString()).get(timeoutSec, TimeUnit.SECONDS);
         } catch (Exception e) {
-            if (!e.getMessage().contains("WalletAlreadyOpenedException"))
+            if(e.getMessage()!=null){
+                if (!e.getMessage().contains("WalletAlreadyOpenedException"))
+                    e.printStackTrace();
+            }else{
                 e.printStackTrace();
+            }
         }
         wallet = new MobileWallet(indyWallet);
         pairwiseList = new WalletPairwiseList(wallet.getPairwise(), wallet.getDid());

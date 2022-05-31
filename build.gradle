@@ -33,6 +33,13 @@ dependencies {
     implementation  'commons-codec:commons-codec:1.14'
     implementation  'com.google.guava:guava:29.0-jre'
     implementation 'org.hyperledger:indy:1.16.0'
+    implementation "com.baidu:brpc-java:2.5.9"
+    implementation "commons-io:commons-io:2.5"
+    implementation "org.apache.commons:commons-lang3:3.5"
+    implementation "org.projectlombok:lombok:1.18.4"
+    implementation "org.rocksdb:rocksdbjni:5.1.4"
+
+
     implementation ( 'org.reflections:reflections:0.9.9'){
         exclude group: 'com.google.code.findbugs', module: 'annotations'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'

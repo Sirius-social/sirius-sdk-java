@@ -37,9 +37,9 @@ public class TestCloudAgent {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         List<String> allAgentsList = new ArrayList<>();
         allAgentsList.add("agent1");
-        allAgentsList.add("agent2");
-        allAgentsList.add("agent3");
-        allAgentsList.add("agent4");
+        // allAgentsList.add("agent2");
+      //  allAgentsList.add("agent3");
+      //  allAgentsList.add("agent4");
         for (int i = 0; i < allAgentsList.size(); i++) {
             String agentName = allAgentsList.get(i);
             AgentParams params = testSuite.getAgentParams(agentName);

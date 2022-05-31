@@ -129,7 +129,7 @@ public class Main {
                 // Ensure pairwise is stored
                 context.getPairwiseList().ensureExists(p2p);
                 Message hello = Message.builder().
-                        setContent("Привет в новый МИР!!!" + (new Date()).toString()).
+                        setContent("Привет в новый МР!!!" + (new Date()).toString()).
                         setLocale("ru").
                         build();
                 System.out.println("Sending hello");

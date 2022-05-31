@@ -4,11 +4,18 @@ import com.neovisionaries.ws.client.*;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.StringUtils;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -196,9 +203,46 @@ public class WebSocketConnector extends BaseConnector {
         String url = serverAddress + "/" + path;
         while (url.endsWith("/"))
             url = url.substring(0, url.length()-1);
+        final TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                    }
+
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                    }
+
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new java.security.cert.X509Certificate[]{};
+                    }
+                }
+        };
+        // Install the all-trusting trust manager
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            // Create an ssl socket factory with our all-trusting manager
+            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            /*okHttpClient.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
+            okHttpClient.hostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });*/
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
         try {
             webSocket = new WebSocketFactory()
                     .setVerifyHostname(false)
+                    .setSSLContext(sslContext)
                     .setConnectionTimeout(defTimeout * 1000)
                     .createSocket(url)
                     .addListener(webSocketListener)
@@ -252,6 +296,7 @@ public class WebSocketConnector extends BaseConnector {
     private byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
         if (frame != null) {
             readFuture.complete(frame.getPayload());
+          //  System.out.println("read="+new String(frame.getPayload()));
             if (readCallback != null)
                 readCallback.apply(frame.getPayload());
             return frame.getPayload();
@@ -262,14 +307,14 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public boolean write(byte[] data) {
-        //log.log(Level.INFO, "Sending binary data");
+        //    log.log(Level.INFO, "Sending binary data="+new String(data));
         webSocket.sendBinary(data);
         return true;
     }
 
     public boolean write(Message message) {
         String payload = message.serialize();
-        //log.log(Level.INFO, "Sending message");
+     //   log.log(Level.INFO, "Sending message payload="+payload);
         webSocket.sendText(payload);
         return true;
     }

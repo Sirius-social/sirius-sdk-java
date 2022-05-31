@@ -149,7 +149,7 @@ public class CloudAgent extends AbstractAgent {
         try {
             rpc.sendMessage(message, their_vk, endpoint, my_vk, routing_keys, false);
         } catch (Exception e) {
-            e.printStackTrace();
+          //  e.printStackTrace();
         }
     }
 
