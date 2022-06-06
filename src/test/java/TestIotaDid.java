@@ -18,6 +18,10 @@ public class TestIotaDid {
 
     ConfTest confTest;
 
+    static {
+        IotaPublicDidDoc.setIotaNetwork(IotaPublicDidDoc.TESTNET);
+    }
+
     @Before
     public void configureTest() {
         confTest = ConfTest.newInstance();
@@ -59,7 +63,7 @@ public class TestIotaDid {
                 didDoc1fromWallet.extractService(true, "DIDCommMessaging").getString("serviceEndpoint"));
     }
 
-    //@Test
+    @Test
     public void testOnChain() {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams issuerParams = testSuite.getAgentParams("agent1");

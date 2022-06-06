@@ -151,11 +151,10 @@
         </dependency>
 
         <dependency>
-            <groupId>org.iota.client</groupId>
-            <artifactId>native</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/lib/iota/native.jar</systemPath>
+            <groupId>org.scijava</groupId>
+            <artifactId>native-lib-loader</artifactId>
+            <version>2.4.0</version>
         </dependency>
+
     </dependencies>
 </project>

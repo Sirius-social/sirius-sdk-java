@@ -1,6 +1,8 @@
 package com.sirius.sdk.agent.diddoc;
 
+import co.libly.resourceloader.SharedLibraryLoader;
 import com.danubetech.keyformats.crypto.ByteSigner;
+import com.google.common.reflect.ClassPath;
 import com.goterl.lazycode.lazysodium.LazySodiumJava;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.encryption.IndyWalletSigner;
@@ -20,7 +22,9 @@ import org.iota.client.MessageId;
 import org.iota.client.MessageMetadata;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.scijava.nativelib.NativeLoader;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -31,12 +35,33 @@ import java.util.stream.Collectors;
 
 public class IotaPublicDidDoc extends PublicDidDoc {
 
+    static {
+        try {
+            NativeLoader.loadLibrary("iota_client");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
+    public static final String TESTNET = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
+
+    private static String iotaNetwork = MAINNET;
+
     Logger log = Logger.getLogger(IotaPublicDidDoc.class.getName());
 
     private JSONObject meta = new JSONObject();
     byte[] publicKey;
     String tag;
     String previousMessageId = "";
+
+    public static String getIotaNetwork() {
+        return iotaNetwork;
+    }
+
+    public static void setIotaNetwork(String iotaNetwork) {
+        IotaPublicDidDoc.iotaNetwork = iotaNetwork;
+    }
 
     static Comparator<Message> msgComparator = new Comparator<Message>() {
         @Override
@@ -258,8 +283,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         return false;
     }
 
-    private static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
     private static Client node() {
-        return Client.Builder().withNode(MAINNET).finish();
+        return Client.Builder().withNode(iotaNetwork).finish();
     }
 }
