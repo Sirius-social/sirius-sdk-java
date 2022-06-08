@@ -16,8 +16,8 @@ public final class TreasuryPayload {
         long a1 = output.mNativeObj;
         output.mNativeObj = 0;
 
-        mNativeObj = init(a0, a1);
-        JNIReachabilityFence.reachabilityFence2(input, output);
+        mNativeObj = init(a0, a1);        java.lang.ref.Reference.reachabilityFence(input);
+        java.lang.ref.Reference.reachabilityFence(output);
     }
     private static native long init(long input, long output);
 
@@ -27,6 +27,25 @@ public final class TreasuryPayload {
         return ret;
     }
     private static native String do_to_string(long self);
+    /**
+     * Serializes the treasury payload into a json string
+     */
+    public final String serialize() {
+        String ret = do_serialize(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_serialize(long self);
+    /**
+     * Turns a serialized treasury payload string back into its class
+     */
+    public static TreasuryPayload deserialize(String serialised_data) {
+        long ret = do_deserialize(serialised_data);
+        TreasuryPayload convRet = new TreasuryPayload(InternalPointerMarker.RAW_PTR, ret);
+
+        return convRet;
+    }
+    private static native long do_deserialize(String serialised_data);
 
     public final TreasuryOutput output() {
         long ret = do_output(mNativeObj);

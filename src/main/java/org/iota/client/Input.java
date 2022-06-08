@@ -32,8 +32,7 @@ public final class Input {
     private final boolean rustEq(Input o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }

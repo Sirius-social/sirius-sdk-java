@@ -28,8 +28,7 @@ public final class MigratedFundsEntry {
 
         long ret = do_from(hash, a1);
         MigratedFundsEntry convRet = new MigratedFundsEntry(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(output);
+        java.lang.ref.Reference.reachabilityFence(output);
 
         return convRet;
     }

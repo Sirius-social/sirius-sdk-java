@@ -34,12 +34,30 @@ public final class Message {
     private final boolean rustEq(Message o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }
     private static native boolean do_rustEq(long self, long o);
+    /**
+     * Serializes the receipt payload into a json string
+     */
+    public final String serialize() {
+        String ret = do_serialize(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_serialize(long self);
+    /**
+     * Turns a serialized receipt payload string back into its class
+     */
+    public static Message deserialize(String serialised_data) {
+        long ret = do_deserialize(serialised_data);
+        Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
+
+        return convRet;
+    }
+    private static native long do_deserialize(String serialised_data);
     /**
      * Creates a new `MessageBuilder` to construct an instance of a `Message`.
      */

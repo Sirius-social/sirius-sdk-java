@@ -30,8 +30,7 @@ public final class SignatureLockedSingleOutput {
 
         long ret = do_from(a0, amount);
         SignatureLockedSingleOutput convRet = new SignatureLockedSingleOutput(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(address);
+        java.lang.ref.Reference.reachabilityFence(address);
 
         return convRet;
     }

@@ -38,8 +38,7 @@ public final class GetMessageBuilder {
 
         long ret = do_data(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -55,8 +54,7 @@ public final class GetMessageBuilder {
 
         long ret = do_metadata(mNativeObj, a0);
         MessageMetadata convRet = new MessageMetadata(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -71,8 +69,7 @@ public final class GetMessageBuilder {
         message_id.mNativeObj = 0;
 
         String ret = do_raw(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return ret;
     }
@@ -87,8 +84,7 @@ public final class GetMessageBuilder {
         message_id.mNativeObj = 0;
 
         MessageId [] ret = do_children(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return ret;
     }

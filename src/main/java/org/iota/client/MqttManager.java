@@ -14,8 +14,7 @@ public final class MqttManager {
 
         long ret = do_withTopic(mNativeObj, a0);
         MqttTopicManager convRet = new MqttTopicManager(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(topic);
+        java.lang.ref.Reference.reachabilityFence(topic);
 
         return convRet;
     }

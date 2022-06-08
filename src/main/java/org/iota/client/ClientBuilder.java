@@ -193,8 +193,7 @@ public final class ClientBuilder {
 
         long ret = do_withMqttBrokerOptions(mNativeObj, a0);
         ClientBuilder convRet = new ClientBuilder(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(options);
+        java.lang.ref.Reference.reachabilityFence(options);
 
         return convRet;
     }
@@ -241,8 +240,7 @@ public final class ClientBuilder {
         int a0 = api.getValue();
         long ret = do_withApiTimeout(mNativeObj, a0, timeout);
         ClientBuilder convRet = new ClientBuilder(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(api);
+        java.lang.ref.Reference.reachabilityFence(api);
 
         return convRet;
     }

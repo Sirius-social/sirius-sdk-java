@@ -226,8 +226,7 @@ public final class Client {
 
         long ret = do_getIncludedMessage(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(transaction_id);
+        java.lang.ref.Reference.reachabilityFence(transaction_id);
 
         return convRet;
     }
@@ -242,8 +241,7 @@ public final class Client {
 
         long ret = do_postMessage(mNativeObj, a0);
         MessageId convRet = new MessageId(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(msg);
+        java.lang.ref.Reference.reachabilityFence(msg);
 
         return convRet;
     }
@@ -259,8 +257,7 @@ public final class Client {
 
         long ret = do_reattach(mNativeObj, a0);
         MessageWrap convRet = new MessageWrap(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -275,8 +272,7 @@ public final class Client {
 
         long ret = do_reattachUnchecked(mNativeObj, a0);
         MessageWrap convRet = new MessageWrap(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -292,8 +288,7 @@ public final class Client {
 
         long ret = do_promote(mNativeObj, a0);
         MessageWrap convRet = new MessageWrap(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -308,8 +303,7 @@ public final class Client {
 
         long ret = do_promoteUnchecked(mNativeObj, a0);
         MessageWrap convRet = new MessageWrap(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return convRet;
     }
@@ -371,8 +365,7 @@ public final class Client {
         message_id.mNativeObj = 0;
 
         MessageWrap [] ret = do_retryUntilIncluded(mNativeObj, a0, interval, max_attempts);
-
-        JNIReachabilityFence.reachabilityFence1(message_id);
+        java.lang.ref.Reference.reachabilityFence(message_id);
 
         return ret;
     }
@@ -413,7 +406,7 @@ public final class Client {
      */
     public static native String bech32ToHex(String bech32);
     /**
-     * Transforms hex to bech32
+     * Transforms a hex encoded address to a bech32 encoded address
      * @param hex The address Bech32 string
      * @param bech32_hrp The Bech32 hrp string
      */
@@ -423,6 +416,17 @@ public final class Client {
         return ret;
     }
     private static native String do_hexToBech32(long self, String hex, String bech32_hrp);
+    /**
+     * Transforms a hex encoded public key to a bech32 encoded address
+     * @param hex hex encoded public key
+     * @param bech32_hrp The Bech32 hrp string
+     */
+    public final String hexPublicKeyToBech32Address(String hex, String bech32_hrp) {
+        String ret = do_hexPublicKeyToBech32Address(mNativeObj, hex, bech32_hrp);
+
+        return ret;
+    }
+    private static native String do_hexPublicKeyToBech32Address(long self, String hex, String bech32_hrp);
     /**
      * Checks if a str is a valid bech32 encoded address.
      * @param address The addresss string to check

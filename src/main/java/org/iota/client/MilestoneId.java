@@ -34,8 +34,7 @@ public final class MilestoneId {
     private final boolean rustEq(MilestoneId o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }

@@ -32,8 +32,7 @@ public final class GetAddressBuilder {
         options.mNativeObj = 0;
 
         UtxoInput [] ret = do_outputs(mNativeObj, address, a1);
-
-        JNIReachabilityFence.reachabilityFence1(options);
+        java.lang.ref.Reference.reachabilityFence(options);
 
         return ret;
     }

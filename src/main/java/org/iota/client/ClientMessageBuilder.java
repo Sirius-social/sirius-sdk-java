@@ -48,8 +48,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_withInput(mNativeObj, a0);
         ClientMessageBuilder convRet = new ClientMessageBuilder(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(input);
+        java.lang.ref.Reference.reachabilityFence(input);
 
         return convRet;
     }
@@ -169,8 +168,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_signTransaction(mNativeObj, a0, seed, inputs_range_low, inputs_range_high);
         MessagePayload convRet = new MessagePayload(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(prepared_transaction_data);
+        java.lang.ref.Reference.reachabilityFence(prepared_transaction_data);
 
         return convRet;
     }
@@ -185,8 +183,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finish(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }
@@ -201,8 +198,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finishTransaction(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }
@@ -217,8 +213,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finishMilestone(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }
@@ -233,8 +228,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finishIndex(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }
@@ -249,8 +243,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finishReceipt(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }
@@ -265,8 +258,7 @@ public final class ClientMessageBuilder {
 
         long ret = do_finishTreasury(mNativeObj, a0);
         Message convRet = new Message(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(payload);
+        java.lang.ref.Reference.reachabilityFence(payload);
 
         return convRet;
     }

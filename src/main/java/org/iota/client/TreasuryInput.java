@@ -29,8 +29,7 @@ public final class TreasuryInput {
         long a0 = id.mNativeObj;
         id.mNativeObj = 0;
 
-        mNativeObj = init(a0);
-        JNIReachabilityFence.reachabilityFence1(id);
+        mNativeObj = init(a0);        java.lang.ref.Reference.reachabilityFence(id);
     }
     private static native long init(long id);
 
@@ -44,8 +43,7 @@ public final class TreasuryInput {
     private final boolean rustEq(TreasuryInput o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }

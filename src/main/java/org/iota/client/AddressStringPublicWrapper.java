@@ -32,14 +32,13 @@ public final class AddressStringPublicWrapper {
     private final boolean rustEq(AddressStringPublicWrapper o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }
     private static native boolean do_rustEq(long self, long o);
     /**
-     * If this is a publci address
+     * If this is a public address
      */
     public final boolean isPublic() {
         boolean ret = do_isPublic(mNativeObj);

@@ -32,8 +32,7 @@ public final class Address {
     private final boolean rustEq(Address o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }
@@ -61,8 +60,7 @@ public final class Address {
         signature.mNativeObj = 0;
 
         do_verify(mNativeObj, msg, a1);
-
-        JNIReachabilityFence.reachabilityFence1(signature);
+        java.lang.ref.Reference.reachabilityFence(signature);
     }
     private static native void do_verify(long self, byte [] msg, long signature);
 

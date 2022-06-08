@@ -18,6 +18,25 @@ public final class IndexationPayload {
     }
     private static native String do_to_string(long self);
     /**
+     * Serializes the indexation payload into a json string
+     */
+    public final String serialize() {
+        String ret = do_serialize(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_serialize(long self);
+    /**
+     * Turns a serialized indexation payload string back into its class
+     */
+    public static IndexationPayload deserialize(String serialised_data) {
+        long ret = do_deserialize(serialised_data);
+        IndexationPayload convRet = new IndexationPayload(InternalPointerMarker.RAW_PTR, ret);
+
+        return convRet;
+    }
+    private static native long do_deserialize(String serialised_data);
+    /**
      * Creates a new `IndexationPayload`.
      * @param index The index
      * @param data The data linked ot this index
@@ -50,6 +69,13 @@ public final class IndexationPayload {
         return ret;
     }
     private static native byte [] do_index(long self);
+
+    public final String indexString() {
+        String ret = do_indexString(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_indexString(long self);
     /**
      * Returns the data of an `IndexationPayload`.
      */
@@ -59,6 +85,13 @@ public final class IndexationPayload {
         return ret;
     }
     private static native byte [] do_data(long self);
+
+    public final String dataString() {
+        String ret = do_dataString(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_dataString(long self);
 
     public synchronized void delete() {
         if (mNativeObj != 0) {

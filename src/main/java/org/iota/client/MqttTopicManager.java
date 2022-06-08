@@ -14,8 +14,7 @@ public final class MqttTopicManager {
 
         long ret = do_withTopic(mNativeObj, a0);
         MqttTopicManager convRet = new MqttTopicManager(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(topic);
+        java.lang.ref.Reference.reachabilityFence(topic);
 
         return convRet;
     }
@@ -38,6 +37,11 @@ public final class MqttTopicManager {
         do_unsubscribe(mNativeObj);
     }
     private static native void do_unsubscribe(long self);
+
+    public final void subscribe(MqttListener cb) {
+        do_subscribe(mNativeObj, cb);
+    }
+    private static native void do_subscribe(long self, MqttListener cb);
 
     public synchronized void delete() {
         if (mNativeObj != 0) {

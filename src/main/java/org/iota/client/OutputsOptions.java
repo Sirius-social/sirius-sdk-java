@@ -36,8 +36,7 @@ public final class OutputsOptions {
         int a0 = (output_type != null) ? output_type.getValue() : -1;
 
         do_outputType(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(output_type);
+        java.lang.ref.Reference.reachabilityFence(output_type);
     }
     private static native void do_outputType(long self, int output_type);
 

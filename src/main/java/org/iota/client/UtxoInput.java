@@ -34,8 +34,7 @@ public final class UtxoInput {
     private final boolean rustEq(UtxoInput o) {
         long a0 = o.mNativeObj;
         boolean ret = do_rustEq(mNativeObj, a0);
-
-        JNIReachabilityFence.reachabilityFence1(o);
+        java.lang.ref.Reference.reachabilityFence(o);
 
         return ret;
     }
@@ -51,8 +50,7 @@ public final class UtxoInput {
 
         long ret = do_from(a0, index);
         UtxoInput convRet = new UtxoInput(InternalPointerMarker.RAW_PTR, ret);
-
-        JNIReachabilityFence.reachabilityFence1(id);
+        java.lang.ref.Reference.reachabilityFence(id);
 
         return convRet;
     }

@@ -18,6 +18,25 @@ public final class TransactionPayload {
     }
     private static native String do_to_string(long self);
     /**
+     * Serializes the transaction payload into a json string
+     */
+    public final String serialize() {
+        String ret = do_serialize(mNativeObj);
+
+        return ret;
+    }
+    private static native String do_serialize(long self);
+    /**
+     * Turns a serialized transaction payload string back into its class
+     */
+    public static TransactionPayload deserialize(String serialised_data) {
+        long ret = do_deserialize(serialised_data);
+        TransactionPayload convRet = new TransactionPayload(InternalPointerMarker.RAW_PTR, ret);
+
+        return convRet;
+    }
+    private static native long do_deserialize(String serialised_data);
+    /**
      * Return a new `TransactionPayloadBuilder` to build a `TransactionPayload`.
      */
     public static TransactionPayloadBuilder builder() {
