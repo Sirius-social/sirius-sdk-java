@@ -1,6 +1,6 @@
 package com.github.wenweihu86.raft.models;
 
-public class LogEntry {
+public class LogEntry  extends BaseRequest{
     Long term ;
      Long index ;
      EntryType type ;

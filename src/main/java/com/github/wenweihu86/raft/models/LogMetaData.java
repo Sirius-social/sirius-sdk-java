@@ -1,6 +1,8 @@
 package com.github.wenweihu86.raft.models;
 
-public class LogMetaData {
+import com.goterl.lazycode.lazysodium.interfaces.Base;
+
+public class LogMetaData extends BaseRequest {
     Long currentTerm  = 0l;
     String votedFor ;
 

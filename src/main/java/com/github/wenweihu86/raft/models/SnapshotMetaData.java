@@ -1,6 +1,6 @@
 package com.github.wenweihu86.raft.models;
 
-public class SnapshotMetaData {
+public class SnapshotMetaData extends  BaseRequest{
     Long lastIncludedIndex = 0l;
 
     Long lastIncludedTerm = 0l;

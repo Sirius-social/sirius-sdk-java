@@ -5,6 +5,7 @@ import com.github.wenweihu86.raft.models.LogEntry;
 import com.github.wenweihu86.raft.models.LogMetaData;
 import com.github.wenweihu86.raft.util.RaftFileUtils;
 
+import com.sirius.sdk.utils.GsonUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -149,7 +150,8 @@ public class SegmentedLog {
                 newSegment.setEndIndex(entry.getIndex());
                 newSegment.getEntries().add(new Segment.Record(
                         newSegment.getRandomAccessFile().getFilePointer(), entry));
-
+                String togson = entry.tosGson();
+                newSegment.getRandomAccessFile().writeUTF(togson);
              //TODO   RaftFileUtils.writeProtoToFile(newSegment.getRandomAccessFile(), entry);
 
                 newSegment.setFileSize(newSegment.getRandomAccessFile().length());
@@ -251,7 +253,7 @@ public class SegmentedLog {
             while (offset < totalLength) {
 
              //TODO   LogEntry entry = RaftFileUtils.readProtoFromFile(rndomAccessFile, LogEntry.class);
-                LogEntry entry = null;
+                LogEntry entry = GsonUtils.getDefaultGson().fromJson(randomAccessFile.readUTF(),LogEntry.class);
                 if (entry == null) {
                     throw new RuntimeException("read segment log failed");
                 }
@@ -309,17 +311,19 @@ public class SegmentedLog {
 
     public LogMetaData readMetaData() {
         String fileName = logDir + File.separator + "metadata";
-     //   File file = new File(fileName);
-        LogMetaData metadata =  MemoryStorage.getInstance("").readLogMetaData();
-       // try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
+        File file = new File(fileName);
+       // LogMetaData metadata =  MemoryStorage.getInstance("").readLogMetaData();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
+            String files = randomAccessFile.readUTF();
+            LogMetaData metadata= GsonUtils.getDefaultGson().fromJson(files,LogMetaData.class);
           //TODO  LogMetaData metadata = RaftFileUtils.readProtoFromFile(
           //          randomAccessFile, LogMetaData.class);
          //   LogMetaData metadata = null;
             return metadata;
-     //   } catch (IOException ex) {
-       //     LOG.warn("meta file not exist, name={}", fileName);
-      //      return null;
-     //   }
+        } catch (IOException ex) {
+            LOG.warn("meta file not exist, name={}", fileName);
+            return null;
+               }
     }
 
     /**
@@ -350,7 +354,8 @@ public class SegmentedLog {
         File file = new File(fileName);
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
           //TODO  RaftFileUtils.writeProtoToFile(randomAccessFile, metaData);
-
+             String toJson =  metaData.tosGson();
+            randomAccessFile.writeUTF(toJson);
             LOG.info("new segment meta info, currentTerm={}, votedFor={}, firstLogIndex={}",
                     metaData.getCurrentTerm(), metaData.getVotedFor(), metaData.getFirstLogIndex());
         } catch (IOException ex) {

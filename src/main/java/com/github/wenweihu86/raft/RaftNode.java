@@ -83,8 +83,8 @@ public class RaftNode {
         this.stateMachine = stateMachine;
 
         // load log and snapshot
-        raftLog = new SegmentedLog(localServer.getServerId(), raftOptions.getMaxSegmentFileSize());
-        snapshot = new Snapshot(localServer.getServerId());
+        raftLog = new SegmentedLog("D:\\new", raftOptions.getMaxSegmentFileSize());
+        snapshot = new Snapshot("D:\\new");
         snapshot.reload();
 
         currentTerm = raftLog.getMetaData().getCurrentTerm();

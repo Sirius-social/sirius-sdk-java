@@ -4,6 +4,7 @@ import com.github.wenweihu86.raft.models.Configuration;
 import com.github.wenweihu86.raft.models.SnapshotMetaData;
 
 import com.github.wenweihu86.raft.util.RaftFileUtils;
+import com.sirius.sdk.utils.GsonUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,18 +91,20 @@ public class Snapshot {
     }
 
     public SnapshotMetaData readMetaData() {
-        return MemoryStorage.getInstance().readSnapshotMetaData();
-    /*    String fileName = snapshotDir + File.separator + "metadata";
+       // return MemoryStorage.getInstance().readSnapshotMetaData();
+        String fileName = snapshotDir + File.separator + "metadata";
         File file = new File(fileName);
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
-            // SnapshotMetaData metadata = RaftFileUtils.readProtoFromFile(
-                 //   randomAccessFile, SnapshotMetaData.class);
-       //     return metadata;
+            String data = randomAccessFile.readUTF();
+            SnapshotMetaData metadata =  GsonUtils.getDefaultGson().fromJson(data, SnapshotMetaData.class);
+    /*         SnapshotMetaData metadata = RaftFileUtils.readProtoFromFile(
+                  randomAccessFile, SnapshotMetaData.class);*/
+           return metadata;
         } catch (IOException ex) {
             LOG.warn("meta file not exist, name={}", fileName);
             return null;
         }
-        return null;*/
+  //      return null;
     }
 
     public void updateMetaData(String dir,
@@ -126,7 +129,8 @@ public class Snapshot {
             }
             file.createNewFile();
             randomAccessFile = new RandomAccessFile(file, "rw");
-
+            String data = snapshotMetaData.tosGson();
+            randomAccessFile.writeUTF(data);
            // TODO RaftFileUtils.writeProtoToFile(randomAccessFile, snapshotMetaData);
 
         } catch (IOException ex) {
