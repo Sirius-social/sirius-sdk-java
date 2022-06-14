@@ -10,9 +10,18 @@ public class IotaChat {
         return null;
     }
 
-    public static IotaChat createChat(String name, Context context) {
+    private IotaChat() {
+
+    }
+
+    public static IotaChat createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         InitialMessage initialMessage = new InitialMessage();
-        return null;
+        initialMessage.chatName = chatName;
+        initialMessage.creatorDid = didVk.first;
+        initialMessage.creatorEndpoint = context.getEndpointWithEmptyRoutingKeys();
+        initialMessage.creatorNickname = myNickName;
+
+        return new IotaChat();
     }
 }
