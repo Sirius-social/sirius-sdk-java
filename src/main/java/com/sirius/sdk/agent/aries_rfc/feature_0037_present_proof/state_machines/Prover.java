@@ -151,15 +151,17 @@ public class Prover extends BaseVerifyStateMachine {
                         res.credInfos.getJSONObject("self_attested_attributes").put(referentId, "");
                     }
                 }
+            } else {
+                JSONArray credInfos = requestedAttributes.getJSONArray(referentId);
+                if (credInfos != null) {
+                    JSONObject credInfo = credInfos.getJSONObject(0).getJSONObject("cred_info");
+                    JSONObject info = new JSONObject();
+                    info.put("cred_id", credInfo.getString("referent"));
+                    info.put("revealed", true);
+                    res.credInfos.getJSONObject("requested_attributes").put(referentId, info);
+                    allInfos.add(credInfo);
+                }
             }
-
-            JSONArray credInfos = requestedAttributes.getJSONArray(referentId);
-            JSONObject credInfo = credInfos.getJSONObject(0).getJSONObject("cred_info");
-            JSONObject info = new JSONObject();
-            info.put("cred_id", credInfo.getString("referent"));
-            info.put("revealed", true);
-            res.credInfos.getJSONObject("requested_attributes").put(referentId, info);
-            allInfos.add(credInfo);
         }
 
         JSONObject requestedPredicates = proofResponse.getJSONObject("requested_predicates");

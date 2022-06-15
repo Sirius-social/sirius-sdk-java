@@ -8,12 +8,13 @@ repositories {
     jcenter()
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.danubetech.com/repository/maven-public/' }
     maven { url  "https://repo.sovrin.org/repository/maven-public"  }
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
 }
 
 shadowJar {
@@ -21,13 +22,13 @@ shadowJar {
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.9.0'
     implementation('org.json:json:20200518')
-   // implementation 'org.slf4j:slf4j-api:2.0.0-alpha1'
+    // implementation 'org.slf4j:slf4j-api:2.0.0-alpha1'
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'net.java.dev.jna:jna:5.6.0'
     implementation  'commons-lang:commons-lang:2.6'
-    implementation 'com.neovisionaries:nv-websocket-client:2.10'
+    implementation 'com.neovisionaries:nv-websocket-client:2.14'
     implementation  'org.apache.httpcomponents:httpclient:4.5.12'
     implementation  'org.apache.httpcomponents:httpcore:4.4.13'
     implementation  'commons-codec:commons-codec:1.14'
@@ -37,6 +38,12 @@ dependencies {
         exclude group: 'com.google.code.findbugs', module: 'annotations'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
+    implementation  'info.weboftrust:ld-signatures-java:1.1-SNAPSHOT'
+    implementation  'decentralized-identity:jsonld-common-java:1.0.0'
+    implementation  'com.github.multiformats:java-multibase:v1.1.0'
+    implementation  'org.scijava:native-lib-loader:2.4.0'
+
+
     testImplementation  'junit:junit:4+'
     testImplementation  'org.slf4j:slf4j-simple:2.0.0-alpha1'
 }
