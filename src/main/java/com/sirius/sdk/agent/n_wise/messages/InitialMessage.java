@@ -2,6 +2,12 @@ package com.sirius.sdk.agent.n_wise.messages;
 
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage.buildDidDoc;
 
 public class InitialMessage extends BaseNWiseMessage {
 
@@ -9,40 +15,93 @@ public class InitialMessage extends BaseNWiseMessage {
         Message.registerMessageClass(InitialMessage.class, BaseNWiseMessage.PROTOCOL, "initial-message");
     }
 
-    public String chatName;
-    public String creatorNickname;
-    public String creatorDid;
-    public Endpoint creatorEndpoint;
-
-    public String getChatName() {
-        return getMessageObj().optString("chatName");
+    public InitialMessage(String msg) {
+        super(msg);
     }
 
-    public void setChatName(String chatName) {
-        this.getMessageObj().put("chatName", chatName);
+    public String getLabel() {
+        return getMessageObj().optString("label");
     }
 
-    public String getCreatorNickname() {
-        return creatorNickname;
+    public static InitialMessage.Builder<?> builder() {
+        return new InitialMessageBuilder();
     }
 
-    public void setCreatorNickname(String creatorNickname) {
-        this.creatorNickname = creatorNickname;
+    public static abstract class Builder<B extends InitialMessage.Builder<B>> extends BaseNWiseMessage.Builder<B> {
+        String label = null;
+        String creatorNickName = null;
+        String creatorDid = null;
+        String creatorVerkey = null;
+        String creatorEndpoint = null;
+        JSONObject creatorDidDocExtra = null;
+        List<JSONObject> creatorConnectionServices = new ArrayList<>();
+
+        public B setLabel(String label) {
+            this.label = label;
+            return self();
+        }
+        public B setCreatorNickName(String creatorNickName) {
+            this.creatorNickName = creatorNickName;
+            return self();
+        }
+
+        public B setCreatorDid(String creatorDid) {
+            this.creatorDid = creatorDid;
+            return self();
+        }
+
+        public B setCreatorVerkey(String creatorVerkey) {
+            this.creatorVerkey = creatorVerkey;
+            return self();
+        }
+
+        public B setCreatorEndpoint(String endpoint) {
+            this.creatorEndpoint = endpoint;
+            return self();
+        }
+
+        public B setCreatorDidDocExtra(JSONObject didDocExtra) {
+            this.creatorDidDocExtra = didDocExtra;
+            return self();
+        }
+
+        public B addConnectionService(JSONObject service) {
+            this.creatorConnectionServices.add(service);
+            return self();
+        }
+        @Override
+        protected JSONObject generateJSON() {
+            JSONObject jsonObject = super.generateJSON();
+
+            put(label, "label", jsonObject);
+
+            JSONObject extra = (creatorDidDocExtra != null) ? creatorDidDocExtra : new JSONObject();
+            if (creatorNickName != null) {
+                extra.put("nickname", creatorNickName);
+            }
+
+            if (creatorDid != null && creatorVerkey != null && creatorEndpoint != null) {
+                jsonObject.put("connection", (new JSONObject().
+                        put("DID", creatorDid).
+                        put("DIDDoc", buildDidDoc(creatorDid, creatorVerkey, creatorEndpoint, extra))));
+                for (JSONObject s : creatorConnectionServices) {
+                    jsonObject.getJSONObject("connection").getJSONObject("DIDDoc").getJSONArray("service").put(s);
+                }
+            }
+
+            return jsonObject;
+        }
+
+        public InitialMessage build() {
+            return new InitialMessage(generateJSON().toString());
+        }
     }
 
-    public String getCreatorDid() {
-        return creatorDid;
+    private static class InitialMessageBuilder extends InitialMessage.Builder<InitialMessageBuilder> {
+        @Override
+        protected InitialMessageBuilder self() {
+            return this;
+        }
     }
 
-    public void setCreatorDid(String creatorDid) {
-        this.creatorDid = creatorDid;
-    }
-
-    public Endpoint getCreatorEndpoint() {
-        return creatorEndpoint;
-    }
-
-    public void setCreatorEndpoint(Endpoint creatorEndpoint) {
-        this.creatorEndpoint = creatorEndpoint;
-    }
 }

@@ -97,6 +97,12 @@ public abstract class AriesProtocolMessage extends Message {
             return jsonObject;
         }
 
+        protected void put(Object o, String name, JSONObject json) {
+            if (o != null) {
+                json.put(name, o);
+            }
+        }
+
     }
 
 
