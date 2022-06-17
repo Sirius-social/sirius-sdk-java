@@ -1,16 +1,32 @@
 package com.sirius.sdk.agent.n_wise;
 
+import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
-import com.sirius.sdk.agent.n_wise.messages.InitialMessage;
-import com.sirius.sdk.agent.n_wise.messages.Invitation;
-import com.sirius.sdk.agent.n_wise.messages.Request;
+import com.sirius.sdk.agent.n_wise.messages.*;
 import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.pairwise.TheirEndpoint;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
+import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.utils.Pair;
+import org.iota.client.Client;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
+import static com.sirius.sdk.utils.IotaUtils.generateTag;
+
 public class IotaChat {
+
+    public static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
+    public static final String TESTNET = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
+
+    public static String iotaNetwork = MAINNET;
+    public static int timeToLiveSec = 60;
 
     String chatName = null;
 
@@ -22,6 +38,10 @@ public class IotaChat {
 
     }
 
+    private IotaChat(InitialMessage initialMessage) {
+        this.chatName = initialMessage.getLabel();
+    }
+
     public static IotaChat createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         InitialMessage initialMessage = InitialMessage.builder().
@@ -31,10 +51,40 @@ public class IotaChat {
                 setCreatorVerkey(didVk.second).setCreatorEndpoint(context.getEndpointAddressWithEmptyRoutingKeys())
                 .build();
 
-        return new IotaChat();
+        Client iota = node();
+        try {
+            String tag = generateTag(initialMessage.getId().getBytes());
+            iota.message().
+                    withIndexString(tag).
+                    withData(initialMessage.toString().getBytes(StandardCharsets.UTF_8)).
+                    finish();
+
+            return new IotaChat(initialMessage);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     public static IotaChat accept(Invitation invitation, String nickName, Context context) {
+        Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
+        TheirEndpoint inviterEndpoint = new TheirEndpoint(invitation.getEndpoint(), invitation.getInviterVerkey(), invitation.routingKeys());
+        List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
+        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, didVk.second, inviterEndpoint, protocols, timeToLiveSec)) {
+            Request request = Request.builder().
+                    setNickname(nickName).
+                    setDid(didVk.first).
+                    setVerkey(didVk.second).
+                    setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
+                    build();
+
+            Pair<Boolean, com.sirius.sdk.messaging.Message> okMsg = cp.sendAndWait(request);
+            if (okMsg.first && okMsg.second instanceof Response) {
+                Response response = (Response) okMsg.second;
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return new IotaChat();
     }
@@ -71,6 +121,10 @@ public class IotaChat {
 
     public boolean fetchFromLedger() {
         return false;
+    }
+
+    private static Client node() {
+        return Client.Builder().withNode(iotaNetwork).finish();
     }
 
 

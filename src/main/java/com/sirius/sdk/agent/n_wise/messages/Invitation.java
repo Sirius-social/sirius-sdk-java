@@ -1,8 +1,10 @@
 package com.sirius.sdk.agent.n_wise.messages;
 
 import com.sirius.sdk.messaging.Message;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Invitation extends BaseNWiseMessage {
@@ -16,10 +18,25 @@ public class Invitation extends BaseNWiseMessage {
     }
 
     public String getInviterVerkey() {
-        return null;
+        return getMessageObj().optString("inviterKey");
     }
 
-    public static Invitation.Builder<?> builder() {
+    public String getEndpoint() {
+        return getMessageObj().optString("serviceEndpoint");
+    }
+
+    public List<String> routingKeys() {
+        List<String> res = new ArrayList<>();
+        if (getMessageObj().has("routingKeys")) {
+            JSONArray jsonArr = getMessageObj().getJSONArray("routingKeys");
+            for (Object obj : jsonArr) {
+                res.add((String) obj);
+            }
+        }
+        return res;
+    }
+
+    public static Builder<?> builder() {
         return new Invitation.InvitationBuilder();
     }
 

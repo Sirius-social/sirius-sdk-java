@@ -33,6 +33,8 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static com.sirius.sdk.utils.IotaUtils.generateTag;
+
 public class IotaPublicDidDoc extends PublicDidDoc {
 
     static {
@@ -83,12 +85,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         payload.put("id", "did:iota:" + tag);
     }
 
-    private static String generateTag(byte[] publicKey) {
-        LazySodiumJava s = LibSodium.getInstance().getLazySodium();
-        byte[] outputBytes = new byte[32];
-        s.cryptoGenericHash(outputBytes, 32, publicKey, publicKey.length, null, 0);
-        return Base58.encode(outputBytes);
-    }
+
 
     private IotaPublicDidDoc(Message msg) {
         JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
@@ -168,9 +165,8 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         if (o == null)
             return false;
         Client iota = node();
-        Message message;
         try {
-            message = iota.message().
+            Message message = iota.message().
                     withIndexString(tag).
                     withData(o.toString().getBytes(StandardCharsets.UTF_8)).
                     finish();
