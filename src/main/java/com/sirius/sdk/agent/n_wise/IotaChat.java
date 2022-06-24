@@ -12,6 +12,7 @@ import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
+import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.MessageId;
 
@@ -48,7 +49,7 @@ public class IotaChat {
                 setLabel(chatName).
                 setCreatorNickName(myNickName).
                 setCreatorDid(didVk.first).
-                setCreatorVerkey(didVk.second).setCreatorEndpoint(context.getEndpointAddressWithEmptyRoutingKeys())
+                setCreatorVerkey(Base58.decode(didVk.second)).setCreatorEndpoint(context.getEndpointAddressWithEmptyRoutingKeys())
                 .build();
 
         Client iota = node();

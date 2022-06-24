@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.n_wise.transactions;
 
 import com.sirius.sdk.agent.n_wise.messages.BaseNWiseMessage;
 import com.sirius.sdk.messaging.Message;
+import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -23,6 +24,18 @@ public class GenesisTx extends BaseNWiseMessage {
         return getMessageObj().optString("label");
     }
 
+    public String getCreatorNickname() {
+        return getMessageObj().optString("nickname");
+    }
+
+    public String getCreatorDid() {
+        return getMessageObj().getJSONObject("connection").optString("DID");
+    }
+
+    public JSONObject getCreatorDidDoc() {
+        return getMessageObj().getJSONObject("connection").optJSONObject("DIDDoc");
+    }
+
     public static GenesisTx.Builder<?> builder() {
         return new InitialMessageBuilder();
     }
@@ -31,7 +44,7 @@ public class GenesisTx extends BaseNWiseMessage {
         String label = null;
         String creatorNickName = null;
         String creatorDid = null;
-        String creatorVerkey = null;
+        byte[] creatorVerkey = null;
         String creatorEndpoint = null;
         JSONObject creatorDidDocExtra = null;
         List<JSONObject> creatorConnectionServices = new ArrayList<>();
@@ -50,7 +63,7 @@ public class GenesisTx extends BaseNWiseMessage {
             return self();
         }
 
-        public B setCreatorVerkey(String creatorVerkey) {
+        public B setCreatorVerkey(byte[] creatorVerkey) {
             this.creatorVerkey = creatorVerkey;
             return self();
         }
@@ -83,7 +96,7 @@ public class GenesisTx extends BaseNWiseMessage {
             if (creatorDid != null && creatorVerkey != null && creatorEndpoint != null) {
                 jsonObject.put("connection", (new JSONObject().
                         put("DID", creatorDid).
-                        put("DIDDoc", buildDidDoc(creatorDid, creatorVerkey, creatorEndpoint, extra))));
+                        put("DIDDoc", buildDidDoc(creatorDid, Base58.encode(creatorVerkey), creatorEndpoint, extra))));
                 for (JSONObject s : creatorConnectionServices) {
                     jsonObject.getJSONObject("connection").getJSONObject("DIDDoc").getJSONArray("service").put(s);
                 }
