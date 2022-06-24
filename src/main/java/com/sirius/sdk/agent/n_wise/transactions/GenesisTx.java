@@ -1,6 +1,6 @@
-package com.sirius.sdk.agent.n_wise.messages;
+package com.sirius.sdk.agent.n_wise.transactions;
 
-import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.n_wise.messages.BaseNWiseMessage;
 import com.sirius.sdk.messaging.Message;
 import org.json.JSONObject;
 
@@ -9,13 +9,13 @@ import java.util.List;
 
 import static com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage.buildDidDoc;
 
-public class InitialMessage extends BaseNWiseMessage {
+public class GenesisTx extends BaseNWiseMessage {
 
     static {
-        Message.registerMessageClass(InitialMessage.class, BaseNWiseMessage.PROTOCOL, "initial-message");
+        Message.registerMessageClass(GenesisTx.class, BaseNWiseMessage.PROTOCOL, "initial-message");
     }
 
-    public InitialMessage(String msg) {
+    public GenesisTx(String msg) {
         super(msg);
     }
 
@@ -23,11 +23,11 @@ public class InitialMessage extends BaseNWiseMessage {
         return getMessageObj().optString("label");
     }
 
-    public static InitialMessage.Builder<?> builder() {
+    public static GenesisTx.Builder<?> builder() {
         return new InitialMessageBuilder();
     }
 
-    public static abstract class Builder<B extends InitialMessage.Builder<B>> extends BaseNWiseMessage.Builder<B> {
+    public static abstract class Builder<B extends GenesisTx.Builder<B>> extends BaseNWiseMessage.Builder<B> {
         String label = null;
         String creatorNickName = null;
         String creatorDid = null;
@@ -92,12 +92,12 @@ public class InitialMessage extends BaseNWiseMessage {
             return jsonObject;
         }
 
-        public InitialMessage build() {
-            return new InitialMessage(generateJSON().toString());
+        public GenesisTx build() {
+            return new GenesisTx(generateJSON().toString());
         }
     }
 
-    private static class InitialMessageBuilder extends InitialMessage.Builder<InitialMessageBuilder> {
+    private static class InitialMessageBuilder extends GenesisTx.Builder<InitialMessageBuilder> {
         @Override
         protected InitialMessageBuilder self() {
             return this;

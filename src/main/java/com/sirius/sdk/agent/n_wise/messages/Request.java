@@ -46,6 +46,11 @@ public class Request extends BaseNWiseMessage {
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
+            put(nickname, "nickname", jsonObject);
+            put(did, "did", jsonObject);
+            put(verkey, "verkey", jsonObject);
+            put(endpoint, "endpoint", jsonObject);
+
             return jsonObject;
         }
 

@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.agent.diddoc.PublicDidDoc;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.utils.IotaUtils;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -19,7 +20,7 @@ public class TestIotaDid {
     ConfTest confTest;
 
     static {
-        IotaPublicDidDoc.setIotaNetwork(IotaPublicDidDoc.TESTNET);
+        IotaUtils.iotaNetwork = IotaUtils.TESTNET;
     }
 
     @Before

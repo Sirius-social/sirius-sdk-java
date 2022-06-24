@@ -8,6 +8,7 @@ import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.encryption.IndyWalletSigner;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.naclJava.LibSodium;
+import com.sirius.sdk.utils.IotaUtils;
 import foundation.identity.jsonld.JsonLDObject;
 import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
 import info.weboftrust.ldsignatures.signer.LdSigner;
@@ -36,20 +37,6 @@ import java.util.stream.Collectors;
 import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
 public class IotaPublicDidDoc extends PublicDidDoc {
-
-    static {
-        try {
-            NativeLoader.loadLibrary("iota_client");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
-    public static final String TESTNET = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
-
-    private static String iotaNetwork = MAINNET;
-
     Logger log = Logger.getLogger(IotaPublicDidDoc.class.getName());
 
     private JSONObject meta = new JSONObject();
@@ -57,35 +44,11 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     String tag;
     String previousMessageId = "";
 
-    public static String getIotaNetwork() {
-        return iotaNetwork;
-    }
-
-    public static void setIotaNetwork(String iotaNetwork) {
-        IotaPublicDidDoc.iotaNetwork = iotaNetwork;
-    }
-
-    static Comparator<Message> msgComparator = new Comparator<Message>() {
-        @Override
-        public int compare(Message o1, Message o2) {
-            MessageMetadata meta1 = node().getMessage().metadata(o1.id());
-            MessageMetadata meta2 = node().getMessage().metadata(o2.id());
-            if (meta1.milestoneIndex() < meta2.milestoneIndex())
-                return -1;
-            else if (meta1.milestoneIndex() > meta2.milestoneIndex())
-                return 1;
-            else
-                return o1.id().toString().compareTo(o2.id().toString());
-        }
-    };
-
     public IotaPublicDidDoc(AbstractCrypto crypto) {
         this.publicKey = Base58.decode(crypto.createKey());
         this.tag = generateTag(this.publicKey);
         payload.put("id", "did:iota:" + tag);
     }
-
-
 
     private IotaPublicDidDoc(Message msg) {
         JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
@@ -115,10 +78,10 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     private static Message loadLastValidIntegrationMessage(String did) {
         try {
             String tag = tagFromId(did);
-            MessageId[] fetchedMessageIds = node().getMessage().indexString(tag);
+            MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
             HashMap<String, List<Message>> map = new HashMap<>();
             for (MessageId msgId : fetchedMessageIds) {
-                Message msg = node().getMessage().data(msgId);
+                Message msg = IotaUtils.node().getMessage().data(msgId);
                 if (msg.payload().isPresent()) {
                     JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
                     String previousMessageId = obj.optJSONObject("meta").optString("previousMessageId", "");
@@ -140,7 +103,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
                     Message finalPrevMessage = prevMessage;
                     List<Message> list = map.get(prevMessageId).stream().
                             filter(m -> checkMessage(m, finalPrevMessage)).
-                            sorted(msgComparator).
+                            sorted(IotaUtils.msgComparator).
                             collect(Collectors.toList());
                     if (list.isEmpty()) {
                         return prevMessage;
@@ -164,7 +127,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         JSONObject o = generateIntegrationMessage(context.getCrypto());
         if (o == null)
             return false;
-        Client iota = node();
+        Client iota = IotaUtils.node();
         try {
             Message message = iota.message().
                     withIndexString(tag).
@@ -277,9 +240,5 @@ public class IotaPublicDidDoc extends PublicDidDoc {
             e.printStackTrace();
         }
         return false;
-    }
-
-    private static Client node() {
-        return Client.Builder().withNode(iotaNetwork).finish();
     }
 }

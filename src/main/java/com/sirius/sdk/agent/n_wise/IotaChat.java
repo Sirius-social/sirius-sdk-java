@@ -4,15 +4,16 @@ import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.n_wise.messages.*;
+import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidMessage;
-import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
+import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
 import org.iota.client.Client;
+import org.iota.client.MessageId;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -25,7 +26,6 @@ public class IotaChat {
     public static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
     public static final String TESTNET = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
-    public static String iotaNetwork = MAINNET;
     public static int timeToLiveSec = 60;
 
     String chatName = null;
@@ -38,13 +38,13 @@ public class IotaChat {
 
     }
 
-    private IotaChat(InitialMessage initialMessage) {
+    private IotaChat(GenesisTx initialMessage) {
         this.chatName = initialMessage.getLabel();
     }
 
     public static IotaChat createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
-        InitialMessage initialMessage = InitialMessage.builder().
+        GenesisTx initialMessage = GenesisTx.builder().
                 setLabel(chatName).
                 setCreatorNickName(myNickName).
                 setCreatorDid(didVk.first).
@@ -80,6 +80,14 @@ public class IotaChat {
             Pair<Boolean, com.sirius.sdk.messaging.Message> okMsg = cp.sendAndWait(request);
             if (okMsg.first && okMsg.second instanceof Response) {
                 Response response = (Response) okMsg.second;
+                IotaResponseAttach attach = new IotaResponseAttach(response.getAttach());
+                String tag = attach.getTag();
+                MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
+                for (MessageId msgId : fetchedMessageIds) {
+                    org.iota.client.Message msg = IotaUtils.node().getMessage().data(msgId);
+
+                }
+
 
             }
         } catch (Exception e) {
@@ -124,8 +132,7 @@ public class IotaChat {
     }
 
     private static Client node() {
-        return Client.Builder().withNode(iotaNetwork).finish();
+        return Client.Builder().withNode(IotaUtils.iotaNetwork).finish();
     }
-
 
 }
