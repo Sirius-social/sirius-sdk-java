@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.
 import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
+import com.sirius.sdk.utils.IotaUtils;
 import foundation.identity.jsonld.JsonLDException;
 import org.iota.client.Client;
 import org.iota.client.local.NativeAPI;
@@ -70,7 +71,7 @@ public class Main {
 //        System.out.println(s2);
 
         //-Djava.library.path=/Users/mike/ssi/iota.rs/bindings/java/target/release
-        IotaPublicDidDoc.setIotaNetwork(IotaPublicDidDoc.TESTNET);
+        IotaUtils.iotaNetwork = IotaUtils.TESTNET;
         IotaPublicDidDoc didDoc = new IotaPublicDidDoc(context.getCrypto());
         didDoc.submitToLedger(context);
         System.out.println(didDoc.getDidDoc());

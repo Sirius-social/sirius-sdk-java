@@ -7,6 +7,7 @@ import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.utils.IotaUtils;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -22,7 +23,7 @@ public class TestNWise {
     ConfTest confTest;
 
     static {
-        IotaPublicDidDoc.setIotaNetwork(IotaPublicDidDoc.TESTNET);
+        IotaUtils.iotaNetwork = IotaUtils.TESTNET;
     }
 
     @Before
