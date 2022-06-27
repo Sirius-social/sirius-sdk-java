@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.n_wise.messages;
 
 import com.sirius.sdk.messaging.Message;
+import com.sirius.sdk.utils.Base58;
 import org.json.JSONObject;
 
 public class Request extends BaseNWiseMessage {
@@ -10,6 +11,14 @@ public class Request extends BaseNWiseMessage {
     }
     public Request(String msg) {
         super(msg);
+    }
+
+    public String getEndpoint() {
+        return getMessageObj().optString("endpoint");
+    }
+
+    public byte[] getVerkey() {
+        return Base58.decode(getMessageObj().optString("verkeyBase58"));
     }
 
     public static Builder<?> builder() {
@@ -48,7 +57,7 @@ public class Request extends BaseNWiseMessage {
 
             put(nickname, "nickname", jsonObject);
             put(did, "did", jsonObject);
-            put(verkey, "verkey", jsonObject);
+            put(verkey, "verkeyBase58", jsonObject);
             put(endpoint, "endpoint", jsonObject);
 
             return jsonObject;

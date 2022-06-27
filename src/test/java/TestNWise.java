@@ -1,5 +1,4 @@
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
-import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.IotaChat;
@@ -16,7 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class TestNWise {
@@ -69,7 +67,7 @@ public class TestNWise {
                             System.out.println("New message from " + nick + " : " + message.getContent());
                         }
                     } else if (event.getRecipientVerkey().equals(invitationForBob.getInviterVerkey()) && event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.accept((Request) event.message(), context));
+                        Assert.assertTrue(finalAliceChat.acceptInvitation((Request) event.message(), context));
                     }
                 }
             } catch (Exception e) {
@@ -82,7 +80,7 @@ public class TestNWise {
 
         IotaChat bobChat = null;
         try (Context context = getContext(bob)) {
-            bobChat = IotaChat.accept(invitationForBob, "Bob", context);
+            bobChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
             Assert.assertNotNull(bobChat);
             bobChat.send(Message.builder().setContent("Hello world").build());
         }
@@ -94,7 +92,7 @@ public class TestNWise {
 
         IotaChat carolChat = null;
         try (Context context = getContext(carol)) {
-            carolChat = IotaChat.accept(invitationForBob, "Bob", context);
+            carolChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
             Assert.assertNotNull(carolChat);
         }
 

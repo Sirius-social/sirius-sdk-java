@@ -1,12 +1,13 @@
 package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.n_wise.transactions.*;
+import org.apache.commons.lang.NotImplementedException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class NWiseState {
+public class NWiseStateMachine {
 
     String label;
 
@@ -19,7 +20,15 @@ public class NWiseState {
 
     List<Participant> participants = new ArrayList<>();
 
-    public NWiseState(GenesisTx genesisTx) {
+    public NWiseStateMachine() {
+
+    }
+
+    public boolean check(JSONObject tx) {
+        return true;
+    }
+
+    public boolean append(GenesisTx genesisTx) {
         label = genesisTx.getLabel();
         Participant creator = new Participant();
         creator.nickname = genesisTx.getCreatorNickname();
@@ -27,25 +36,32 @@ public class NWiseState {
         creator.didDoc = genesisTx.getCreatorDidDoc();
         creator.role = "admin";
         participants.add(creator);
+        return true;
     }
 
-    public void append(AddParticipantTx tx) {
+    public boolean append(AddParticipantTx tx) {
         Participant participant = new Participant();
         participant.nickname = tx.getNickname();
         participant.didDoc = tx.getDidDoc();
         participant.role = tx.getRole();
         participants.add(participant);
+        return true;
     }
 
-    public void append(UpdateMetadataTx tx) {
-
+    public boolean append(UpdateMetadataTx tx) {
+        throw new NotImplementedException();
     }
 
-    public void append(UpdateParticipantTx tx) {
-
+    public boolean append(UpdateParticipantTx tx) {
+        throw new NotImplementedException();
     }
 
-    public void append(RemoveParticipantTx tx) {
-
+    public boolean append(RemoveParticipantTx tx) {
+        throw new NotImplementedException();
     }
+
+    public boolean append(JSONObject jsonObject) {
+        return true;
+    }
+
 }
