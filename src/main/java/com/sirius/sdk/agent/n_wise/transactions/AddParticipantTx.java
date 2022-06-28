@@ -4,7 +4,6 @@ import org.json.JSONObject;
 
 public class AddParticipantTx extends NWiseTx {
 
-
     public void setNickname(String nickname) {
         put("nickname", nickname);
     }

@@ -4,7 +4,9 @@ import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.n_wise.messages.*;
+import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
+import com.sirius.sdk.agent.n_wise.transactions.NWiseTx;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.hub.Context;
@@ -18,22 +20,23 @@ import org.iota.client.MessageId;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
 public class IotaChat {
 
+    NWiseStateMachine stateMachine;
     public static int timeToLiveSec = 60;
     byte[] myVerkey;
     static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
 
     String chatName = null;
 
-    public IotaChat(NWiseStateMachine stateMachine) {
+    public IotaChat(NWiseStateMachine stateMachine, byte[] myVerkey) {
+        this.stateMachine = stateMachine;
+        this.myVerkey = myVerkey;
     }
 
     private IotaChat() {
@@ -59,7 +62,7 @@ public class IotaChat {
 
             NWiseStateMachine stateMachine = new NWiseStateMachine();
             stateMachine.append(genesisTx);
-            return new IotaChat(stateMachine);
+            return new IotaChat(stateMachine, Base58.decode(didVk.second));
         } catch (Exception ex) {
             return null;
         }
@@ -73,7 +76,7 @@ public class IotaChat {
             Request request = Request.builder().
                     setNickname(nickname).
                     setDid(didVk.first).
-                    setVerkey(didVk.second).
+                    setVerkey(Base58.decode(didVk.second)).
                     setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                     build();
 
@@ -81,7 +84,7 @@ public class IotaChat {
             if (okMsg.first && okMsg.second instanceof Response) {
                 Response response = (Response) okMsg.second;
                 IotaResponseAttach attach = new IotaResponseAttach(response.getAttach());
-                stateMachine = processTransactions(attach.getTag());
+                stateMachine = processTransactions(attach.getTag()).first;
                 if (response.hasPleaseAck()) {
                     Ack ack = Ack.builder().
                             setStatus(Ack.Status.OK).
@@ -94,10 +97,34 @@ public class IotaChat {
             e.printStackTrace();
         }
 
-        return new IotaChat(stateMachine);
+        return new IotaChat(stateMachine, Base58.decode(didVk.second));
     }
 
-    private static NWiseStateMachine processTransactions(String tag) {
+    private static NWiseStateMachine processTransactions(List<NWiseTx> transactions, String genesisHashBase58) {
+        NWiseStateMachine stateMachine = new NWiseStateMachine();
+        Map<String, NWiseTx> hashTable = new HashMap<>();
+        Map<String, List<NWiseTx>> prevHashTable = new HashMap<>();
+        for (NWiseTx tx : transactions) {
+            hashTable.put(Base58.encode(tx.getHash()), tx);
+            if (!prevHashTable.containsKey(tx.getPreviousTxHashBase58())) {
+                prevHashTable.put(tx.getPreviousTxHashBase58(), new ArrayList<>());
+            }
+            prevHashTable.get(tx.getPreviousTxHashBase58()).add(tx);
+        }
+        NWiseTx genesisTx = hashTable.get(genesisHashBase58);
+        if (stateMachine.check(genesisTx)) {
+            stateMachine.append(genesisTx);
+            prevHashTable.remove("");
+        }
+
+        String prevHash = genesisHashBase58;
+
+        List<NWiseTx> curTxs = prevHashTable.get(prevHash);
+
+        return stateMachine;
+    }
+
+    private static Pair<NWiseStateMachine, String> processTransactions(String tag) {
         NWiseStateMachine stateMachine = new NWiseStateMachine();
         MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
         HashMap<String, List<org.iota.client.Message>> map = new HashMap<>();
@@ -114,7 +141,7 @@ public class IotaChat {
         }
 
         if (!map.containsKey(""))
-            return stateMachine;
+            return new Pair<>(stateMachine, "");
 
         String prevMessageId = "";
         org.iota.client.Message prevMessage = null;
@@ -126,42 +153,68 @@ public class IotaChat {
                         sorted(IotaUtils.msgComparator).
                         collect(Collectors.toList());
                 if (list.isEmpty()) {
-                    return stateMachine;
+                    return new Pair<>(stateMachine, prevMessageId);
                 } else {
                     map.remove(prevMessageId);
                     prevMessage = list.get(list.size() - 1);
-                    stateMachine.append(new JSONObject(new String(prevMessage.payload().get().asIndexation().data())));
+                    stateMachine.append(new JSONObject(new String(prevMessage.payload().get().asIndexation().data())).optJSONObject("transaction"));
                     prevMessageId = prevMessage.id().toString();
                 }
             } else {
                 break;
             }
         }
-        return stateMachine;
+        return new Pair<>(stateMachine, prevMessageId);
     }
 
     private static boolean checkMessage(org.iota.client.Message msg, NWiseStateMachine stateMachine) {
         return true;
     }
 
-
     public boolean acceptRequest(Request request, Context context) {
         TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
                 Base58.encode(request.getVerkey()), Arrays.asList());
 
         try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), inviteeEndpoint, protocols, timeToLiveSec)) {
+            AddParticipantTx addParticipantTx = new AddParticipantTx();
+            addParticipantTx.setNickname(request.getNickname());
+            addParticipantTx.setDid(request.getDid());
+            addParticipantTx.setDidDoc(request.getDidDoc());
+            addParticipantTx.setRole("user");
+
+
             Response response = Response.builder().
                     setLedgerType(getLedgerType()).
                     setAttach(getAttach()).
                     build();
             response.setThreadId(request.getId());
+
+            cp.send(response);
         }
 
-        return false;
+        return true;
+    }
+
+    private boolean pushTransaction(NWiseTx tx) {
+        String tag = IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey());
+        Pair<NWiseStateMachine, String> res = processTransactions(tag);
+        JSONObject o = new JSONObject().
+                put("transaction", tx).
+                put("meta", new JSONObject().
+                                put("previousMessageId", res.second));
+        try {
+            IotaUtils.node().message().
+                    withIndexString(tag).
+                    withData(o.toString().getBytes(StandardCharsets.UTF_8)).
+                    finish();
+        } catch (Exception ex) {
+            return false;
+        }
+        return true;
     }
 
     private JSONObject getAttach() {
-        return new JSONObject();
+        return new IotaResponseAttach(IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey()));
     }
 
     private String getLedgerType() {
@@ -185,7 +238,7 @@ public class IotaChat {
         return null;
     }
 
-    public String resolveNickName(String verkey) {
+    public String resolveNickname(String verkey) {
         return null;
     }
 

@@ -63,11 +63,11 @@ public class TestNWise {
                     if (event.getRecipientVerkey().equals(finalAliceChat.myKey())) {
                         if (event.message() instanceof Message) {
                             Message message = (Message) event.message();
-                            String nick = finalAliceChat.resolveNickName(event.getSenderVerkey());
+                            String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
                             System.out.println("New message from " + nick + " : " + message.getContent());
                         }
                     } else if (event.getRecipientVerkey().equals(invitationForBob.getInviterVerkey()) && event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.acceptInvitation((Request) event.message(), context));
+                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                     }
                 }
             } catch (Exception e) {

@@ -2,6 +2,7 @@ package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.n_wise.transactions.*;
 import org.apache.commons.lang.NotImplementedException;
+import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 public class NWiseStateMachine {
 
     String label;
+    byte[] genesisCreatorVerkey;
 
     class Participant {
         public String nickname;
@@ -36,6 +38,7 @@ public class NWiseStateMachine {
         creator.didDoc = genesisTx.getCreatorDidDoc();
         creator.role = "admin";
         participants.add(creator);
+        this.genesisCreatorVerkey = Base58.decode(creator.didDoc.optJSONArray("publicKey").getJSONObject(0).getString("publicKeyBase58"));
         return true;
     }
 
@@ -62,6 +65,10 @@ public class NWiseStateMachine {
 
     public boolean append(JSONObject jsonObject) {
         return true;
+    }
+
+    public byte[] getGenesisCreatorVerkey() {
+        return genesisCreatorVerkey;
     }
 
 }
