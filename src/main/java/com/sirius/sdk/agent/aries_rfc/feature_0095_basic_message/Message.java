@@ -10,8 +10,10 @@ import java.util.List;
 
 public class Message extends AriesProtocolMessage {
 
+    public static final String PROTOCOL = "basicmessage";
+
     static {
-        com.sirius.sdk.messaging.Message.registerMessageClass(Message.class, "basicmessage", "message");
+        com.sirius.sdk.messaging.Message.registerMessageClass(Message.class, PROTOCOL, "message");
     }
 
     public Message(String msg) {

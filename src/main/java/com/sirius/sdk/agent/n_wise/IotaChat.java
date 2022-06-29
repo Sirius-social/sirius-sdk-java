@@ -55,9 +55,12 @@ public class IotaChat {
         Client iota = IotaUtils.node();
         try {
             String tag = generateTag(Base58.decode(didVk.second));
+            JSONObject o = new JSONObject().
+                    put("transaction", genesisTx).
+                    put("meta", new JSONObject());
             iota.message().
                     withIndexString(tag).
-                    withData(genesisTx.toString().getBytes(StandardCharsets.UTF_8)).
+                    withData(o.toString().getBytes(StandardCharsets.UTF_8)).
                     finish();
 
             NWiseStateMachine stateMachine = new NWiseStateMachine();
@@ -167,6 +170,10 @@ public class IotaChat {
         return new Pair<>(stateMachine, prevMessageId);
     }
 
+    private void fetchFromLedger() {
+        stateMachine = processTransactions(generateTag(stateMachine.getGenesisCreatorVerkey())).first;
+    }
+
     private static boolean checkMessage(org.iota.client.Message msg, NWiseStateMachine stateMachine) {
         return true;
     }
@@ -181,6 +188,7 @@ public class IotaChat {
             addParticipantTx.setDid(request.getDid());
             addParticipantTx.setDidDoc(request.getDidDoc());
             addParticipantTx.setRole("user");
+            pushTransaction(addParticipantTx);
 
 
             Response response = Response.builder().
@@ -229,9 +237,17 @@ public class IotaChat {
                 build();
     }
 
-    public boolean send(Message message) {
-
-        return false;
+    public boolean send(Message message, Context context) {
+        List<NWiseParticipant> participants = getParticipants();
+        for (NWiseParticipant participant : participants) {
+            if (Arrays.equals(participant.getVerkey(), this.myVerkey))
+                break;
+            TheirEndpoint theirEndpoint = new TheirEndpoint(participant.getEndpoint(), Base58.encode(participant.getVerkey()), Arrays.asList());
+            try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), theirEndpoint, Arrays.asList(Message.PROTOCOL), timeToLiveSec)) {
+                cp.send(message);
+            }
+        }
+        return true;
     }
 
     public String myKey() {
@@ -242,12 +258,9 @@ public class IotaChat {
         return null;
     }
 
-    public List<Pairwise.Their> getParticipants() {
-        return null;
-    }
-
-    public boolean fetchFromLedger() {
-        return false;
+    public List<NWiseParticipant> getParticipants() {
+        fetchFromLedger();
+        return stateMachine.participants;
     }
 
 }

@@ -13,14 +13,11 @@ public class NWiseStateMachine {
     String label;
     byte[] genesisCreatorVerkey;
 
-    class Participant {
-        public String nickname;
-        public String did;
-        public JSONObject didDoc;
-        public String role;
-    }
+    List<NWiseParticipant> participants = new ArrayList<>();
 
-    List<Participant> participants = new ArrayList<>();
+    public List<NWiseParticipant> getParticipants() {
+        return participants;
+    }
 
     public NWiseStateMachine() {
 
@@ -32,7 +29,7 @@ public class NWiseStateMachine {
 
     public boolean append(GenesisTx genesisTx) {
         label = genesisTx.getLabel();
-        Participant creator = new Participant();
+        NWiseParticipant creator = new NWiseParticipant();
         creator.nickname = genesisTx.getCreatorNickname();
         creator.did = genesisTx.getCreatorDid();
         creator.didDoc = genesisTx.getCreatorDidDoc();
@@ -43,7 +40,7 @@ public class NWiseStateMachine {
     }
 
     public boolean append(AddParticipantTx tx) {
-        Participant participant = new Participant();
+        NWiseParticipant participant = new NWiseParticipant();
         participant.nickname = tx.getNickname();
         participant.didDoc = tx.getDidDoc();
         participant.role = tx.getRole();
@@ -64,7 +61,14 @@ public class NWiseStateMachine {
     }
 
     public boolean append(JSONObject jsonObject) {
-        return true;
+        String type = jsonObject.optString("type");
+        if (type.equals("genesisTx")) {
+            return append(new GenesisTx(jsonObject));
+        }
+        if (type.equals("addParticipantTx")) {
+            return append(new AddParticipantTx(jsonObject));
+        }
+        return false;
     }
 
     public byte[] getGenesisCreatorVerkey() {

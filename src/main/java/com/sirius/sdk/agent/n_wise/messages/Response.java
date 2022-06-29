@@ -6,7 +6,7 @@ import org.json.JSONObject;
 public class Response extends BaseNWiseMessage {
 
     static {
-        Message.registerMessageClass(Request.class, BaseNWiseMessage.PROTOCOL, "response");
+        Message.registerMessageClass(Response.class, BaseNWiseMessage.PROTOCOL, "response");
     }
     public Response(String msg) {
         super(msg);

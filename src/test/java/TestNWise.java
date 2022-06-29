@@ -46,28 +46,34 @@ public class TestNWise {
         String carol = "agent3";
 
         Invitation invitationForBob;
+        Invitation invitationForCarol;
 
         IotaChat aliceChat = null;
         try (Context context = getContext(alice)) {
             aliceChat = IotaChat.createChat("Iota chat", "Alice", context);
             invitationForBob = aliceChat.createInvitation(context);
+            invitationForCarol = aliceChat.createInvitation(context);
         }
+
 
         IotaChat finalAliceChat = aliceChat;
         Thread aliceThread = new Thread(() -> {
             Listener listener = null;
             try (Context context = getContext(alice)) {
                 listener = context.subscribe();
-                while (true) {
+                for (int i = 0; i < 3; i++) {
                     Event event = listener.getOne().get(30, TimeUnit.SECONDS);
-                    if (event.getRecipientVerkey().equals(finalAliceChat.myKey())) {
-                        if (event.message() instanceof Message) {
-                            Message message = (Message) event.message();
-                            String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
-                            System.out.println("New message from " + nick + " : " + message.getContent());
+                    System.out.println("Event:" + event.message());
+                    if ((event.getRecipientVerkey().equals(invitationForBob.getInviterVerkey()) ||
+                            event.getRecipientVerkey().equals(invitationForCarol.getInviterVerkey()))) {
+                        if (event.message() instanceof Request) {
+                            Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                         }
-                    } else if (event.getRecipientVerkey().equals(invitationForBob.getInviterVerkey()) && event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
+                    }
+                    if (event.message() instanceof Message) {
+                        Message message = (Message) event.message();
+                        String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
+                        System.out.println("New message from " + nick + " : " + message.getContent());
                     }
                 }
             } catch (Exception e) {
@@ -82,17 +88,12 @@ public class TestNWise {
         try (Context context = getContext(bob)) {
             bobChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
             Assert.assertNotNull(bobChat);
-            bobChat.send(Message.builder().setContent("Hello world").build());
-        }
-
-        Invitation invitationForCarol = null;
-        try (Context context = getContext(alice)) {
-            invitationForCarol = aliceChat.createInvitation(context);
+            bobChat.send(Message.builder().setContent("Hello world").build(), context);
         }
 
         IotaChat carolChat = null;
         try (Context context = getContext(carol)) {
-            carolChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
+            carolChat = IotaChat.acceptInvitation(invitationForCarol, "Bob", context);
             Assert.assertNotNull(carolChat);
         }
 

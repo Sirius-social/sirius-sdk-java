@@ -10,6 +10,14 @@ import java.nio.charset.StandardCharsets;
 
 public class NWiseTx extends JSONObject {
 
+    public NWiseTx() {
+        super();
+    }
+
+    public NWiseTx(String str) {
+        super(str);
+    }
+
     public byte[] getPreviousTxHash() {
         String hash = optString("previousTxHashBase58");
         if (!hash.isEmpty()) {

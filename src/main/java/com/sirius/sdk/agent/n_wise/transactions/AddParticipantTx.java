@@ -4,6 +4,15 @@ import org.json.JSONObject;
 
 public class AddParticipantTx extends NWiseTx {
 
+    public AddParticipantTx() {
+        super();
+        put("type", "addParticipantTx");
+    }
+
+    public AddParticipantTx(JSONObject jsonObject) {
+        super(jsonObject.toString());
+    }
+
     public void setNickname(String nickname) {
         put("nickname", nickname);
     }

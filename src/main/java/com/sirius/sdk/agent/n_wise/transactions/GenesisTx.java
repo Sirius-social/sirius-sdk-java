@@ -17,6 +17,10 @@ public class GenesisTx extends NWiseTx {
         put("type", "genesisTx");
     }
 
+    public GenesisTx(JSONObject jsonObject) {
+        super(jsonObject.toString());
+    }
+
     public String getLabel() {
         return optString("label");
     }
