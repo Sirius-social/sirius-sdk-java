@@ -1,7 +1,7 @@
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
-import com.sirius.sdk.agent.n_wise.IotaChat;
+import com.sirius.sdk.agent.n_wise.IotaNWise;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.CloudContext;
@@ -50,18 +50,19 @@ public class TestNWise {
         Invitation invitationForBob;
         Invitation invitationForCarol;
 
-        IotaChat aliceChat = null;
+        IotaNWise aliceChat = null;
         try (Context context = getContext(alice)) {
-            aliceChat = IotaChat.createChat(chatName, "Alice", context);
+            aliceChat = IotaNWise.createChat(chatName, "Alice", context);
             invitationForBob = aliceChat.createInvitation(context);
             invitationForCarol = aliceChat.createInvitation(context);
         }
 
-        IotaChat finalAliceChat = aliceChat;
+        IotaNWise finalAliceChat = aliceChat;
         Thread aliceThread = new Thread(() -> {
             Listener listener = null;
             try (Context context = getContext(alice)) {
                 listener = context.subscribe();
+                System.out.println("Start listening...");
                 for (int i = 0; i < 3; i++) {
                     Event event = listener.getOne().get(30, TimeUnit.SECONDS);
                     System.out.println("Event:" + event.message());
@@ -86,15 +87,15 @@ public class TestNWise {
         });
         aliceThread.start();
 
-        IotaChat bobChat = null;
+        IotaNWise bobChat = null;
         try (Context context = getContext(bob)) {
-            bobChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
+            bobChat = IotaNWise.acceptInvitation(invitationForBob, "Bob", context);
             Assert.assertNotNull(bobChat);
         }
 
-        IotaChat carolChat = null;
+        IotaNWise carolChat = null;
         try (Context context = getContext(carol)) {
-            carolChat = IotaChat.acceptInvitation(invitationForCarol, "Carol", context);
+            carolChat = IotaNWise.acceptInvitation(invitationForCarol, "Carol", context);
             Assert.assertNotNull(carolChat);
             carolChat.send(Message.builder().setContent("Hello world").build(), context);
         }

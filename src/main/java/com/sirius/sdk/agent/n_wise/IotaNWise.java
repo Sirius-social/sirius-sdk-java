@@ -14,6 +14,7 @@ import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
+import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.MessageId;
@@ -26,9 +27,9 @@ import java.util.stream.Collectors;
 
 import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
-public class IotaChat {
+public class IotaNWise extends NWise {
 
-    Logger log = Logger.getLogger(IotaChat.class.getName());
+    Logger log = Logger.getLogger(IotaNWise.class.getName());
 
     NWiseStateMachine stateMachine;
     List<String> invitationKeysBase58 = new ArrayList<>();
@@ -36,17 +37,17 @@ public class IotaChat {
     byte[] myVerkey;
     static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
 
-    public IotaChat(NWiseStateMachine stateMachine, byte[] myVerkey) {
+    public IotaNWise(NWiseStateMachine stateMachine, byte[] myVerkey) {
         this.stateMachine = stateMachine;
         this.myVerkey = myVerkey;
     }
 
-    private IotaChat() {
+    private IotaNWise() {
 
     }
 
 
-    public static IotaChat createChat(String chatName, String myNickName, Context context) {
+    public static IotaNWise createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         GenesisTx genesisTx = new GenesisTx();
         genesisTx.setLabel(chatName);
@@ -67,13 +68,13 @@ public class IotaChat {
 
             NWiseStateMachine stateMachine = new NWiseStateMachine();
             stateMachine.append(genesisTx);
-            return new IotaChat(stateMachine, Base58.decode(didVk.second));
+            return new IotaNWise(stateMachine, Base58.decode(didVk.second));
         } catch (Exception ex) {
             return null;
         }
     }
 
-    public static IotaChat acceptInvitation(Invitation invitation, String nickname, Context context) {
+    public static IotaNWise acceptInvitation(Invitation invitation, String nickname, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         TheirEndpoint inviterEndpoint = new TheirEndpoint(invitation.getEndpoint(), invitation.getInviterVerkey(), invitation.routingKeys());
         NWiseStateMachine stateMachine = null;
@@ -85,7 +86,7 @@ public class IotaChat {
                     setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                     build();
 
-            Logger log = Logger.getLogger(IotaChat.class.getName());
+            Logger log = Logger.getLogger(IotaNWise.class.getName());
             log.info("Send connection request to " + didVk.second);
             Pair<Boolean, com.sirius.sdk.messaging.Message> okMsg = cp.sendAndWait(request);
             if (okMsg.first && okMsg.second instanceof Response) {
@@ -105,7 +106,7 @@ public class IotaChat {
             e.printStackTrace();
         }
 
-        return new IotaChat(stateMachine, Base58.decode(didVk.second));
+        return new IotaNWise(stateMachine, Base58.decode(didVk.second));
     }
 
     private static NWiseStateMachine processTransactions(List<NWiseTx> transactions, String genesisHashBase58) {
@@ -241,8 +242,14 @@ public class IotaChat {
         return new IotaResponseAttach(IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey()));
     }
 
-    private String getLedgerType() {
+    @Override
+    public String getLedgerType() {
         return "iota@v1.0";
+    }
+
+    @Override
+    public JSONObject getRestoreAttach() {
+        throw new NotImplementedException();
     }
 
     public Invitation createInvitation(Context context) {
