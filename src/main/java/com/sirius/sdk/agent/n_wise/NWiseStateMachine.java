@@ -6,6 +6,7 @@ import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class NWiseStateMachine {
@@ -21,6 +22,10 @@ public class NWiseStateMachine {
 
     public NWiseStateMachine() {
 
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public boolean check(JSONObject tx) {
@@ -42,6 +47,7 @@ public class NWiseStateMachine {
     public boolean append(AddParticipantTx tx) {
         NWiseParticipant participant = new NWiseParticipant();
         participant.nickname = tx.getNickname();
+        participant.did = tx.getDid();
         participant.didDoc = tx.getDidDoc();
         participant.role = tx.getRole();
         participants.add(participant);
@@ -57,7 +63,10 @@ public class NWiseStateMachine {
     }
 
     public boolean append(RemoveParticipantTx tx) {
-        throw new NotImplementedException();
+        participants.removeIf((NWiseParticipant p) -> {
+            return p.did.equals(tx.getDid());
+        });
+        return true;
     }
 
     public boolean append(JSONObject jsonObject) {
@@ -68,11 +77,30 @@ public class NWiseStateMachine {
         if (type.equals("addParticipantTx")) {
             return append(new AddParticipantTx(jsonObject));
         }
+        if (type.equals("removeParticipantTx")) {
+            return append(new RemoveParticipantTx(jsonObject));
+        }
         return false;
     }
 
     public byte[] getGenesisCreatorVerkey() {
         return genesisCreatorVerkey;
+    }
+
+    public String resolveNickname(byte[] verkey) {
+        for (NWiseParticipant p : participants) {
+            if (Arrays.equals(p.getVerkey(), verkey))
+                return p.nickname;
+        }
+        return null;
+    }
+
+    public String resolveDid(byte[] verkey) {
+        for (NWiseParticipant p : participants) {
+            if (Arrays.equals(p.getVerkey(), verkey))
+                return p.did;
+        }
+        return null;
     }
 
 }

@@ -7,7 +7,7 @@ import com.sirius.sdk.agent.n_wise.messages.*;
 import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.n_wise.transactions.NWiseTx;
-import com.sirius.sdk.agent.pairwise.Pairwise;
+import com.sirius.sdk.agent.n_wise.transactions.RemoveParticipantTx;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
@@ -21,18 +21,19 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
 public class IotaChat {
 
+    Logger log = Logger.getLogger(IotaChat.class.getName());
+
     NWiseStateMachine stateMachine;
     public static int timeToLiveSec = 60;
     byte[] myVerkey;
     static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
-
-    String chatName = null;
 
     public IotaChat(NWiseStateMachine stateMachine, byte[] myVerkey) {
         this.stateMachine = stateMachine;
@@ -83,8 +84,11 @@ public class IotaChat {
                     setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                     build();
 
+            Logger log = Logger.getLogger(IotaChat.class.getName());
+            log.info("Send connection request to " + didVk.second);
             Pair<Boolean, com.sirius.sdk.messaging.Message> okMsg = cp.sendAndWait(request);
             if (okMsg.first && okMsg.second instanceof Response) {
+                log.info("Receiver connection response from " + didVk.second);
                 Response response = (Response) okMsg.second;
                 IotaResponseAttach attach = new IotaResponseAttach(response.getAttach());
                 stateMachine = processTransactions(attach.getTag()).first;
@@ -170,7 +174,11 @@ public class IotaChat {
         return new Pair<>(stateMachine, prevMessageId);
     }
 
-    private void fetchFromLedger() {
+    public String getChatName() {
+        return this.stateMachine.getLabel();
+    }
+
+    public void fetchFromLedger() {
         stateMachine = processTransactions(generateTag(stateMachine.getGenesisCreatorVerkey())).first;
     }
 
@@ -182,6 +190,8 @@ public class IotaChat {
         TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
                 Base58.encode(request.getVerkey()), Arrays.asList());
 
+        log.info("Received request from" + Base58.encode(request.getVerkey()));
+
         try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), inviteeEndpoint, protocols, timeToLiveSec)) {
             AddParticipantTx addParticipantTx = new AddParticipantTx();
             addParticipantTx.setNickname(request.getNickname());
@@ -190,7 +200,7 @@ public class IotaChat {
             addParticipantTx.setRole("user");
             pushTransaction(addParticipantTx);
 
-
+            log.info("Send response to" + Base58.encode(request.getVerkey()));
             Response response = Response.builder().
                     setLedgerType(getLedgerType()).
                     setAttach(getAttach()).
@@ -231,7 +241,7 @@ public class IotaChat {
 
     public Invitation createInvitation(Context context) {
         return Invitation.builder().
-                setLabel(chatName).
+                setLabel(getChatName()).
                 setInviterKey(context.getCrypto().createKey()).
                 setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                 build();
@@ -254,8 +264,8 @@ public class IotaChat {
         return null;
     }
 
-    public String resolveNickname(String verkey) {
-        return null;
+    public String resolveNickname(String verkeyBase58) {
+        return stateMachine.resolveNickname(Base58.decode(verkeyBase58));
     }
 
     public List<NWiseParticipant> getParticipants() {
@@ -263,4 +273,9 @@ public class IotaChat {
         return stateMachine.participants;
     }
 
+    public boolean leave() {
+        RemoveParticipantTx tx = new RemoveParticipantTx();
+        tx.setDid(stateMachine.resolveDid(this.myVerkey));
+        return pushTransaction(tx);
+    }
 }

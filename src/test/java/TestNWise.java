@@ -45,16 +45,17 @@ public class TestNWise {
         String bob = "agent2";
         String carol = "agent3";
 
+        String chatName = "test chat";
+
         Invitation invitationForBob;
         Invitation invitationForCarol;
 
         IotaChat aliceChat = null;
         try (Context context = getContext(alice)) {
-            aliceChat = IotaChat.createChat("Iota chat", "Alice", context);
+            aliceChat = IotaChat.createChat(chatName, "Alice", context);
             invitationForBob = aliceChat.createInvitation(context);
             invitationForCarol = aliceChat.createInvitation(context);
         }
-
 
         IotaChat finalAliceChat = aliceChat;
         Thread aliceThread = new Thread(() -> {
@@ -72,7 +73,9 @@ public class TestNWise {
                     }
                     if (event.message() instanceof Message) {
                         Message message = (Message) event.message();
+                        finalAliceChat.fetchFromLedger();
                         String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
+                        Assert.assertEquals("Carol", nick);
                         System.out.println("New message from " + nick + " : " + message.getContent());
                     }
                 }
@@ -88,18 +91,26 @@ public class TestNWise {
         try (Context context = getContext(bob)) {
             bobChat = IotaChat.acceptInvitation(invitationForBob, "Bob", context);
             Assert.assertNotNull(bobChat);
-            bobChat.send(Message.builder().setContent("Hello world").build(), context);
         }
 
         IotaChat carolChat = null;
         try (Context context = getContext(carol)) {
-            carolChat = IotaChat.acceptInvitation(invitationForCarol, "Bob", context);
+            carolChat = IotaChat.acceptInvitation(invitationForCarol, "Carol", context);
             Assert.assertNotNull(carolChat);
+            carolChat.send(Message.builder().setContent("Hello world").build(), context);
         }
 
         Assert.assertEquals(3, aliceChat.getParticipants().size());
         Assert.assertEquals(3, bobChat.getParticipants().size());
         Assert.assertEquals(3, carolChat.getParticipants().size());
+
+        Assert.assertEquals(chatName, aliceChat.getChatName());
+        Assert.assertEquals(chatName, bobChat.getChatName());
+        Assert.assertEquals(chatName, carolChat.getChatName());
+
+        bobChat.leave();
+        carolChat.fetchFromLedger();
+        Assert.assertEquals(2, carolChat.getParticipants().size());
 
         aliceThread.interrupt();
     }
