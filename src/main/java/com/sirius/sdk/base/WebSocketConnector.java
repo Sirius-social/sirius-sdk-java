@@ -244,7 +244,8 @@ public class WebSocketConnector extends BaseConnector {
 
     @Override
     public CompletableFuture<byte[]> read() {
-        readFuture = new CompletableFuture<>();
+        if (readCallback == null)
+            readFuture = new CompletableFuture<>();
         return readFuture;
     }
 
@@ -254,6 +255,7 @@ public class WebSocketConnector extends BaseConnector {
             readFuture.complete(frame.getPayload());
             if (readCallback != null)
                 readCallback.apply(frame.getPayload());
+            readFuture = new CompletableFuture<>();
             return frame.getPayload();
         }
         return null;
