@@ -274,8 +274,16 @@ public class IotaChat {
     }
 
     public boolean leave() {
+        return removeParticipant(getMyDid());
+    }
+
+    public boolean removeParticipant(String did) {
         RemoveParticipantTx tx = new RemoveParticipantTx();
-        tx.setDid(stateMachine.resolveDid(this.myVerkey));
+        tx.setDid(did);
         return pushTransaction(tx);
+    }
+
+    public String getMyDid() {
+        return stateMachine.resolveDid(this.myVerkey);
     }
 }

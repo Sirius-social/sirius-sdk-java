@@ -112,6 +112,9 @@ public class TestNWise {
         carolChat.fetchFromLedger();
         Assert.assertEquals(2, carolChat.getParticipants().size());
 
+        aliceChat.removeParticipant(carolChat.getMyDid());
+        Assert.assertEquals(1, aliceChat.getParticipants().size());
+
         aliceThread.interrupt();
     }
 }
