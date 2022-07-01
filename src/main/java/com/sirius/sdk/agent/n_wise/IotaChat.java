@@ -31,6 +31,7 @@ public class IotaChat {
     Logger log = Logger.getLogger(IotaChat.class.getName());
 
     NWiseStateMachine stateMachine;
+    List<String> invitationKeysBase58 = new ArrayList<>();
     public static int timeToLiveSec = 60;
     byte[] myVerkey;
     static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
@@ -186,7 +187,11 @@ public class IotaChat {
         return true;
     }
 
-    public boolean acceptRequest(Request request, Context context) {
+    public boolean acceptRequest(Request request, String invitationKeyBase58, Context context) {
+        if (!invitationKeysBase58.contains(invitationKeyBase58)) {
+            log.info("Invitation with specified key was not issued");
+            return false;
+        }
         TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
                 Base58.encode(request.getVerkey()), Arrays.asList());
 
@@ -208,6 +213,7 @@ public class IotaChat {
             response.setThreadId(request.getId());
 
             cp.send(response);
+            invitationKeysBase58.remove(invitationKeyBase58);
         }
 
         return true;
@@ -240,13 +246,14 @@ public class IotaChat {
     }
 
     public Invitation createInvitation(Context context) {
+        String key = context.getCrypto().createKey();
+        invitationKeysBase58.add(key);
         return Invitation.builder().
                 setLabel(getChatName()).
-                setInviterKey(context.getCrypto().createKey()).
+                setInviterKey(key).
                 setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                 build();
     }
-
     public boolean send(Message message, Context context) {
         List<NWiseParticipant> participants = getParticipants();
         for (NWiseParticipant participant : participants) {
@@ -285,5 +292,13 @@ public class IotaChat {
 
     public String getMyDid() {
         return stateMachine.resolveDid(this.myVerkey);
+    }
+
+    public List<String> getCurrentParticipantsVerkeysBase58() {
+        List<String> res = new ArrayList<>();
+        for (NWiseParticipant p : getParticipants()) {
+            res.add(Base58.encode(p.getVerkey()));
+        }
+        return res;
     }
 }

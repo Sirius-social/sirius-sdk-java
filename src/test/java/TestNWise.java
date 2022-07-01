@@ -65,18 +65,17 @@ public class TestNWise {
                 for (int i = 0; i < 3; i++) {
                     Event event = listener.getOne().get(30, TimeUnit.SECONDS);
                     System.out.println("Event:" + event.message());
-                    if ((event.getRecipientVerkey().equals(invitationForBob.getInviterVerkey()) ||
-                            event.getRecipientVerkey().equals(invitationForCarol.getInviterVerkey()))) {
-                        if (event.message() instanceof Request) {
-                            Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
+                    if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getRecipientVerkey())) {
+                        if (event.message() instanceof Message) {
+                            Message message = (Message) event.message();
+                            finalAliceChat.fetchFromLedger();
+                            String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
+                            Assert.assertEquals("Carol", nick);
+                            System.out.println("New message from " + nick + " : " + message.getContent());
                         }
                     }
-                    if (event.message() instanceof Message) {
-                        Message message = (Message) event.message();
-                        finalAliceChat.fetchFromLedger();
-                        String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
-                        Assert.assertEquals("Carol", nick);
-                        System.out.println("New message from " + nick + " : " + message.getContent());
+                    if (event.message() instanceof Request) {
+                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), event.getRecipientVerkey(), context));
                     }
                 }
             } catch (Exception e) {
