@@ -38,10 +38,6 @@ public class IotaNWise extends NWise {
         this.myVerkey = myVerkey;
     }
 
-    private IotaNWise() {
-
-    }
-
     public static IotaNWise createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         GenesisTx genesisTx = new GenesisTx();
@@ -102,6 +98,19 @@ public class IotaNWise extends NWise {
         }
 
         return new IotaNWise(stateMachine, Base58.decode(didVk.second));
+    }
+
+    public JSONObject getRestoreAttach() {
+        return new JSONObject().
+                put("tag", generateTag(stateMachine.getGenesisCreatorVerkey())).
+                put("myVerkeyBase58", Base58.encode(myVerkey));
+    }
+
+    public static IotaNWise restore(JSONObject attach) {
+        String tag = attach.optString("tag");
+        String myVerkeyBase58 = attach.optString("myVerkeyBase58");
+        NWiseStateMachine stateMachine = processTransactions(tag).first;
+        return new IotaNWise(stateMachine, Base58.decode(myVerkeyBase58));
     }
 
     private static Pair<NWiseStateMachine, String> processTransactions(String tag) {
@@ -215,11 +224,6 @@ public class IotaNWise extends NWise {
     @Override
     public String getLedgerType() {
         return "iota@v1.0";
-    }
-
-    @Override
-    public JSONObject getRestoreAttach() {
-        throw new NotImplementedException();
     }
 
     public boolean send(Message message, Context context) {

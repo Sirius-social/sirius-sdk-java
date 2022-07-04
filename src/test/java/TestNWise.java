@@ -3,6 +3,7 @@ import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.IotaNWise;
 import com.sirius.sdk.agent.n_wise.NWise;
+import com.sirius.sdk.agent.n_wise.NWiseList;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.CloudContext;
@@ -16,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TestNWise {
@@ -24,6 +26,10 @@ public class TestNWise {
     static {
         IotaUtils.iotaNetwork = IotaUtils.TESTNET;
     }
+
+    static final String alice = "agent1";
+    static final String bob = "agent2";
+    static final String carol = "agent3";
 
     @Before
     public void configureTest() {
@@ -42,23 +48,20 @@ public class TestNWise {
 
     @Test
     public void testIotaChat() {
-        String alice = "agent1";
-        String bob = "agent2";
-        String carol = "agent3";
-
         String chatName = "test chat";
 
         Invitation invitationForBob;
         Invitation invitationForCarol;
 
-        NWise aliceChat = null;
+        IotaNWise aliceChat = null;
         try (Context context = getContext(alice)) {
             aliceChat = IotaNWise.createChat(chatName, "Alice", context);
             invitationForBob = aliceChat.createInvitation(context);
             invitationForCarol = aliceChat.createInvitation(context);
+            new NWiseList(context.getNonSecrets()).add(aliceChat);
         }
 
-        NWise finalAliceChat = aliceChat;
+        IotaNWise finalAliceChat = aliceChat;
         Thread aliceThread = new Thread(() -> {
             Listener listener = null;
             try (Context context = getContext(alice)) {
@@ -117,5 +120,23 @@ public class TestNWise {
         Assert.assertEquals(1, aliceChat.getParticipants().size());
 
         aliceThread.interrupt();
+    }
+
+    @Test
+    public void testRestoreIotaChat() {
+        IotaNWise aliceChat1 = null;
+        IotaNWise aliceChat2 = null;
+        try (Context context = getContext(alice)) {
+            aliceChat1 = IotaNWise.createChat("chat1", "Alice", context);
+            aliceChat2 = IotaNWise.createChat("chat2", "Alice", context);
+            new NWiseList(context.getNonSecrets()).add(aliceChat1);
+            new NWiseList(context.getNonSecrets()).add(aliceChat2);
+        }
+
+        try (Context context = getContext(alice)) {
+            List<NWiseList.NWiseInfo> nWiseList = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
+            Assert.assertEquals(2, nWiseList.size());
+            NWise.restore(nWiseList.get(0));
+        }
     }
 }

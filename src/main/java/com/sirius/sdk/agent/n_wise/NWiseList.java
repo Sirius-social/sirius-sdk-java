@@ -16,7 +16,7 @@ public class NWiseList {
     private static final String NON_SECRET_NWISE_LIST = "NWiseList";
     private static final String NON_SECRET_NWISE_LIST_INVITATION_KEYS = "NWiseListInvitationKeys";
 
-    static class NWiseInfo {
+    public static class NWiseInfo {
         public String internalId;
         public String ledgerType;
         public JSONObject attach;
@@ -89,12 +89,12 @@ public class NWiseList {
         return record.second != 0;
     }
 
-    public NWiseInfo getNWiseInfoByInvitation(String internalId, String keyBase58) {
+    public NWiseInfo getNWiseInfoByInvitation(String keyBase58) {
         JSONObject tags = new JSONObject().put("invitationKeyBase58", keyBase58);
         Pair<List<String>,Integer> record = nonSecrets.walletSearch(NON_SECRET_NWISE_LIST_INVITATION_KEYS, tags.toString(),
                 new RetrieveRecordOptions(true, true, true), 1);
         if (record.second > 0) {
-            String id = new JSONObject(record.first.get(0)).optString(internalId);
+            String id = new JSONObject(record.first.get(0)).optString("internalId");
             return getNWiseInfo(id);
         }
         return null;

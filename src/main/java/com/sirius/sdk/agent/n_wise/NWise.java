@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
+import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.agent.n_wise.transactions.NWiseTx;
 import com.sirius.sdk.agent.n_wise.transactions.RemoveParticipantTx;
 import com.sirius.sdk.hub.Context;
@@ -18,7 +19,10 @@ public abstract class NWise {
     String internalId = null;
 
     public static NWise restore(NWiseList.NWiseInfo info) {
-        throw new NotImplementedException();
+        if (info.ledgerType.equals("iota@v1.0")) {
+            return IotaNWise.restore(info.attach);
+        }
+        return null;
     }
 
     public static NWise acceptInvitation(Invitation invitation, String nickname, Context context) {
