@@ -45,6 +45,7 @@ public class Invitation extends BaseNWiseMessage {
         String inviterKey = null;
         String endpoint = null;
         List<String> routingKeys = null;
+        String ledgerType = null;
 
         public B setLabel(String label) {
             this.label = label;
@@ -66,6 +67,11 @@ public class Invitation extends BaseNWiseMessage {
             return self();
         }
 
+        public B setLedgerType(String ledgerType) {
+            this.ledgerType = ledgerType;
+            return self();
+        }
+
         @Override
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
@@ -74,6 +80,7 @@ public class Invitation extends BaseNWiseMessage {
             put(inviterKey, "inviterKey", jsonObject);
             put(endpoint, "serviceEndpoint", jsonObject);
             put(routingKeys, "routingKeys", jsonObject);
+            put(ledgerType, "ledgerType", jsonObject);
 
             return jsonObject;
         }

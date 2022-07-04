@@ -31,10 +31,6 @@ public class IotaNWise extends NWise {
 
     Logger log = Logger.getLogger(IotaNWise.class.getName());
 
-    NWiseStateMachine stateMachine;
-    List<String> invitationKeysBase58 = new ArrayList<>();
-    public static int timeToLiveSec = 60;
-    byte[] myVerkey;
     static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
 
     public IotaNWise(NWiseStateMachine stateMachine, byte[] myVerkey) {
@@ -45,7 +41,6 @@ public class IotaNWise extends NWise {
     private IotaNWise() {
 
     }
-
 
     public static IotaNWise createChat(String chatName, String myNickName, Context context) {
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
@@ -109,30 +104,6 @@ public class IotaNWise extends NWise {
         return new IotaNWise(stateMachine, Base58.decode(didVk.second));
     }
 
-    private static NWiseStateMachine processTransactions(List<NWiseTx> transactions, String genesisHashBase58) {
-        NWiseStateMachine stateMachine = new NWiseStateMachine();
-        Map<String, NWiseTx> hashTable = new HashMap<>();
-        Map<String, List<NWiseTx>> prevHashTable = new HashMap<>();
-        for (NWiseTx tx : transactions) {
-            hashTable.put(Base58.encode(tx.getHash()), tx);
-            if (!prevHashTable.containsKey(tx.getPreviousTxHashBase58())) {
-                prevHashTable.put(tx.getPreviousTxHashBase58(), new ArrayList<>());
-            }
-            prevHashTable.get(tx.getPreviousTxHashBase58()).add(tx);
-        }
-        NWiseTx genesisTx = hashTable.get(genesisHashBase58);
-        if (stateMachine.check(genesisTx)) {
-            stateMachine.append(genesisTx);
-            prevHashTable.remove("");
-        }
-
-        String prevHash = genesisHashBase58;
-
-        List<NWiseTx> curTxs = prevHashTable.get(prevHash);
-
-        return stateMachine;
-    }
-
     private static Pair<NWiseStateMachine, String> processTransactions(String tag) {
         NWiseStateMachine stateMachine = new NWiseStateMachine();
         MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
@@ -176,12 +147,10 @@ public class IotaNWise extends NWise {
         return new Pair<>(stateMachine, prevMessageId);
     }
 
-    public String getChatName() {
-        return this.stateMachine.getLabel();
-    }
-
-    public void fetchFromLedger() {
+    @Override
+    public boolean fetchFromLedger() {
         stateMachine = processTransactions(generateTag(stateMachine.getGenesisCreatorVerkey())).first;
+        return true;
     }
 
     private static boolean checkMessage(org.iota.client.Message msg, NWiseStateMachine stateMachine) {
@@ -189,7 +158,7 @@ public class IotaNWise extends NWise {
     }
 
     public boolean acceptRequest(Request request, String invitationKeyBase58, Context context) {
-        if (!invitationKeysBase58.contains(invitationKeyBase58)) {
+        if (!new NWiseList(context.getNonSecrets()).hasInvitationKey(invitationKeyBase58)) {
             log.info("Invitation with specified key was not issued");
             return false;
         }
@@ -214,13 +183,14 @@ public class IotaNWise extends NWise {
             response.setThreadId(request.getId());
 
             cp.send(response);
-            invitationKeysBase58.remove(invitationKeyBase58);
+            new NWiseList(context.getNonSecrets()).removeInvitationKey(invitationKeyBase58);
         }
 
         return true;
     }
 
-    private boolean pushTransaction(NWiseTx tx) {
+    @Override
+    protected boolean pushTransaction(NWiseTx tx) {
         String tag = IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey());
         Pair<NWiseStateMachine, String> res = processTransactions(tag);
         JSONObject o = new JSONObject().
@@ -252,15 +222,6 @@ public class IotaNWise extends NWise {
         throw new NotImplementedException();
     }
 
-    public Invitation createInvitation(Context context) {
-        String key = context.getCrypto().createKey();
-        invitationKeysBase58.add(key);
-        return Invitation.builder().
-                setLabel(getChatName()).
-                setInviterKey(key).
-                setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
-                build();
-    }
     public boolean send(Message message, Context context) {
         List<NWiseParticipant> participants = getParticipants();
         for (NWiseParticipant participant : participants) {
@@ -272,40 +233,5 @@ public class IotaNWise extends NWise {
             }
         }
         return true;
-    }
-
-    public String myKey() {
-        return null;
-    }
-
-    public String resolveNickname(String verkeyBase58) {
-        return stateMachine.resolveNickname(Base58.decode(verkeyBase58));
-    }
-
-    public List<NWiseParticipant> getParticipants() {
-        fetchFromLedger();
-        return stateMachine.participants;
-    }
-
-    public boolean leave() {
-        return removeParticipant(getMyDid());
-    }
-
-    public boolean removeParticipant(String did) {
-        RemoveParticipantTx tx = new RemoveParticipantTx();
-        tx.setDid(did);
-        return pushTransaction(tx);
-    }
-
-    public String getMyDid() {
-        return stateMachine.resolveDid(this.myVerkey);
-    }
-
-    public List<String> getCurrentParticipantsVerkeysBase58() {
-        List<String> res = new ArrayList<>();
-        for (NWiseParticipant p : getParticipants()) {
-            res.add(Base58.encode(p.getVerkey()));
-        }
-        return res;
     }
 }

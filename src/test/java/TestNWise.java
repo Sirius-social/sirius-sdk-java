@@ -2,6 +2,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.IotaNWise;
+import com.sirius.sdk.agent.n_wise.NWise;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.CloudContext;
@@ -50,14 +51,14 @@ public class TestNWise {
         Invitation invitationForBob;
         Invitation invitationForCarol;
 
-        IotaNWise aliceChat = null;
+        NWise aliceChat = null;
         try (Context context = getContext(alice)) {
             aliceChat = IotaNWise.createChat(chatName, "Alice", context);
             invitationForBob = aliceChat.createInvitation(context);
             invitationForCarol = aliceChat.createInvitation(context);
         }
 
-        IotaNWise finalAliceChat = aliceChat;
+        NWise finalAliceChat = aliceChat;
         Thread aliceThread = new Thread(() -> {
             Listener listener = null;
             try (Context context = getContext(alice)) {
