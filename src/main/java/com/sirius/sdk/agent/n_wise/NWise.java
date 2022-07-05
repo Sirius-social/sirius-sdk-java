@@ -16,7 +16,6 @@ public abstract class NWise {
     public static int timeToLiveSec = 60;
     NWiseStateMachine stateMachine;
     byte[] myVerkey;
-    String internalId = null;
 
     public static NWise restore(NWiseList.NWiseInfo info) {
         if (info.ledgerType.equals("iota@v1.0")) {
@@ -43,7 +42,6 @@ public abstract class NWise {
 
     public Invitation createInvitation(Context context) {
         String key = context.getCrypto().createKey();
-        new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, key);
         return Invitation.builder().
                 setLabel(getChatName()).
                 setInviterKey(key).

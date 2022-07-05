@@ -25,6 +25,10 @@ public class Invitation extends BaseNWiseMessage {
         return getMessageObj().optString("serviceEndpoint");
     }
 
+    public String getLedgerType() {
+        return getMessageObj().optString("ledgerType");
+    }
+
     public List<String> routingKeys() {
         List<String> res = new ArrayList<>();
         if (getMessageObj().has("routingKeys")) {

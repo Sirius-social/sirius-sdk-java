@@ -167,10 +167,6 @@ public class IotaNWise extends NWise {
     }
 
     public boolean acceptRequest(Request request, String invitationKeyBase58, Context context) {
-        if (!new NWiseList(context.getNonSecrets()).hasInvitationKey(invitationKeyBase58)) {
-            log.info("Invitation with specified key was not issued");
-            return false;
-        }
         TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
                 Base58.encode(request.getVerkey()), Arrays.asList());
 
@@ -192,7 +188,6 @@ public class IotaNWise extends NWise {
             response.setThreadId(request.getId());
 
             cp.send(response);
-            new NWiseList(context.getNonSecrets()).removeInvitationKey(invitationKeyBase58);
         }
 
         return true;

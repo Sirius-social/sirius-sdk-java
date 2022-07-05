@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -56,9 +57,11 @@ public class TestNWise {
         IotaNWise aliceChat = null;
         try (Context context = getContext(alice)) {
             aliceChat = IotaNWise.createChat(chatName, "Alice", context);
+            String internalId = new NWiseList(context.getNonSecrets()).add(aliceChat);
             invitationForBob = aliceChat.createInvitation(context);
+            new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitationForBob.getInviterVerkey());
             invitationForCarol = aliceChat.createInvitation(context);
-            new NWiseList(context.getNonSecrets()).add(aliceChat);
+            new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitationForCarol.getInviterVerkey());
         }
 
         IotaNWise finalAliceChat = aliceChat;
@@ -70,7 +73,7 @@ public class TestNWise {
                 for (int i = 0; i < 3; i++) {
                     Event event = listener.getOne().get(30, TimeUnit.SECONDS);
                     System.out.println("Event:" + event.message());
-                    if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getRecipientVerkey())) {
+                    if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getSenderVerkey())) {
                         if (event.message() instanceof Message) {
                             Message message = (Message) event.message();
                             finalAliceChat.fetchFromLedger();
@@ -123,12 +126,11 @@ public class TestNWise {
     }
 
     @Test
-    public void testRestoreIotaChat() {
-        IotaNWise aliceChat1 = null;
-        IotaNWise aliceChat2 = null;
+    public void testRestoreIotaChats() {
         try (Context context = getContext(alice)) {
-            aliceChat1 = IotaNWise.createChat("chat1", "Alice", context);
-            aliceChat2 = IotaNWise.createChat("chat2", "Alice", context);
+            new NWiseList(context.getNonSecrets()).clearList();
+            IotaNWise aliceChat1 = IotaNWise.createChat("chat1", "Alice", context);
+            IotaNWise aliceChat2 = IotaNWise.createChat("chat2", "Alice", context);
             new NWiseList(context.getNonSecrets()).add(aliceChat1);
             new NWiseList(context.getNonSecrets()).add(aliceChat2);
         }
@@ -136,7 +138,33 @@ public class TestNWise {
         try (Context context = getContext(alice)) {
             List<NWiseList.NWiseInfo> nWiseList = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
             Assert.assertEquals(2, nWiseList.size());
-            NWise.restore(nWiseList.get(0));
+            NWise restoredNWise1 = NWise.restore(nWiseList.get(0));
+            NWise restoredNWise2 = NWise.restore(nWiseList.get(1));
+            Assert.assertTrue(restoredNWise1 instanceof IotaNWise);
+            Assert.assertTrue(restoredNWise2 instanceof IotaNWise);
+            Assert.assertTrue(Arrays.asList("chat1", "chat2").contains(restoredNWise1.getChatName()));
+            Assert.assertTrue(Arrays.asList("chat1", "chat2").contains(restoredNWise2.getChatName()));
+            Assert.assertNotEquals(restoredNWise1.getChatName(), restoredNWise2.getChatName());
+        }
+    }
+
+    @Test
+    public void testRestoreIotaChat() {
+        IotaNWise nWise;
+        try (Context context = getContext(alice)) {
+            new NWiseList(context.getNonSecrets()).clearList();
+            nWise = IotaNWise.createChat("chat1", "Alice", context);
+            new NWiseList(context.getNonSecrets()).add(nWise);
+        }
+
+        try (Context context = getContext(alice)) {
+            List<NWiseList.NWiseInfo> nWiseList = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
+            Assert.assertEquals(1, nWiseList.size());
+            NWise restoredNWise = NWise.restore(nWiseList.get(0));
+            Assert.assertTrue(restoredNWise instanceof IotaNWise);
+            Assert.assertEquals(nWise.getChatName(), restoredNWise.getChatName());
+            Assert.assertEquals(nWise.getLedgerType(), restoredNWise.getLedgerType());
+            Assert.assertEquals(nWise.getMyDid(), restoredNWise.getMyDid());
         }
     }
 }

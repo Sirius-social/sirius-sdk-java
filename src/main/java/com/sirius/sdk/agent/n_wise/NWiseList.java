@@ -38,6 +38,13 @@ public class NWiseList {
         return internalId;
     }
 
+    public void clearList() {
+        List<NWiseInfo> list = getNWiseInfoList();
+        for (NWiseInfo info : list) {
+            nonSecrets.deleteWalletRecord(NON_SECRET_NWISE_LIST, info.internalId);
+        }
+    }
+
     public boolean remove(String internalId) {
         throw new NotImplementedException();
     }
@@ -51,8 +58,9 @@ public class NWiseList {
              JSONObject o = new JSONObject(s);
              NWiseInfo info = new NWiseInfo();
              info.internalId = o.optString("id");
-             info.ledgerType = o.getJSONObject("value").optString("ledgerType");
-             info.attach = o.getJSONObject("value").optJSONObject("restoreAttach");
+             JSONObject value = new JSONObject(o.optString("value"));
+             info.ledgerType = value.optString("ledgerType");
+             info.attach = value.optJSONObject("restoreAttach");
              res.add(info);
          }
         return res;
