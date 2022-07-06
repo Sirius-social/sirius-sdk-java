@@ -186,8 +186,8 @@ public class TestNWise {
         String nWise1AliceInternalId;
         Invitation invitationForBob;
         try (Context context = getContext(alice)) {
-            nWise1AliceInternalId = NWiseManager.create("NWise1", "Alice", context);
-            invitationForBob = NWiseManager.createPrivateInvitation(nWise1AliceInternalId, context);
+            nWise1AliceInternalId = context.getNWiseManager().create("NWise1", "Alice");
+            invitationForBob = context.getNWiseManager().createPrivateInvitation(nWise1AliceInternalId);
         }
 
         CompletableFuture<Boolean> aliceFuture = CompletableFuture.supplyAsync(() -> {
@@ -199,11 +199,11 @@ public class TestNWise {
                     Event event = listener.getOne().get(30, TimeUnit.SECONDS);
                     System.out.println("Event:" + event.message());
                     if (event.message() instanceof Request) {
-                        NWiseManager.acceptRequest((Request) event.message(), event.getRecipientVerkey(), context);
+                        context.getNWiseManager().acceptRequest((Request) event.message(), event.getRecipientVerkey());
                     } else if (event.message() instanceof Message) {
-                        String nWiseId = NWiseManager.resolveNWiseId(event.getSenderVerkey(), context);
+                        String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
                         Assert.assertEquals(nWise1AliceInternalId, nWiseId);
-                        String nick = NWiseManager.resolveParticipant(event.getSenderVerkey(), context).nickname;
+                        String nick = context.getNWiseManager().resolveParticipant(event.getSenderVerkey()).nickname;
                         Assert.assertEquals("Bob", nick);
                         Message message = (Message) event.message();
                         System.out.println("New message from " + nick + " : " + message.getContent());
@@ -222,9 +222,9 @@ public class TestNWise {
 
 
         try (Context context = getContext(bob)) {
-            String internalId = NWiseManager.acceptInvitation(invitationForBob, "Bob", context);
+            String internalId = context.getNWiseManager().acceptInvitation(invitationForBob, "Bob");
             Assert.assertNotNull(internalId);
-            Assert.assertTrue(NWiseManager.send(internalId, Message.builder().setContent("Hello world").build(), context));
+            Assert.assertTrue(context.getNWiseManager().send(internalId, Message.builder().setContent("Hello world").build()));
         }
 
         Assert.assertTrue(aliceFuture.get(10, TimeUnit.SECONDS));

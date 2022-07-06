@@ -14,83 +14,88 @@ public class NWiseManager {
 
     private static Map<String, NWise> nWiseMap = null;
 
-    public static void loadFromWallet(Context context) {
+    Context context;
+    public NWiseManager(Context context) {
+        this.context = context;
+    }
+
+    public void loadFromWallet() {
         List<NWiseList.NWiseInfo> infos = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
         for (NWiseList.NWiseInfo info : infos) {
             NWise nWise = NWise.restore(info);
             if (nWise != null) {
-                getNWiseMap(context).put(info.internalId, nWise);
+                getNWiseMap().put(info.internalId, nWise);
             }
         }
     }
 
-    private static Map<String, NWise> getNWiseMap(Context context) {
+    private Map<String, NWise> getNWiseMap() {
         if (nWiseMap == null) {
             nWiseMap = new ConcurrentHashMap<>();
-            loadFromWallet(context);
+            loadFromWallet();
         }
         return nWiseMap;
     }
 
-    public static String create(String nWiseName, String myName, Context context) {
+    public String create(String nWiseName, String myName) {
         NWise nWise = IotaNWise.createChat(nWiseName, myName, context);
         if (nWise != null)
-            return add(nWise, context);
+            return add(nWise);
         return null;
     }
 
-    public static String add(NWise nWise, Context context) {
+    public String add(NWise nWise) {
         String internalId = new NWiseList(context.getNonSecrets()).add(nWise);
-        getNWiseMap(context).put(internalId, nWise);
+        getNWiseMap().put(internalId, nWise);
         return internalId;
     }
 
-    public static String resolveNWiseId(String senderVerkeyBase58, Context context) {
+    public String resolveNWiseId(String senderVerkeyBase58) {
         List<NWiseList.NWiseInfo> myInfos = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
         List<String> myInternalIds = new ArrayList<>();
         for (NWiseList.NWiseInfo info : myInfos)
             myInternalIds.add(info.internalId);
-        for (Map.Entry<String, NWise> e : getNWiseMap(context).entrySet()) {
+        for (Map.Entry<String, NWise> e : getNWiseMap().entrySet()) {
             if (e.getValue().getCurrentParticipantsVerkeysBase58().contains(senderVerkeyBase58) && myInternalIds.contains(e.getKey()))
                 return e.getKey();
         }
         return null;
     }
 
-    public static NWiseParticipant resolveParticipant(String senderVerkeyBase58, Context context) {
-        String internalId = resolveNWiseId(senderVerkeyBase58, context);
-        NWise nWise = getNWiseMap(context).get(internalId);
+    public NWiseParticipant resolveParticipant(String senderVerkeyBase58) {
+        String internalId = resolveNWiseId(senderVerkeyBase58);
+        NWise nWise = getNWiseMap().get(internalId);
         if (nWise != null)
             return nWise.resolveParticipant(senderVerkeyBase58);
         return null;
     }
 
-    public static Invitation createPrivateInvitation(String internalId, Context context) {
-        if (!getNWiseMap(context).containsKey(internalId))
+    public Invitation createPrivateInvitation(String internalId) {
+        if (!getNWiseMap().containsKey(internalId))
             return null;
-        NWise nWise = getNWiseMap(context).get(internalId);
+        NWise nWise = getNWiseMap().get(internalId);
         Invitation invitation = nWise.createInvitation(context);
         new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitation.getInviterVerkey());
         return invitation;
     }
 
-    public static String acceptInvitation(Invitation invitation, String nickname, Context context) {
+    public String acceptInvitation(Invitation invitation, String nickname) {
         if (invitation.getLedgerType().equals("iota@v1.0")) {
             NWise nWise = IotaNWise.acceptInvitation(invitation, nickname, context);
             if (nWise != null) {
-                return add(nWise, context);
+                return add(nWise);
             }
         }
         return null;
     }
 
-    public static boolean acceptRequest(Request request, String invitationKeyBase58, Context context) {
+    public boolean acceptRequest(Request request, String invitationKeyBase58) {
         if (!new NWiseList(context.getNonSecrets()).hasInvitationKey(invitationKeyBase58)) {
             return false;
         }
 
         String internalId = new NWiseList(context.getNonSecrets()).getNWiseInfoByInvitation(invitationKeyBase58).internalId;
-        NWise nWise = getNWiseMap(context).get(internalId);
+        NWise nWise = getNWiseMap().get(internalId);
         if (nWise instanceof IotaNWise) {
             if (((IotaNWise) nWise).acceptRequest(request, invitationKeyBase58, context)) {
                 new NWiseList(context.getNonSecrets()).removeInvitationKey(invitationKeyBase58);
@@ -101,16 +106,16 @@ public class NWiseManager {
         return false;
     }
 
-    public static boolean send(String internalId, Message msg, Context context) {
-        if (!getNWiseMap(context).containsKey(internalId))
+    public boolean send(String internalId, Message msg) {
+        if (!getNWiseMap().containsKey(internalId))
             return false;
-        return getNWiseMap(context).get(internalId).send(msg, context);
+        return getNWiseMap().get(internalId).send(msg, context);
     }
 
-    public static boolean leave(String internalId, Context context) {
-        if (!getNWiseMap(context).containsKey(internalId))
+    public boolean leave(String internalId, Context context) {
+        if (!getNWiseMap().containsKey(internalId))
             return false;
-        boolean res = getNWiseMap(context).get(internalId).leave();
+        boolean res = getNWiseMap().get(internalId).leave();
         if (res) {
             new NWiseList(context.getNonSecrets()).remove(internalId);
         }
