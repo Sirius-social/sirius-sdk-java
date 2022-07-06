@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.IotaNWise;
 import com.sirius.sdk.agent.n_wise.NWise;
 import com.sirius.sdk.agent.n_wise.NWiseList;
+import com.sirius.sdk.agent.n_wise.NWiseManager;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.CloudContext;
@@ -19,7 +20,10 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TestNWise {
     ConfTest confTest;
@@ -166,5 +170,63 @@ public class TestNWise {
             Assert.assertEquals(nWise.getLedgerType(), restoredNWise.getLedgerType());
             Assert.assertEquals(nWise.getMyDid(), restoredNWise.getMyDid());
         }
+    }
+
+    @Test
+    public void testNWiseManager() throws ExecutionException, InterruptedException, TimeoutException {
+        try (Context context = getContext(alice)) {
+            new NWiseList(context.getNonSecrets()).clearList();
+        }
+
+        try (Context context = getContext(bob)) {
+            new NWiseList(context.getNonSecrets()).clearList();
+        }
+
+
+        String nWise1AliceInternalId;
+        Invitation invitationForBob;
+        try (Context context = getContext(alice)) {
+            nWise1AliceInternalId = NWiseManager.create("NWise1", "Alice", context);
+            invitationForBob = NWiseManager.createPrivateInvitation(nWise1AliceInternalId, context);
+        }
+
+        CompletableFuture<Boolean> aliceFuture = CompletableFuture.supplyAsync(() -> {
+            Listener listener = null;
+            try (Context context = getContext(alice)) {
+                listener = context.subscribe();
+                System.out.println("Start listening...");
+                for (int i = 0; i < 2; i++) {
+                    Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                    System.out.println("Event:" + event.message());
+                    if (event.message() instanceof Request) {
+                        NWiseManager.acceptRequest((Request) event.message(), event.getRecipientVerkey(), context);
+                    } else if (event.message() instanceof Message) {
+                        String nWiseId = NWiseManager.resolveNWiseId(event.getSenderVerkey(), context);
+                        Assert.assertEquals(nWise1AliceInternalId, nWiseId);
+                        String nick = NWiseManager.resolveParticipant(event.getSenderVerkey(), context).nickname;
+                        Assert.assertEquals("Bob", nick);
+                        Message message = (Message) event.message();
+                        System.out.println("New message from " + nick + " : " + message.getContent());
+                    } else {
+                        Assert.fail("Unexpected message to Alice");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+                listener.unsubscribe();
+            }
+            return true;
+        });
+
+
+        try (Context context = getContext(bob)) {
+            String internalId = NWiseManager.acceptInvitation(invitationForBob, "Bob", context);
+            Assert.assertNotNull(internalId);
+            Assert.assertTrue(NWiseManager.send(internalId, Message.builder().setContent("Hello world").build(), context));
+        }
+
+        Assert.assertTrue(aliceFuture.get(10, TimeUnit.SECONDS));
     }
 }

@@ -220,17 +220,4 @@ public class IotaNWise extends NWise {
     public String getLedgerType() {
         return "iota@v1.0";
     }
-
-    public boolean send(Message message, Context context) {
-        List<NWiseParticipant> participants = getParticipants();
-        for (NWiseParticipant participant : participants) {
-            if (Arrays.equals(participant.getVerkey(), this.myVerkey))
-                break;
-            TheirEndpoint theirEndpoint = new TheirEndpoint(participant.getEndpoint(), Base58.encode(participant.getVerkey()), Arrays.asList());
-            try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), theirEndpoint, Arrays.asList(Message.PROTOCOL), timeToLiveSec)) {
-                cp.send(message);
-            }
-        }
-        return true;
-    }
 }

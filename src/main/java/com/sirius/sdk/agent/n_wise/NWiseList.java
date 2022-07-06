@@ -73,8 +73,8 @@ public class NWiseList {
         JSONObject o = new JSONObject(res);
         NWiseInfo info = new NWiseInfo();
         info.internalId = internalId;
-        info.ledgerType = o.getJSONObject("value").optString("ledgerType");
-        info.attach = o.getJSONObject("value").optJSONObject("restoreAttach");
+        info.ledgerType = new JSONObject(o.optString("value")).optString("ledgerType");
+        info.attach = new JSONObject(o.optString("value")).optJSONObject("restoreAttach");
         return info;
     }
 
@@ -102,7 +102,7 @@ public class NWiseList {
         Pair<List<String>,Integer> record = nonSecrets.walletSearch(NON_SECRET_NWISE_LIST_INVITATION_KEYS, tags.toString(),
                 new RetrieveRecordOptions(true, true, true), 1);
         if (record.second > 0) {
-            String id = new JSONObject(record.first.get(0)).optString("internalId");
+            String id = new JSONObject(new JSONObject(record.first.get(0)).getString("value")).optString("internalId");
             return getNWiseInfo(id);
         }
         return null;

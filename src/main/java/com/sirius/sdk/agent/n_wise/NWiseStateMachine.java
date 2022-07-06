@@ -95,6 +95,14 @@ public class NWiseStateMachine {
         return null;
     }
 
+    public NWiseParticipant resolveParticipant(byte[] verkey) {
+        for (NWiseParticipant p : participants) {
+            if (Arrays.equals(p.getVerkey(), verkey))
+                return p;
+        }
+        return null;
+    }
+
     public String resolveDid(byte[] verkey) {
         for (NWiseParticipant p : participants) {
             if (Arrays.equals(p.getVerkey(), verkey))
