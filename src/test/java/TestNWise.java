@@ -1,15 +1,15 @@
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
-import com.sirius.sdk.agent.n_wise.IotaNWise;
-import com.sirius.sdk.agent.n_wise.NWise;
-import com.sirius.sdk.agent.n_wise.NWiseList;
-import com.sirius.sdk.agent.n_wise.NWiseManager;
+import com.sirius.sdk.agent.n_wise.*;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
+import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
+import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -228,5 +228,23 @@ public class TestNWise {
         }
 
         Assert.assertTrue(aliceFuture.get(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testNWiseStateMachine() {
+        try (Context context = getContext(alice)) {
+            NWiseStateMachine stateMachine = new NWiseStateMachine();
+            GenesisTx genesisTx = new GenesisTx();
+            genesisTx.setCreatorNickname("Alice");
+            Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
+            genesisTx.setCreatorDidDocParams(
+                    didVk.first,
+                    Base58.decode(didVk.second),
+                    context.getEndpointAddressWithEmptyRoutingKeys()
+            );
+            genesisTx.sign(context.getCrypto());
+
+            Assert.assertTrue(stateMachine.check(genesisTx));
+        }
     }
 }

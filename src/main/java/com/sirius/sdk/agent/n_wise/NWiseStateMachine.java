@@ -1,6 +1,11 @@
 package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.n_wise.transactions.*;
+import foundation.identity.jsonld.JsonLDObject;
+import info.weboftrust.ldsignatures.suites.JcsEd25519Signature2020SignatureSuite;
+import info.weboftrust.ldsignatures.verifier.JcsEd25519Signature2020LdVerifier;
+import info.weboftrust.ldsignatures.verifier.LdVerifier;
+import io.ipfs.multibase.Multibase;
 import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
@@ -28,8 +33,23 @@ public class NWiseStateMachine {
         return label;
     }
 
-    public boolean check(JSONObject tx) {
+    public boolean check(JSONObject jsonObject) {
+        String type = jsonObject.optString("type");
+        if (type.equals("genesisTx")) {
+            return check(new GenesisTx(jsonObject));
+        }
         return true;
+    }
+
+    public boolean check(GenesisTx tx) {
+        LdVerifier<JcsEd25519Signature2020SignatureSuite> ldVerifier = new JcsEd25519Signature2020LdVerifier(tx.getCreatorVerkey());
+        JsonLDObject ldObject = JsonLDObject.fromJson(tx.toString());
+        try {
+            return ldVerifier.verify(ldObject);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public boolean append(GenesisTx genesisTx) {

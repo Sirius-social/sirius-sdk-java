@@ -1,11 +1,21 @@
 package com.sirius.sdk.agent.n_wise.transactions;
 
+import com.danubetech.keyformats.crypto.ByteSigner;
 import com.sirius.sdk.agent.n_wise.messages.BaseNWiseMessage;
+import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
+import com.sirius.sdk.encryption.IndyWalletSigner;
 import com.sirius.sdk.messaging.Message;
+import foundation.identity.jsonld.JsonLDException;
+import foundation.identity.jsonld.JsonLDObject;
+import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
+import info.weboftrust.ldsignatures.signer.LdSigner;
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage.buildDidDoc;
@@ -41,6 +51,11 @@ public class GenesisTx extends NWiseTx {
         return getJSONObject("connection").optString("DID");
     }
 
+    public byte[] getCreatorVerkey() {
+        return Base58.decode(getJSONObject("connection").optJSONObject("DIDDoc").
+                optJSONArray("publicKey").getJSONObject(0).optString("publicKeyBase58"));
+    }
+
     public JSONObject getCreatorDidDoc() {
         return getJSONObject("connection").optJSONObject("DIDDoc");
     }
@@ -51,6 +66,25 @@ public class GenesisTx extends NWiseTx {
                 put("DIDDoc", buildDidDoc(did, Base58.encode(verkey), endpoint, didDocExtra))));
         for (JSONObject s : connectionServices) {
             getJSONObject("connection").getJSONObject("DIDDoc").getJSONArray("service").put(s);
+        }
+    }
+
+    public void setCreatorDidDocParams(String did, byte[] verkey, String endpoint) {
+        setCreatorDidDocParams(did, verkey, endpoint, Arrays.asList(), new JSONObject());
+    }
+
+    public void sign(AbstractCrypto crypto) {
+        if (has("proof"))
+            remove("proof");
+
+        ByteSigner byteSigner = new IndyWalletSigner(crypto, Base58.encode(getCreatorVerkey()));
+        LdSigner ldSigner = new JcsEd25519Signature2020LdSigner(byteSigner);
+        JsonLDObject jsonLdObject = JsonLDObject.fromJson(this.toString());
+        try {
+            JSONObject proof = new JSONObject(ldSigner.sign(jsonLdObject).toJson());
+            put("proof", proof);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
