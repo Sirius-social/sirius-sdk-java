@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 public interface ReadOnlyChannel {
     /**
      * Read message packet
-     * @param timeout Operation timeout is sec
      * @return chunk of data stream
      */
     CompletableFuture<byte[]> read();

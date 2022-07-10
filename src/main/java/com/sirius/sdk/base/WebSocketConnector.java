@@ -1,16 +1,20 @@
 package com.sirius.sdk.base;
 
-import com.neovisionaries.ws.client.*;
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketAdapter;
+import com.neovisionaries.ws.client.WebSocketException;
+import com.neovisionaries.ws.client.WebSocketExtension;
+import com.neovisionaries.ws.client.WebSocketFactory;
+import com.neovisionaries.ws.client.WebSocketFrame;
+import com.neovisionaries.ws.client.WebSocketListener;
+import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.StringUtils;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -23,7 +27,7 @@ public class WebSocketConnector extends BaseConnector {
     Charset encoding = StandardCharsets.UTF_8;
     String serverAddress;
     String path;
-    byte[] credentials = null;
+    byte[] credentials;
     WebSocket webSocket;
 
     public Function<byte[], Void> readCallback = null;
@@ -44,158 +48,56 @@ public class WebSocketConnector extends BaseConnector {
         initWebSocket();
     }
 
-    WebSocketListener webSocketListener = new WebSocketListener() {
-        @Override
-        public void onStateChanged(WebSocket webSocket, WebSocketState webSocketState) throws Exception {
-
-        }
+    WebSocketListener webSocketListener = new WebSocketAdapter() {
 
         @Override
-        public void onConnected(WebSocket webSocket, Map<String, List<String>> map) throws Exception {
-            //log.log(Level.INFO, "Connected");
-        }
-
-        @Override
-        public void onConnectError(WebSocket webSocket, WebSocketException e) throws Exception {
+        public void onConnectError(WebSocket webSocket, WebSocketException e) {
             log.log(Level.WARNING, "Connect error");
         }
 
         @Override
-        public void onDisconnected(WebSocket webSocket, WebSocketFrame webSocketFrame, WebSocketFrame webSocketFrame1, boolean b) throws Exception {
+        public void onDisconnected(WebSocket websocket,
+                                   WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame,
+                                   boolean closedByServer) throws Exception {
+            if (closedByServer) {
+                throw new SiriusConnectionClosed("Socket is closed by server");
+            }
             //log.log(Level.INFO, "Disconnected");
         }
 
         @Override
-        public void onFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
+        public void onTextFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) {
+            read(webSocketFrame);
         }
 
         @Override
-        public void onContinuationFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onTextFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-            read(webSocketFrame, null, defTimeout);
-        }
-
-        @Override
-        public void onBinaryFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-            read(webSocketFrame, null, defTimeout);
-        }
-
-        @Override
-        public void onCloseFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onPingFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onPongFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onTextMessage(WebSocket webSocket, String s) throws Exception {
-
-        }
-
-        @Override
-        public void onTextMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-
-        }
-
-        @Override
-        public void onBinaryMessage(WebSocket webSocket, byte[] bytes) throws Exception {
-
-        }
-
-        @Override
-        public void onSendingFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onFrameSent(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onFrameUnsent(WebSocket webSocket, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onThreadCreated(WebSocket webSocket, ThreadType threadType, Thread thread) throws Exception {
-
-        }
-
-        @Override
-        public void onThreadStarted(WebSocket webSocket, ThreadType threadType, Thread thread) throws Exception {
-
-        }
-
-        @Override
-        public void onThreadStopping(WebSocket webSocket, ThreadType threadType, Thread thread) throws Exception {
-
-        }
-
-        @Override
-        public void onError(WebSocket webSocket, WebSocketException e) throws Exception {
-
-        }
-
-        @Override
-        public void onFrameError(WebSocket webSocket, WebSocketException e, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onMessageError(WebSocket webSocket, WebSocketException e, List<WebSocketFrame> list) throws Exception {
-
-        }
-
-        @Override
-        public void onMessageDecompressionError(WebSocket webSocket, WebSocketException e, byte[] bytes) throws Exception {
-
-        }
-
-        @Override
-        public void onTextMessageError(WebSocket webSocket, WebSocketException e, byte[] bytes) throws Exception {
-
-        }
-
-        @Override
-        public void onSendError(WebSocket webSocket, WebSocketException e, WebSocketFrame webSocketFrame) throws Exception {
-
-        }
-
-        @Override
-        public void onUnexpectedError(WebSocket webSocket, WebSocketException e) throws Exception {
-
+        public void onBinaryFrame(WebSocket webSocket, WebSocketFrame webSocketFrame) {
+            read(webSocketFrame);
         }
 
         @Override
         public void handleCallbackError(WebSocket webSocket, Throwable throwable) throws Exception {
-
-        }
-
-        @Override
-        public void onSendingHandshake(WebSocket webSocket, String s, List<String[]> list) throws Exception {
-
+            if (throwable instanceof SiriusConnectionClosed) {
+                log.log(Level.WARNING, throwable.getMessage());
+                Retryer retryer = Retryer.builder()
+                        .maxAttempts(3)
+                        .waitDuration(Duration.ofMillis(100L))
+                        .build();
+                retryer.retry(() -> {
+                    WebSocketConnector.this.close();
+                    WebSocketConnector.this.initWebSocket();
+                    return null;
+                });
+            }
         }
     };
 
 
     public void initWebSocket() {
         String url = serverAddress + "/" + path;
-        while (url.endsWith("/"))
-            url = url.substring(0, url.length()-1);
+        while (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
         try {
             webSocket = new WebSocketFactory()
                     .setVerifyHostname(false)
@@ -204,7 +106,7 @@ public class WebSocketConnector extends BaseConnector {
                     .addListener(webSocketListener)
                     .addExtension(WebSocketExtension.PERMESSAGE_DEFLATE)
                     .setPingInterval(60 * 3 * 1000).
-                            addHeader("origin", serverAddress);
+                    addHeader("origin", serverAddress);
             if (this.credentials != null) {
                 webSocket.addHeader("credentials", StringUtils.bytesToString(credentials));
             }
@@ -249,11 +151,12 @@ public class WebSocketConnector extends BaseConnector {
     }
 
 
-    private byte[] read(WebSocketFrame frame, WebSocketException exception, int timeout) {
+    private byte[] read(WebSocketFrame frame) {
         if (frame != null) {
             readFuture.complete(frame.getPayload());
-            if (readCallback != null)
+            if (readCallback != null) {
                 readCallback.apply(frame.getPayload());
+            }
             return frame.getPayload();
         }
         return null;
