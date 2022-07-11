@@ -1,14 +1,20 @@
+import com.goterl.lazycode.lazysodium.LazySodiumJava;
+import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.*;
+import com.sirius.sdk.agent.n_wise.messages.FastInvitation;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
+import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
@@ -90,7 +96,7 @@ public class TestNWise {
                         }
                     }
                     if (event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), event.getRecipientVerkey(), context));
+                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                     }
                 }
             } catch (Exception e) {
@@ -234,7 +240,7 @@ public class TestNWise {
     }
 
     @Test
-    public void testNWiseStateMachine() {
+    public void testNWiseStateMachine() throws SodiumException {
         Pair<String, String> aliceDidVk;
         NWiseStateMachine stateMachine = new NWiseStateMachine();
         try (Context context = getContext(alice)) {
@@ -276,6 +282,16 @@ public class TestNWise {
 
             stateMachine.append(addBobTx);
             Assert.assertEquals(2, stateMachine.getParticipants().size());
+        }
+
+        try (Context context = getContext(alice)) {
+            LazySodiumJava s = LibSodium.getInstance().getLazySodium();
+            KeyPair keyPair = s.cryptoSignKeypair();
+            InvitationTx invitationTx = new InvitationTx();
+            invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
+            invitationTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
+            Assert.assertTrue(stateMachine.check(invitationTx));
+            stateMachine.append(invitationTx);
         }
     }
 

@@ -29,10 +29,6 @@ import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
 public class IotaNWise extends NWise {
 
-    Logger log = Logger.getLogger(IotaNWise.class.getName());
-
-    static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
-
     public IotaNWise(NWiseStateMachine stateMachine, byte[] myVerkey) {
         this.stateMachine = stateMachine;
         this.myVerkey = myVerkey;
@@ -166,33 +162,6 @@ public class IotaNWise extends NWise {
         return true;
     }
 
-    public boolean acceptRequest(Request request, String invitationKeyBase58, Context context) {
-        TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
-                Base58.encode(request.getVerkey()), Arrays.asList());
-
-        log.info("Received request from" + Base58.encode(request.getVerkey()));
-
-        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), inviteeEndpoint, protocols, timeToLiveSec)) {
-            AddParticipantTx addParticipantTx = new AddParticipantTx();
-            addParticipantTx.setNickname(request.getNickname());
-            addParticipantTx.setDid(request.getDid());
-            addParticipantTx.setDidDoc(request.getDidDoc());
-            addParticipantTx.setRole("user");
-            pushTransaction(addParticipantTx);
-
-            log.info("Send response to" + Base58.encode(request.getVerkey()));
-            Response response = Response.builder().
-                    setLedgerType(getLedgerType()).
-                    setAttach(getAttach()).
-                    build();
-            response.setThreadId(request.getId());
-
-            cp.send(response);
-        }
-
-        return true;
-    }
-
     @Override
     protected boolean pushTransaction(NWiseTx tx) {
         String tag = IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey());
@@ -212,7 +181,8 @@ public class IotaNWise extends NWise {
         return true;
     }
 
-    private JSONObject getAttach() {
+    @Override
+    protected JSONObject getAttach() {
         return new IotaResponseAttach(IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey()));
     }
 

@@ -1,14 +1,21 @@
 package com.sirius.sdk.agent.n_wise;
 
+import com.goterl.lazycode.lazysodium.LazySodiumJava;
+import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
+import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
-import com.sirius.sdk.agent.n_wise.messages.Invitation;
-import com.sirius.sdk.agent.n_wise.messages.Request;
+import com.sirius.sdk.agent.n_wise.messages.*;
+import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
+import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.agent.n_wise.transactions.NWiseTx;
 import com.sirius.sdk.agent.n_wise.transactions.RemoveParticipantTx;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
+import com.sirius.sdk.naclJava.LibSodium;
 import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
@@ -16,8 +23,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 public abstract class NWise {
+    Logger log = Logger.getLogger(NWise.class.getName());
+
+    static List<String> protocols = Arrays.asList(BaseNWiseMessage.PROTOCOL, Ack.PROTOCOL, Ping.PROTOCOL);
     public static int timeToLiveSec = 60;
     NWiseStateMachine stateMachine;
     byte[] myVerkey;
@@ -41,6 +52,8 @@ public abstract class NWise {
 
     protected abstract boolean pushTransaction(NWiseTx tx);
 
+    protected abstract JSONObject getAttach();
+
     public String getChatName() {
         return this.stateMachine.getLabel();
     }
@@ -53,6 +66,26 @@ public abstract class NWise {
                 setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
                 setLedgerType(getLedgerType()).
                 build();
+    }
+
+    public FastInvitation createFastInvitation(Context context) {
+        LazySodiumJava s = LibSodium.getInstance().getLazySodium();
+        try {
+            KeyPair keyPair = s.cryptoSignKeypair();
+            InvitationTx invitationTx = new InvitationTx();
+            invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
+            pushTransaction(invitationTx);
+            FastInvitation fastInvitation = FastInvitation.builder().
+                    setLabel(getChatName()).
+                    setLedgerType(getLedgerType()).
+                    setInvitationPrivateKey(keyPair.getSecretKey().getAsBytes()).
+                    setAttach(getAttach()).
+                    build();
+            return fastInvitation;
+        } catch (SodiumException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<NWiseParticipant> getParticipants() {
@@ -100,6 +133,33 @@ public abstract class NWise {
                 cp.send(message);
             }
         }
+        return true;
+    }
+
+    public boolean acceptRequest(Request request, Context context) {
+        TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
+                Base58.encode(request.getVerkey()), Arrays.asList());
+
+        log.info("Received request from" + Base58.encode(request.getVerkey()));
+
+        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), inviteeEndpoint, protocols, timeToLiveSec)) {
+            AddParticipantTx addParticipantTx = new AddParticipantTx();
+            addParticipantTx.setNickname(request.getNickname());
+            addParticipantTx.setDid(request.getDid());
+            addParticipantTx.setDidDoc(request.getDidDoc());
+            addParticipantTx.setRole("user");
+            pushTransaction(addParticipantTx);
+
+            log.info("Send response to" + Base58.encode(request.getVerkey()));
+            Response response = Response.builder().
+                    setLedgerType(getLedgerType()).
+                    setAttach(getAttach()).
+                    build();
+            response.setThreadId(request.getId());
+
+            cp.send(response);
+        }
+
         return true;
     }
 

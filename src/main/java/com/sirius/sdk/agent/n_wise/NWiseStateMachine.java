@@ -1,6 +1,7 @@
 package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.n_wise.transactions.*;
+import com.sirius.sdk.utils.Pair;
 import foundation.identity.jsonld.JsonLDObject;
 import info.weboftrust.ldsignatures.suites.JcsEd25519Signature2020SignatureSuite;
 import info.weboftrust.ldsignatures.verifier.JcsEd25519Signature2020LdVerifier;
@@ -10,14 +11,13 @@ import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class NWiseStateMachine {
 
     String label;
     byte[] genesisCreatorVerkey;
+    Map<String, byte[]> invitationKeys = new HashMap<>();
 
     List<NWiseParticipant> participants = new ArrayList<>();
 
@@ -39,6 +39,8 @@ public class NWiseStateMachine {
             return check(new GenesisTx(jsonObject));
         } else if (type.equals("addParticipantTx")) {
             return check(new AddParticipantTx(jsonObject));
+        } else if (type.equals("invitationTx")) {
+            return check(new InvitationTx(jsonObject));
         }
         return true;
     }
@@ -63,8 +65,30 @@ public class NWiseStateMachine {
             return false;
         JSONObject proof = tx.getJSONObject("proof");
         String verificationMethod = proof.optString("verificationMethod");
+        if (invitationKeys.containsKey(verificationMethod)) {
+            byte[] verkey = invitationKeys.get(verificationMethod);
+            if (tx.getRole().equals("user"))
+                return check(tx, verkey);
+            else
+                return false;
+        }
         byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
         if (verkey == null)
+            return false;
+        if (!resolveParticipant(verkey).role.equals("admin"))
+            return false;
+        return check(tx, verkey);
+    }
+
+    public boolean check(InvitationTx tx) {
+        if (!tx.has("proof"))
+            return false;
+        JSONObject proof = tx.getJSONObject("proof");
+        String verificationMethod = proof.optString("verificationMethod");
+        byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
+        if (verkey == null)
+            return false;
+        if (!resolveParticipant(verkey).role.equals("admin"))
             return false;
         return check(tx, verkey);
     }
@@ -97,6 +121,14 @@ public class NWiseStateMachine {
         participant.didDoc = tx.getDidDoc();
         participant.role = tx.getRole();
         participants.add(participant);
+        return true;
+    }
+
+    public boolean append(InvitationTx tx) {
+        List<Pair<String, byte[]>> keys = tx.getPublicKeys();
+        for (Pair<String, byte[]> p : keys) {
+            invitationKeys.put(p.first, p.second);
+        }
         return true;
     }
 
