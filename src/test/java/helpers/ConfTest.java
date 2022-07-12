@@ -4,6 +4,7 @@ import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.CloudAgent;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.agent.pairwise.Pairwise;
@@ -20,6 +21,7 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class ConfTest {
@@ -229,5 +231,13 @@ public class ConfTest {
                 put("uncommitted_size", ledger.uncommittedSize()).
                 put("root_hash", ledger.rootHash()).
                 put("uncommitted_root_hash", ledger.uncommittedRootHash());
+    }
+
+    public static Invitation getMediatorInvitation() {
+        return Invitation.builder().
+                setLabel("Testable-Mediator").
+                setRecipientKeys(Arrays.asList("F5BERxEyX6uDhgXCbizxJB1z3SGnjHbjfzwuTytuK4r5")).
+                setEndpoint("ws://localhost:8000/ws").
+                build();
     }
 }

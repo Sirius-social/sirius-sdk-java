@@ -78,6 +78,7 @@ public abstract class NWise {
             FastInvitation fastInvitation = FastInvitation.builder().
                     setLabel(getChatName()).
                     setLedgerType(getLedgerType()).
+                    setInvitationKeyId(Base58.encode(keyPair.getPublicKey().getAsBytes())).
                     setInvitationPrivateKey(keyPair.getSecretKey().getAsBytes()).
                     setAttach(getAttach()).
                     build();

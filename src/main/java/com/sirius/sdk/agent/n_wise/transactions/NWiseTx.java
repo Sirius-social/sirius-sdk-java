@@ -53,7 +53,21 @@ public class NWiseTx extends JSONObject {
         ByteSigner byteSigner = new IndyWalletSigner(crypto, Base58.encode(verkey));
         LdSigner<JcsEd25519Signature2020SignatureSuite> ldSigner = new JcsEd25519Signature2020LdSigner(byteSigner);
         ldSigner.setVerificationMethod(URI.create(did + "#1"));
-        //ldSigner.set
+        JsonLDObject jsonLdObject = JsonLDObject.fromJson(this.toString());
+        try {
+            JSONObject proof = new JSONObject(ldSigner.sign(jsonLdObject).toJson());
+            put("proof", proof);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sign(String id, byte[] privateKey) {
+        if (has("proof"))
+            remove("proof");
+
+        LdSigner<JcsEd25519Signature2020SignatureSuite> ldSigner = new JcsEd25519Signature2020LdSigner(privateKey);
+        ldSigner.setVerificationMethod(URI.create(id));
         JsonLDObject jsonLdObject = JsonLDObject.fromJson(this.toString());
         try {
             JSONObject proof = new JSONObject(ldSigner.sign(jsonLdObject).toJson());

@@ -3,6 +3,7 @@ package com.sirius.sdk.agent.n_wise;
 import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
 import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.n_wise.messages.*;
 import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
@@ -96,6 +97,24 @@ public class IotaNWise extends NWise {
         return new IotaNWise(stateMachine, Base58.decode(didVk.second));
     }
 
+    public static IotaNWise acceptInvitation(FastInvitation invitation, String nickname, Context context) {
+        IotaResponseAttach attach = new IotaResponseAttach(invitation.getAttach());
+        Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
+        AddParticipantTx tx = new AddParticipantTx();
+        tx.setDid(didVk.first);
+        JSONObject didDoc = ConnProtocolMessage.buildDidDoc(didVk.first, didVk.second, context.getEndpointAddressWithEmptyRoutingKeys());
+        tx.setDidDoc(didDoc);
+        tx.setRole("user");
+        tx.setNickname(nickname);
+        tx.sign(invitation.getInvitationKeyId(), invitation.getInvitationPrivateKey());
+        Pair<Boolean, NWiseStateMachine> res = pushTransactionToIota(tx, attach.getTag());
+        if (res.first) {
+            return new IotaNWise(res.second, Base58.decode(didVk.second));
+        } else {
+            return null;
+        }
+    }
+
     public JSONObject getRestoreAttach() {
         return new JSONObject().
                 put("tag", generateTag(stateMachine.getGenesisCreatorVerkey())).
@@ -165,20 +184,30 @@ public class IotaNWise extends NWise {
     @Override
     protected boolean pushTransaction(NWiseTx tx) {
         String tag = IotaUtils.generateTag(stateMachine.getGenesisCreatorVerkey());
+        Pair<Boolean, NWiseStateMachine> res = pushTransactionToIota(tx, tag);
+        stateMachine = res.second;
+        return res.first;
+    }
+
+    private static Pair<Boolean, NWiseStateMachine> pushTransactionToIota(NWiseTx tx, String tag) {
         Pair<NWiseStateMachine, String> res = processTransactions(tag);
         JSONObject o = new JSONObject().
                 put("transaction", tx).
                 put("meta", new JSONObject().
-                                put("previousMessageId", res.second));
+                        put("previousMessageId", res.second));
         try {
+            if (!res.first.check(tx)) {
+                return new Pair<>(false, res.first);
+            }
             IotaUtils.node().message().
                     withIndexString(tag).
                     withData(o.toString().getBytes(StandardCharsets.UTF_8)).
                     finish();
+            res.first.append(tx);
         } catch (Exception ex) {
-            return false;
+            return new Pair<>(false, res.first);
         }
-        return true;
+        return new Pair<>(true, res.first);
     }
 
     @Override

@@ -24,6 +24,14 @@ public class FastInvitation extends BaseNWiseMessage {
         return Base58.decode(getMessageObj().optString("invitationPrivateKeyBase58"));
     }
 
+    public String getInvitationKeyId() {
+        return getMessageObj().optString("invitationKeyId");
+    }
+
+    public String getLedgerType() {
+        return getMessageObj().optString("ledgerType");
+    }
+
     public JSONObject getAttach() {
         return getMessageObj().getJSONObject("attach");
     }
@@ -34,12 +42,18 @@ public class FastInvitation extends BaseNWiseMessage {
 
     public static abstract class Builder<B extends FastInvitation.Builder<B>> extends BaseNWiseMessage.Builder<B> {
         String label = null;
+        String invitationKeyId = null;
         String invitationPrivateKeyBase58 = null;
         String ledgerType = null;
         JSONObject attach = null;
 
         public B setLabel(String label) {
             this.label = label;
+            return self();
+        }
+
+        public B setInvitationKeyId(String keyId) {
+            this.invitationKeyId = keyId;
             return self();
         }
 
@@ -63,6 +77,7 @@ public class FastInvitation extends BaseNWiseMessage {
             JSONObject jsonObject = super.generateJSON();
 
             put(label, "label", jsonObject);
+            put(invitationKeyId, "invitationKeyId", jsonObject);
             put(invitationPrivateKeyBase58, "invitationPrivateKeyBase58", jsonObject);
             put(ledgerType, "ledgerType", jsonObject);
             put(attach, "attach", jsonObject);

@@ -14,6 +14,7 @@ import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
@@ -28,6 +29,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -313,6 +315,26 @@ public class TestNWise {
             genesisTx.optJSONObject("proof").put("signatureValue", signatureValue);
 
             Assert.assertFalse(stateMachine.check(genesisTx));
+        }
+    }
+
+    @Test
+    public void testMobileAgent() {
+        JSONObject walletConfig = new JSONObject().
+                put("id", "Wallet9").
+                put("storage_type", "default");
+        JSONObject walletCredentials = new JSONObject().
+                put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+                put("key_derivation_method", "RAW");
+
+        try (Context context = MobileContext.builder().
+                setWalletConfig(walletConfig).
+                setWalletCredentials(walletCredentials).
+                setMediatorInvitation(ConfTest.getMediatorInvitation()).
+                build()) {
+            String internalId = context.getNWiseManager().create("nwise", "Alice");
+            context.getNWiseManager().createFastInvitation(internalId);
+
         }
     }
 }
