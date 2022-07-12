@@ -1,18 +1,27 @@
+import com.goterl.lazycode.lazysodium.LazySodiumJava;
+import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.*;
+import com.sirius.sdk.agent.n_wise.messages.FastInvitation;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
+import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
+import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,7 +96,7 @@ public class TestNWise {
                         }
                     }
                     if (event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), event.getRecipientVerkey(), context));
+                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                     }
                 }
             } catch (Exception e) {
@@ -231,20 +240,79 @@ public class TestNWise {
     }
 
     @Test
-    public void testNWiseStateMachine() {
+    public void testNWiseStateMachine() throws SodiumException {
+        Pair<String, String> aliceDidVk;
+        NWiseStateMachine stateMachine = new NWiseStateMachine();
+        try (Context context = getContext(alice)) {
+            GenesisTx genesisTx = new GenesisTx();
+            genesisTx.setCreatorNickname("Alice");
+            String chatName = "Alice chat";
+            genesisTx.setLabel(chatName);
+            aliceDidVk = context.getDid().createAndStoreMyDid();
+            genesisTx.setCreatorDidDocParams(
+                    aliceDidVk.first,
+                    Base58.decode(aliceDidVk.second),
+                    context.getEndpointAddressWithEmptyRoutingKeys()
+            );
+            genesisTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
+            Assert.assertTrue(stateMachine.check(genesisTx));
+
+            stateMachine.append(genesisTx);
+            Assert.assertEquals(chatName, stateMachine.getLabel());
+            Assert.assertArrayEquals(Base58.decode(aliceDidVk.second), stateMachine.getGenesisCreatorVerkey());
+            Assert.assertEquals(aliceDidVk.first, stateMachine.resolveDid(Base58.decode(aliceDidVk.second)));
+            Assert.assertEquals(1, stateMachine.getParticipants().size());
+        }
+
+        Pair<String, String> bobDidVk;
+        JSONObject bobDidDoc;
+        try (Context context = getContext(bob)) {
+            bobDidVk = context.getDid().createAndStoreMyDid();
+            bobDidDoc = ConnProtocolMessage.buildDidDoc(bobDidVk.first, bobDidVk.second, context.getEndpointAddressWithEmptyRoutingKeys());
+        }
+
+        try (Context context = getContext(alice)) {
+            AddParticipantTx addBobTx = new AddParticipantTx();
+            addBobTx.setNickname("Bob");
+            addBobTx.setDid(bobDidVk.first);
+            addBobTx.setDidDoc(bobDidDoc);
+            addBobTx.setRole("user");
+            addBobTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
+            Assert.assertTrue(stateMachine.check(addBobTx));
+
+            stateMachine.append(addBobTx);
+            Assert.assertEquals(2, stateMachine.getParticipants().size());
+        }
+
+        try (Context context = getContext(alice)) {
+            LazySodiumJava s = LibSodium.getInstance().getLazySodium();
+            KeyPair keyPair = s.cryptoSignKeypair();
+            InvitationTx invitationTx = new InvitationTx();
+            invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
+            invitationTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
+            Assert.assertTrue(stateMachine.check(invitationTx));
+            stateMachine.append(invitationTx);
+        }
+    }
+
+    @Test
+    public void testNWiseStateMachine_badGenesisSignature() {
         try (Context context = getContext(alice)) {
             NWiseStateMachine stateMachine = new NWiseStateMachine();
             GenesisTx genesisTx = new GenesisTx();
             genesisTx.setCreatorNickname("Alice");
-            Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
+            Pair<String, String> aliceDidVk = context.getDid().createAndStoreMyDid();
             genesisTx.setCreatorDidDocParams(
-                    didVk.first,
-                    Base58.decode(didVk.second),
+                    aliceDidVk.first,
+                    Base58.decode(aliceDidVk.second),
                     context.getEndpointAddressWithEmptyRoutingKeys()
             );
-            genesisTx.sign(context.getCrypto());
+            genesisTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
+            String signatureValue = genesisTx.optJSONObject("proof").optString("signatureValue");
+            signatureValue = new StringBuilder(signatureValue).reverse().toString();
+            genesisTx.optJSONObject("proof").put("signatureValue", signatureValue);
 
-            Assert.assertTrue(stateMachine.check(genesisTx));
+            Assert.assertFalse(stateMachine.check(genesisTx));
         }
     }
 }

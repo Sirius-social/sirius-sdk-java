@@ -97,7 +97,7 @@ public class NWiseManager {
         String internalId = new NWiseList(context.getNonSecrets()).getNWiseInfoByInvitation(invitationKeyBase58).internalId;
         NWise nWise = getNWiseMap().get(internalId);
         if (nWise instanceof IotaNWise) {
-            if (((IotaNWise) nWise).acceptRequest(request, invitationKeyBase58, context)) {
+            if (((IotaNWise) nWise).acceptRequest(request, context)) {
                 new NWiseList(context.getNonSecrets()).removeInvitationKey(invitationKeyBase58);
                 return true;
             }

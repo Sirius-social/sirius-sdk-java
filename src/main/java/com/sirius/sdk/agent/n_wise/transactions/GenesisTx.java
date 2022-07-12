@@ -72,19 +72,4 @@ public class GenesisTx extends NWiseTx {
     public void setCreatorDidDocParams(String did, byte[] verkey, String endpoint) {
         setCreatorDidDocParams(did, verkey, endpoint, Arrays.asList(), new JSONObject());
     }
-
-    public void sign(AbstractCrypto crypto) {
-        if (has("proof"))
-            remove("proof");
-
-        ByteSigner byteSigner = new IndyWalletSigner(crypto, Base58.encode(getCreatorVerkey()));
-        LdSigner ldSigner = new JcsEd25519Signature2020LdSigner(byteSigner);
-        JsonLDObject jsonLdObject = JsonLDObject.fromJson(this.toString());
-        try {
-            JSONObject proof = new JSONObject(ldSigner.sign(jsonLdObject).toJson());
-            put("proof", proof);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
