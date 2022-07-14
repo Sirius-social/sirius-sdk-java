@@ -379,7 +379,7 @@ public class TestNWise {
         }
     }
 
-    @After
+    //@After
     public void deleteWallet() throws Exception {
         Wallet.deleteWallet(aliceWalletConfig.toString(), aliceWalletCredentials.toString()).get();
     }

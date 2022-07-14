@@ -42,6 +42,7 @@ public class IotaNWise extends NWise {
         genesisTx.setCreatorNickname(myNickName);
         genesisTx.setCreatorDidDocParams(
                 didVk.first, Base58.decode(didVk.second), context.getEndpointAddressWithEmptyRoutingKeys(), Arrays.asList(), new JSONObject());
+        genesisTx.sign(context.getCrypto(), didVk.first, Base58.decode(didVk.second));
 
         Client iota = IotaUtils.node();
         try {

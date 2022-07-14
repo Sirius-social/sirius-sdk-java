@@ -47,7 +47,7 @@ public class NWiseStateMachine {
     }
 
     public boolean check(GenesisTx tx) {
-        if (!created)
+        if (created)
             return false;
         return check(tx, tx.getCreatorVerkey());
     }

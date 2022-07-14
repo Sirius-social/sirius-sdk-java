@@ -149,6 +149,7 @@ public abstract class NWise {
             addParticipantTx.setDid(request.getDid());
             addParticipantTx.setDidDoc(request.getDidDoc());
             addParticipantTx.setRole("user");
+            addParticipantTx.sign(context.getCrypto(), getMyDid(), myVerkey);
             pushTransaction(addParticipantTx);
 
             log.info("Send response to" + Base58.encode(request.getVerkey()));
