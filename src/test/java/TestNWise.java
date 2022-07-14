@@ -22,15 +22,15 @@ import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
+import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -286,14 +286,41 @@ public class TestNWise {
             Assert.assertEquals(2, stateMachine.getParticipants().size());
         }
 
+        KeyPair carolInvitationKeyPair;
         try (Context context = getContext(alice)) {
             LazySodiumJava s = LibSodium.getInstance().getLazySodium();
-            KeyPair keyPair = s.cryptoSignKeypair();
+            carolInvitationKeyPair = s.cryptoSignKeypair();
             InvitationTx invitationTx = new InvitationTx();
-            invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
+            invitationTx.setPublicKeys(Arrays.asList(carolInvitationKeyPair.getPublicKey().getAsBytes()));
             invitationTx.sign(context.getCrypto(), aliceDidVk.first, Base58.decode(aliceDidVk.second));
             Assert.assertTrue(stateMachine.check(invitationTx));
             stateMachine.append(invitationTx);
+        }
+
+        Pair<String, String> carolDidVk;
+        JSONObject carolDidDoc;
+        try (Context context = getContext(carol)) {
+            AddParticipantTx addCarolTx = new AddParticipantTx();
+            addCarolTx.setNickname("Carol");
+            addCarolTx.setRole("user");
+            carolDidVk = context.getDid().createAndStoreMyDid();
+            carolDidDoc = ConnProtocolMessage.buildDidDoc(bobDidVk.first, bobDidVk.second, context.getEndpointAddressWithEmptyRoutingKeys());
+            addCarolTx.setDid(carolDidVk.first);
+            addCarolTx.setDidDoc(carolDidDoc);
+            addCarolTx.sign(Base58.encode(carolInvitationKeyPair.getPublicKey().getAsBytes()), carolInvitationKeyPair.getSecretKey().getAsBytes());
+            Assert.assertTrue(stateMachine.check(addCarolTx));
+            stateMachine.append(addCarolTx);
+
+            Assert.assertEquals(3, stateMachine.getParticipants().size());
+            List<NWiseParticipant> participants = stateMachine.getParticipants();
+            Set<String> actualDidSet = new HashSet<>();
+            for (NWiseParticipant p : participants) {
+                actualDidSet.add(p.did);
+            }
+            Set<String> expectedDidSet = Set.of(aliceDidVk.first, bobDidVk.first, carolDidVk.first);
+            Assert.assertEquals(expectedDidSet, actualDidSet);
+
+            Assert.assertFalse(stateMachine.check(addCarolTx));
         }
     }
 
@@ -318,23 +345,42 @@ public class TestNWise {
         }
     }
 
+    JSONObject aliceWalletConfig = new JSONObject().
+            put("id", "alice").
+            put("storage_type", "default");
+    JSONObject aliceWalletCredentials = new JSONObject().
+            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+            put("key_derivation_method", "RAW");
+    JSONObject bobWalletConfig = new JSONObject().
+            put("id", "bob").
+            put("storage_type", "default");
+    JSONObject bobWalletCredentials = new JSONObject().
+            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+            put("key_derivation_method", "RAW");
+
     @Test
     public void testMobileAgent() {
-        JSONObject walletConfig = new JSONObject().
-                put("id", "Wallet9").
-                put("storage_type", "default");
-        JSONObject walletCredentials = new JSONObject().
-                put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
-                put("key_derivation_method", "RAW");
-
+        FastInvitation fastInvitationForBob;
         try (Context context = MobileContext.builder().
-                setWalletConfig(walletConfig).
-                setWalletCredentials(walletCredentials).
+                setWalletConfig(aliceWalletConfig).
+                setWalletCredentials(aliceWalletCredentials).
                 setMediatorInvitation(ConfTest.getMediatorInvitation()).
                 build()) {
             String internalId = context.getNWiseManager().create("nwise", "Alice");
-            context.getNWiseManager().createFastInvitation(internalId);
-
+            fastInvitationForBob = context.getNWiseManager().createFastInvitation(internalId);
         }
+
+        try (Context context = MobileContext.builder().
+                setWalletConfig(bobWalletConfig).
+                setWalletCredentials(bobWalletCredentials).
+                setMediatorInvitation(ConfTest.getMediatorInvitation()).
+                build()) {
+            context.getNWiseManager().acceptInvitation(fastInvitationForBob, "Bob");
+        }
+    }
+
+    @After
+    public void deleteWallet() throws Exception {
+        Wallet.deleteWallet(aliceWalletConfig.toString(), aliceWalletCredentials.toString()).get();
     }
 }

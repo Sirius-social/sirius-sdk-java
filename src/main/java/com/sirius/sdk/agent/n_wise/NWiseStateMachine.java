@@ -15,6 +15,7 @@ import java.util.*;
 
 public class NWiseStateMachine {
 
+    boolean created = false;
     String label;
     byte[] genesisCreatorVerkey;
     Map<String, byte[]> invitationKeys = new HashMap<>();
@@ -46,6 +47,8 @@ public class NWiseStateMachine {
     }
 
     public boolean check(GenesisTx tx) {
+        if (!created)
+            return false;
         return check(tx, tx.getCreatorVerkey());
     }
 
@@ -103,6 +106,9 @@ public class NWiseStateMachine {
     }
 
     public boolean append(GenesisTx genesisTx) {
+        if (!check(genesisTx))
+            return false;
+        created = true;
         label = genesisTx.getLabel();
         NWiseParticipant creator = new NWiseParticipant();
         creator.nickname = genesisTx.getCreatorNickname();
@@ -115,16 +121,26 @@ public class NWiseStateMachine {
     }
 
     public boolean append(AddParticipantTx tx) {
+        if (!check(tx))
+            return false;
         NWiseParticipant participant = new NWiseParticipant();
         participant.nickname = tx.getNickname();
         participant.did = tx.getDid();
         participant.didDoc = tx.getDidDoc();
         participant.role = tx.getRole();
         participants.add(participant);
+
+        JSONObject proof = tx.getJSONObject("proof");
+        String verificationMethod = proof.optString("verificationMethod");
+        if (invitationKeys.containsKey(verificationMethod))
+            invitationKeys.remove(verificationMethod);
+
         return true;
     }
 
     public boolean append(InvitationTx tx) {
+        if (!check(tx))
+            return false;
         List<Pair<String, byte[]>> keys = tx.getPublicKeys();
         for (Pair<String, byte[]> p : keys) {
             invitationKeys.put(p.first, p.second);
