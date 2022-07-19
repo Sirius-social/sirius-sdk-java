@@ -2,10 +2,7 @@ package com.sirius.sdk.hub;
 import com.sirius.sdk.agent.MobileAgent;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines.Invitee;
-import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdate;
-import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.KeylistUpdateResponse;
-import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.MediateGrant;
-import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.MediateRequest;
+import com.sirius.sdk.agent.aries_rfc.feature_0211_mediator_coordination_protocol.*;
 import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.wallet.abstract_wallet.model.RetrieveRecordOptions;
@@ -136,7 +133,8 @@ public class MobileContext extends Context {
 
     public boolean askForMediation() {
         try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(
-                this, mediatorPw.getMe().getVerkey(), mediatorPw.getTheir(), new ArrayList<>(), timeToLiveSec)) {
+                this, mediatorPw.getMe().getVerkey(), mediatorPw.getTheir(),
+                Arrays.asList(CoordinateMediationMessage.PROTOCOL), timeToLiveSec)) {
             MediateRequest request = MediateRequest.builder().build();
             Pair<Boolean, Message> res = cp.sendAndWait(request);
             if (res.first) {

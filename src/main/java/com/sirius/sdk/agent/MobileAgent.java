@@ -199,8 +199,10 @@ public class MobileAgent extends AbstractAgent {
                         put("message", unpackedMessage);
             }
 
-            for (Pair<MobileAgentEvents, Listener> e : events)
-                e.first.future.complete(new Message(eventMessage));
+            for (Pair<MobileAgentEvents, Listener> e : events) {
+                if (e.first.future != null)
+                    e.first.future.complete(new Message(eventMessage));
+            }
         } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
             e.printStackTrace();
         }

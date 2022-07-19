@@ -9,7 +9,7 @@ import java.util.List;
 public class FastInvitation extends BaseNWiseMessage {
 
     static {
-        Message.registerMessageClass(FastInvitation.class, BaseNWiseMessage.PROTOCOL, "fastInvitation");
+        Message.registerMessageClass(FastInvitation.class, BaseNWiseMessage.PROTOCOL, "fast-invitation");
     }
 
     public FastInvitation(String msg) {
