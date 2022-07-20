@@ -165,14 +165,15 @@ public class NWiseStateMachine {
 
     public boolean append(JSONObject jsonObject) {
         String type = jsonObject.optString("type");
-        if (type.equals("genesisTx")) {
-            return append(new GenesisTx(jsonObject));
-        }
-        if (type.equals("addParticipantTx")) {
-            return append(new AddParticipantTx(jsonObject));
-        }
-        if (type.equals("removeParticipantTx")) {
-            return append(new RemoveParticipantTx(jsonObject));
+        switch (type) {
+            case "genesisTx":
+                return append(new GenesisTx(jsonObject));
+            case "addParticipantTx":
+                return append(new AddParticipantTx(jsonObject));
+            case "removeParticipantTx":
+                return append(new RemoveParticipantTx(jsonObject));
+            case "invitationTx":
+                return append(new InvitationTx(jsonObject));
         }
         return false;
     }

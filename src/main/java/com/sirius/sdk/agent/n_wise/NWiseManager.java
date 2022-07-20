@@ -7,6 +7,7 @@ import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.Context;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +70,20 @@ public class NWiseManager {
         if (nWise != null)
             return nWise.resolveParticipant(senderVerkeyBase58);
         return null;
+    }
+
+    public List<NWiseParticipant> getParticipants(String internalId) {
+        NWise nWise = getNWiseMap().get(internalId);
+        if (nWise != null)
+            return nWise.getParticipants();
+        return Arrays.asList();
+    }
+
+    public boolean update(String internalId) {
+        NWise nWise = getNWiseMap().get(internalId);
+        if (nWise != null)
+            return nWise.fetchFromLedger();
+        return false;
     }
 
     public Invitation createPrivateInvitation(String internalId) {
@@ -139,5 +154,12 @@ public class NWiseManager {
             new NWiseList(context.getNonSecrets()).remove(internalId);
         }
         return res;
+    }
+
+    public boolean getNotify(String senderVerkeyBase58) {
+        String internalId = resolveNWiseId(senderVerkeyBase58);
+        if (internalId != null)
+            return update(internalId);
+        return false;
     }
 }

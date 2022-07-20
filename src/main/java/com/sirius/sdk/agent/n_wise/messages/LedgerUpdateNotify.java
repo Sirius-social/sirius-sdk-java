@@ -6,7 +6,7 @@ import org.json.JSONObject;
 public class LedgerUpdateNotify extends BaseNWiseMessage {
 
     static {
-        Message.registerMessageClass(LedgerUpdateNotify.class, BaseNWiseMessage.PROTOCOL, "ledgerUpdateNotify");
+        Message.registerMessageClass(LedgerUpdateNotify.class, BaseNWiseMessage.PROTOCOL, "ledger-update-notify");
     }
 
     public LedgerUpdateNotify(String msg) {

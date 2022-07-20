@@ -15,12 +15,14 @@ import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.MobileContext;
+import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
+import helpers.Smartphone;
 import models.AgentParams;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONObject;
@@ -346,37 +348,53 @@ public class TestNWise {
     }
 
     JSONObject aliceWalletConfig = new JSONObject().
-            put("id", "alice").
+            put("id", "alice2").
             put("storage_type", "default");
     JSONObject aliceWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
             put("key_derivation_method", "RAW");
     JSONObject bobWalletConfig = new JSONObject().
-            put("id", "bob").
+            put("id", "bob2").
             put("storage_type", "default");
     JSONObject bobWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
             put("key_derivation_method", "RAW");
 
     @Test
-    public void testMobileAgent() {
-        FastInvitation fastInvitationForBob;
-        try (Context context = MobileContext.builder().
-                setWalletConfig(aliceWalletConfig).
-                setWalletCredentials(aliceWalletCredentials).
-                setMediatorInvitation(ConfTest.getMediatorInvitation()).
-                build()) {
-            String internalId = context.getNWiseManager().create("nwise", "Alice");
-            fastInvitationForBob = context.getNWiseManager().createFastInvitation(internalId);
-        }
+    public void testMobileAgent() throws InterruptedException, ExecutionException, TimeoutException {
+        MobileHub.Config aliceConfig = new MobileHub.Config();
+        aliceConfig.walletConfig = aliceWalletConfig;
+        aliceConfig.walletCredentials = aliceWalletCredentials;
+        aliceConfig.mediatorInvitation = ConfTest.getMediatorInvitation();
+        Smartphone alice = new Smartphone(aliceConfig, "Alice");
+        alice.start();
 
-        try (Context context = MobileContext.builder().
-                setWalletConfig(bobWalletConfig).
-                setWalletCredentials(bobWalletCredentials).
-                setMediatorInvitation(ConfTest.getMediatorInvitation()).
-                build()) {
-            context.getNWiseManager().acceptInvitation(fastInvitationForBob, "Bob");
-        }
+        MobileHub.Config bobConfig = new MobileHub.Config();
+        bobConfig.walletConfig = bobWalletConfig;
+        bobConfig.walletCredentials = bobWalletCredentials;
+        bobConfig.mediatorInvitation = ConfTest.getMediatorInvitation();
+        Smartphone bob = new Smartphone(bobConfig, "Bob");
+        bob.start();
+
+        String aliceNWiseInternalId = alice.createNWise("new n-wise");
+        Assert.assertNotNull(aliceNWiseInternalId);
+
+        FastInvitation fastInvitationAliceToBob = alice.createNWiseInvitation(aliceNWiseInternalId);
+        Assert.assertNotNull(fastInvitationAliceToBob);
+        String bobNWiseInternalId = bob.acceptInvitation(fastInvitationAliceToBob);
+        Assert.assertNotNull(bobNWiseInternalId);
+
+        Assert.assertTrue(alice.updateNWise(aliceNWiseInternalId));
+        List<NWiseParticipant> aliceParticipants = alice.getNWiseParticipants(aliceNWiseInternalId);
+        Assert.assertEquals(2, aliceParticipants.size());
+
+        bob.sendNWiseMessage(bobNWiseInternalId, Message.builder().setContent("hello world!").build());
+        alice.getMessage().get(10, TimeUnit.SECONDS);
+        Assert.assertEquals(1, alice.getReceivedMessages().size());
+
+
+        //alice.stop();
+        //bob.stop();
     }
 
     //@After

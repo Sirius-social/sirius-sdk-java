@@ -74,6 +74,7 @@ public abstract class NWise {
             KeyPair keyPair = s.cryptoSignKeypair();
             InvitationTx invitationTx = new InvitationTx();
             invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
+            invitationTx.sign(context.getCrypto(), getMyDid(), myVerkey);
             pushTransaction(invitationTx);
             FastInvitation fastInvitation = FastInvitation.builder().
                     setLabel(getChatName()).
