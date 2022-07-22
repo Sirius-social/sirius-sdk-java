@@ -116,6 +116,7 @@ public class Smartphone {
                             receivedMessages.add(nWiseMessage);
                             if (future != null)
                                 future.complete(nWiseMessage);
+
                         }
                     }
                 } else if (event.message() instanceof LedgerUpdateNotify) {

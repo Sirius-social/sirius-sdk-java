@@ -52,7 +52,7 @@ public class NWiseList {
     public List<NWiseInfo> getNWiseInfoList() {
         JSONObject tags = new JSONObject().put("type", NON_SECRET_NWISE_LIST);
         Pair<List<String>,Integer> record = nonSecrets.walletSearch(NON_SECRET_NWISE_LIST, tags.toString(),
-                new RetrieveRecordOptions(true, true, true), 100000);
+                new RetrieveRecordOptions(false, true, false), 100000);
         List<NWiseInfo> res = new ArrayList<>();
         if (record.second == 0)
             return res;

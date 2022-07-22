@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NWiseManager {
 
-    private static Map<String, NWise> nWiseMap = null;
+    private Map<String, NWise> nWiseMap = null;
 
     Context context;
     public NWiseManager(Context context) {

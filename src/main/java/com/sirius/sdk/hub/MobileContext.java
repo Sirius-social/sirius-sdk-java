@@ -67,7 +67,8 @@ public class MobileContext extends Context {
     public void connectToMediator() {
         Invitation invitation = ((MobileHub.Config) getCurrentHub().getConfig()).mediatorInvitation;
 
-        String mediatorDid = getMediatorDid(invitation.recipientKeys().get(0));
+        //String mediatorDid = getMediatorDid(invitation.recipientKeys().get(0));
+        String mediatorDid = null;
         if (mediatorDid == null) {
             Pair<String, String> didVk = getDid().createAndStoreMyDid();
             Pairwise.Me me = new Pairwise.Me(didVk.first, didVk.second);

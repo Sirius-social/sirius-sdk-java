@@ -110,7 +110,9 @@ public class IotaNWise extends NWise {
         tx.sign(invitation.getInvitationKeyId(), invitation.getInvitationPrivateKey());
         Pair<Boolean, NWiseStateMachine> res = pushTransactionToIota(tx, attach.getTag());
         if (res.first) {
-            return new IotaNWise(res.second, Base58.decode(didVk.second));
+            IotaNWise nWise = new IotaNWise(res.second, Base58.decode(didVk.second));
+            nWise.notify(context);
+            return nWise;
         } else {
             return null;
         }

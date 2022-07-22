@@ -76,6 +76,7 @@ public abstract class NWise {
             invitationTx.setPublicKeys(Arrays.asList(keyPair.getPublicKey().getAsBytes()));
             invitationTx.sign(context.getCrypto(), getMyDid(), myVerkey);
             pushTransaction(invitationTx);
+            notify(context);
             FastInvitation fastInvitation = FastInvitation.builder().
                     setLabel(getChatName()).
                     setLedgerType(getLedgerType()).
@@ -110,7 +111,10 @@ public abstract class NWise {
     public boolean removeParticipant(String did) {
         RemoveParticipantTx tx = new RemoveParticipantTx();
         tx.setDid(did);
-        return pushTransaction(tx);
+        boolean res = pushTransaction(tx);
+        if (res)
+            notify();
+        return res;
     }
 
     public String getMyDid() {
@@ -125,7 +129,7 @@ public abstract class NWise {
         return stateMachine.resolveParticipant(Base58.decode(verkeyBase58));
     }
 
-    public boolean send(Message message, Context context) {
+    public boolean send(com.sirius.sdk.messaging.Message message, Context context) {
         List<NWiseParticipant> participants = getParticipants();
         for (NWiseParticipant participant : participants) {
             if (Arrays.equals(participant.getVerkey(), this.myVerkey))
@@ -136,6 +140,10 @@ public abstract class NWise {
             }
         }
         return true;
+    }
+
+    public boolean notify(Context context) {
+        return send(LedgerUpdateNotify.builder().build(), context);
     }
 
     public boolean acceptRequest(Request request, Context context) {
@@ -152,6 +160,7 @@ public abstract class NWise {
             addParticipantTx.setRole("user");
             addParticipantTx.sign(context.getCrypto(), getMyDid(), myVerkey);
             pushTransaction(addParticipantTx);
+            notify(context);
 
             log.info("Send response to" + Base58.encode(request.getVerkey()));
             Response response = Response.builder().

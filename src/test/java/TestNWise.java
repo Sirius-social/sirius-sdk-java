@@ -348,13 +348,13 @@ public class TestNWise {
     }
 
     JSONObject aliceWalletConfig = new JSONObject().
-            put("id", "alice2").
+            put("id", "alice6").
             put("storage_type", "default");
     JSONObject aliceWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
             put("key_derivation_method", "RAW");
     JSONObject bobWalletConfig = new JSONObject().
-            put("id", "bob2").
+            put("id", "bob6").
             put("storage_type", "default");
     JSONObject bobWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
@@ -389,7 +389,7 @@ public class TestNWise {
         Assert.assertEquals(2, aliceParticipants.size());
 
         bob.sendNWiseMessage(bobNWiseInternalId, Message.builder().setContent("hello world!").build());
-        alice.getMessage().get(10, TimeUnit.SECONDS);
+        alice.getMessage().get(30, TimeUnit.SECONDS);
         Assert.assertEquals(1, alice.getReceivedMessages().size());
 
 
