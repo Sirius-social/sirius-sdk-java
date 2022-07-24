@@ -12,7 +12,8 @@ import com.sirius.sdk.agent.wallet.MobileWallet;
 import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-import org.apache.http.HttpResponse;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -21,7 +22,6 @@ import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -43,16 +43,6 @@ public class MobileAgent extends AbstractAgent {
 
     Wallet indyWallet;
     Map<String, WebSocketConnector> webSockets = new HashMap<>();
-
-    class MobileAgentEvents implements AgentEvents {
-
-        CompletableFuture<Message> future;
-        @Override
-        public CompletableFuture<Message> pull() {
-            future = new CompletableFuture<>();
-            return future;
-        }
-    }
 
     List<Pair<MobileAgentEvents, Listener>> events = new ArrayList<>();
 
@@ -143,11 +133,12 @@ public class MobileAgent extends AbstractAgent {
             return webSockets.get(endpoint);
         } else {
             WebSocketConnector webSocket = new WebSocketConnector(endpoint, "", null);
-            final MobileAgent fAgent = this;
+            //final MobileAgent fAgent = this;
+            //webSocket.
             webSocket.readCallback = new Function<byte[], Void>() {
                 @Override
                 public Void apply(byte[] bytes) {
-                    fAgent.receiveMsg(bytes);
+                    receiveMsg(bytes);
                     return null;
                 }
             };

@@ -1,7 +1,6 @@
 package com.sirius.sdk.rpc;
 
 import com.sirius.sdk.base.ReadOnlyChannel;
-import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.base.WriteOnlyChannel;
 import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
@@ -63,9 +62,9 @@ public class AddressedTunnel {
      * @return received packet
      */
     public Message receive(int timeout) throws SiriusInvalidPayloadStructure {
-        byte[] payload = new byte[0];
+        byte[] payload;
         try {
-            payload = input.read().get(timeout, TimeUnit.SECONDS);
+            payload = input.listen().firstOrError().toFuture().get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
             return null;

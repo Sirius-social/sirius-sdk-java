@@ -24,6 +24,7 @@ import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.functions.Consumer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,17 +110,19 @@ public class AirCompany extends BaseParticipant {
     protected void routine() {
         try (Context c = new CloudContext(config)) {
             Listener listener = c.subscribe();
-            while (loop) {
-                Event event = listener.getOne().get();
-                if (event.message() instanceof InitRequestLedgerMessage) {
-                    processInitMicroledger(c, event);
-                } else if (event.message() instanceof ProposeTransactionsMessage) {
-                    processNewCommit(c, event);
-                } else if (event.message() instanceof ConnRequest) {
-                    processBoardingPassRequest(c, event);
+            listener.listen().blockingSubscribe(new Consumer<Event>() {
+                @Override
+                public void accept(Event event) throws Throwable {
+                    if (event.message() instanceof InitRequestLedgerMessage) {
+                        processInitMicroledger(c, event);
+                    } else if (event.message() instanceof ProposeTransactionsMessage) {
+                        processNewCommit(c, event);
+                    } else if (event.message() instanceof ConnRequest) {
+                        processBoardingPassRequest(c, event);
+                    }
                 }
-            }
-        } catch (InterruptedException | ExecutionException ignored) {}
+            });
+        }
     }
 
     private void processNewCommit(Context c, Event event) {

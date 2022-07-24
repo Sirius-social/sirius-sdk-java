@@ -8,10 +8,7 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.rpc.AddressedTunnel;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +61,7 @@ public abstract class BaseAgentConnection {
     }
 
     public void create() throws SiriusFieldValueError {
-        CompletableFuture<byte[]> feat = connector.read();
+        Future<byte[]> feat = connector.listen().firstOrError().toFuture();
         connector.open();
         byte[] payload = new byte[0];
         try {
