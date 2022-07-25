@@ -54,7 +54,17 @@ public class TestFuturePromise {
         }
         Assert.assertFalse(isWait);
 
-        agent_to_sdk.post(message);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                agent_to_sdk.post(message);
+            }
+        }).start();
         boolean isOk = future.waitPromise(5);
         Assert.assertTrue(isOk);
         try {
