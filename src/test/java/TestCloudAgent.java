@@ -8,6 +8,7 @@ import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
+import io.reactivex.rxjava3.functions.Consumer;
 import models.AgentParams;
 import models.TrustPingMessageUnderTest;
 import org.json.JSONObject;
@@ -112,12 +113,20 @@ public class TestCloudAgent {
 
 
         Listener agent2Listener = agent2.subscribe();
-        Future<Event> eventFeat = agent2Listener.listen().toFuture();
-        System.out.println("sendMess1=");
-        agent1.sendMessage(trustPing, thierVerkeys, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
-        Event event = eventFeat.get(10, TimeUnit.SECONDS);
-        System.out.println("event=" + event.getMessageObj());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                agent1.sendMessage(trustPing, thierVerkeys, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+            }
+        }).start();
+
+        Event event = agent2Listener.listen().timeout(10, TimeUnit.SECONDS).blockingLatest().iterator().next();
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         Assert.assertNotNull(message);
         String type = message.getString("@type");
@@ -125,11 +134,8 @@ public class TestCloudAgent {
         String id = message.getString("@id");
         Assert.assertEquals(trustPing.getId(), id);
 
-
         agent1.close();
         agent2.close();
-
-
     }
 
     @Test
@@ -183,14 +189,22 @@ public class TestCloudAgent {
         List<String> verkeyList = new ArrayList<>();
         verkeyList.add(entity2.getVerkey());
 
-        Iterable<Event> eventIterable = agent2Listener.listen().timeout(10, TimeUnit.SECONDS).blockingNext();
-        agent1.sendMessage(trust_ping, verkeyList, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+        String finalAgent2Endpoint = agent2Endpoint;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                agent1.sendMessage(trust_ping, verkeyList, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
+            }
+        }).start();
 
-
-        Event event = eventIterable.iterator().next();
+        Event event = agent2Listener.listen().timeout(10, TimeUnit.SECONDS).blockingLatest().iterator().next();
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         System.out.println("message=" + message);
-           // assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))
         agent1.close();
         agent2.close();
     }
