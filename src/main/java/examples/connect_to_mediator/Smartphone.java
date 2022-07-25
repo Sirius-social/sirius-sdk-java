@@ -18,6 +18,7 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.functions.Consumer;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -72,9 +73,9 @@ public class Smartphone {
             e.printStackTrace();
         }
         Listener listener = context.subscribe();
-        try {
-            while (loop) {
-                Event event = listener.getOne().get();
+        listener.listen().blockingSubscribe(new Consumer<Event>() {
+            @Override
+            public void accept(Event event) throws Throwable {
                 if (event.message() instanceof OfferCredentialMessage && event.getPairwise() != null) {
                     OfferCredentialMessage offer = (OfferCredentialMessage) event.message();
                     Holder holder = new Holder(context, event.getPairwise(), masterSecret);
@@ -93,8 +94,6 @@ public class Smartphone {
                     System.out.println("Received new message: " + message.getContent());
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
     }
 }

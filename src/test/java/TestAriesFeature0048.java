@@ -59,11 +59,11 @@ public class TestAriesFeature0048 {
                 setResponseRequested(false).
                 build();
 
-        Future<Event> feature2 = listener2.getOne();
+        Iterable<Event> eventIterable = listener2.listen().timeout(10, TimeUnit.SECONDS).blockingNext();
         agent1.sendTo(ping, to);
 
         // Check OK
-        Event event = feature2.get(10, TimeUnit.SECONDS);
+        Event event = eventIterable.iterator().next();
         JSONObject recv = event.getJSONOBJECTFromJSON("message");
         Pair<Boolean, Message> result = Message.restoreMessageInstance(recv.toString());
         Assert.assertTrue(result.first);

@@ -6,6 +6,8 @@ import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Consumer;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +48,10 @@ public class PairwiseMobileCoProtocolTransport extends AbstractCoProtocolTranspo
     @Override
     public GetOneResult getOne() {
         try {
-            Event event = listener.getOne().get(timeToLiveSec, TimeUnit.SECONDS);
+            Iterable<Event> ie = listener.listen().filter(event1 -> {
+                return event1.getRecipientVerkey().equals(pw.getMe().getVerkey()) && event1.getSenderVerkey().equals(pw.getTheir().getVerkey());
+            }).timeout(timeToLiveSec, TimeUnit.SECONDS).blockingNext();
+            Event event = ie.iterator().next();
             return new GetOneResult(event.message(), event.getSenderVerkey(), event.getRecipientVerkey());
         } catch (Exception e) {
             e.printStackTrace();

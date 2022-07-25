@@ -17,10 +17,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class TestCloudAgent {
 
@@ -115,7 +112,7 @@ public class TestCloudAgent {
 
 
         Listener agent2Listener = agent2.subscribe();
-        CompletableFuture<Event> eventFeat = agent2Listener.getOne();
+        Future<Event> eventFeat = agent2Listener.listen().toFuture();
         System.out.println("sendMess1=");
         agent1.sendMessage(trustPing, thierVerkeys, finalAgent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
@@ -186,11 +183,11 @@ public class TestCloudAgent {
         List<String> verkeyList = new ArrayList<>();
         verkeyList.add(entity2.getVerkey());
 
-        CompletableFuture<Event> eventFeat = agent2Listener.getOne();
+        Iterable<Event> eventIterable = agent2Listener.listen().timeout(10, TimeUnit.SECONDS).blockingNext();
         agent1.sendMessage(trust_ping, verkeyList, agent2Endpoint, entity1.getVerkey(), new ArrayList<>());
 
 
-        Event event = eventFeat.get(10, TimeUnit.SECONDS);
+        Event event = eventIterable.iterator().next();
         JSONObject message = event.getJSONOBJECTFromJSON("message");
         System.out.println("message=" + message);
            // assert isinstance(msg, TrustPingMessageUnderTest), 'Unexpected msg type: ' + str(type(msg))

@@ -23,6 +23,7 @@ import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import helpers.Smartphone;
+import io.reactivex.rxjava3.functions.Consumer;
 import models.AgentParams;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONObject;
@@ -87,24 +88,24 @@ public class TestNWise {
             try (Context context = getContext(alice)) {
                 listener = context.subscribe();
                 System.out.println("Start listening...");
-                for (int i = 0; i < 3; i++) {
-                    Event event = listener.getOne().get(30, TimeUnit.SECONDS);
-                    System.out.println("Event:" + event.message());
-                    if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getSenderVerkey())) {
-                        if (event.message() instanceof Message) {
-                            Message message = (Message) event.message();
-                            finalAliceChat.fetchFromLedger();
-                            String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
-                            Assert.assertEquals("Carol", nick);
-                            System.out.println("New message from " + nick + " : " + message.getContent());
+                listener.listen().blockingSubscribe(new Consumer<Event>() {
+                    @Override
+                    public void accept(Event event) throws Throwable {
+                        System.out.println("Event:" + event.message());
+                        if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getSenderVerkey())) {
+                            if (event.message() instanceof Message) {
+                                Message message = (Message) event.message();
+                                finalAliceChat.fetchFromLedger();
+                                String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
+                                Assert.assertEquals("Carol", nick);
+                                System.out.println("New message from " + nick + " : " + message.getContent());
+                            }
+                        }
+                        if (event.message() instanceof Request) {
+                            Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                         }
                     }
-                    if (event.message() instanceof Request) {
-                        Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+                });
             } finally {
                 listener.unsubscribe();
             }
@@ -208,22 +209,24 @@ public class TestNWise {
             try (Context context = getContext(alice)) {
                 listener = context.subscribe();
                 System.out.println("Start listening...");
-                for (int i = 0; i < 2; i++) {
-                    Event event = listener.getOne().get(30, TimeUnit.SECONDS);
-                    System.out.println("Event:" + event.message());
-                    if (event.message() instanceof Request) {
-                        context.getNWiseManager().acceptRequest((Request) event.message(), event.getRecipientVerkey());
-                    } else if (event.message() instanceof Message) {
-                        String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                        Assert.assertEquals(nWise1AliceInternalId, nWiseId);
-                        String nick = context.getNWiseManager().resolveParticipant(event.getSenderVerkey()).nickname;
-                        Assert.assertEquals("Bob", nick);
-                        Message message = (Message) event.message();
-                        System.out.println("New message from " + nick + " : " + message.getContent());
-                    } else {
-                        Assert.fail("Unexpected message to Alice");
+                listener.listen().blockingSubscribe(new Consumer<Event>() {
+                    @Override
+                    public void accept(Event event) throws Throwable {
+                        System.out.println("Event:" + event.message());
+                        if (event.message() instanceof Request) {
+                            context.getNWiseManager().acceptRequest((Request) event.message(), event.getRecipientVerkey());
+                        } else if (event.message() instanceof Message) {
+                            String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
+                            Assert.assertEquals(nWise1AliceInternalId, nWiseId);
+                            String nick = context.getNWiseManager().resolveParticipant(event.getSenderVerkey()).nickname;
+                            Assert.assertEquals("Bob", nick);
+                            Message message = (Message) event.message();
+                            System.out.println("New message from " + nick + " : " + message.getContent());
+                        } else {
+                            Assert.fail("Unexpected message to Alice");
+                        }
                     }
-                }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;

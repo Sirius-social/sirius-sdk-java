@@ -21,6 +21,7 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.functions.Consumer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,30 +100,32 @@ public class Smartphone {
     protected void routine() {
         Listener listener = context.subscribe();
         try {
-            while (loop) {
-                Event event = listener.getOne().get();
-                System.out.println(nickname + "    " + event.message());
-                if (event.message() instanceof Message) {
-                    String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                    if (nWiseId != null) {
-                        Message message = (Message) event.message();
-                        NWiseParticipant sender = context.getNWiseManager().resolveParticipant(event.getSenderVerkey());
-                        if (sender != null) {
-                            System.out.println("Received new message from " + sender.nickname + " : " + message.getContent());
-                            NWiseMessage nWiseMessage = new NWiseMessage();
-                            nWiseMessage.message = message;
-                            nWiseMessage.nWiseInternalId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                            nWiseMessage.senderDid = sender.did;
-                            receivedMessages.add(nWiseMessage);
-                            if (future != null)
-                                future.complete(nWiseMessage);
+            listener.listen().blockingSubscribe(new Consumer<Event>() {
+                @Override
+                public void accept(Event event) {
+                    System.out.println(nickname + "    " + event.message());
+                    if (event.message() instanceof Message) {
+                        String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
+                        if (nWiseId != null) {
+                            Message message = (Message) event.message();
+                            NWiseParticipant sender = context.getNWiseManager().resolveParticipant(event.getSenderVerkey());
+                            if (sender != null) {
+                                System.out.println("Received new message from " + sender.nickname + " : " + message.getContent());
+                                NWiseMessage nWiseMessage = new NWiseMessage();
+                                nWiseMessage.message = message;
+                                nWiseMessage.nWiseInternalId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
+                                nWiseMessage.senderDid = sender.did;
+                                receivedMessages.add(nWiseMessage);
+                                if (future != null)
+                                    future.complete(nWiseMessage);
 
+                            }
                         }
+                    } else if (event.message() instanceof LedgerUpdateNotify) {
+                        context.getNWiseManager().getNotify(event.getSenderVerkey());
                     }
-                } else if (event.message() instanceof LedgerUpdateNotify) {
-                    context.getNWiseManager().getNotify(event.getSenderVerkey());
                 }
-            }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

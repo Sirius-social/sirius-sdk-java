@@ -65,7 +65,7 @@ public class TestAriesFeature0113 {
                     build()) {
                 Listener listener = context.subscribe();
                 while (true) {
-                    Event e = listener.getOne().get(60, TimeUnit.SECONDS);
+                    Event e = listener.listen().timeout(60, TimeUnit.SECONDS).blockingNext().iterator().next();
                     if (e.message() instanceof QuestionMessage) {
                         QuestionMessage question = (QuestionMessage) e.message();
                         Recipes.makeAnswer(context, "Yes", question, e.getPairwise());
