@@ -104,16 +104,16 @@ public abstract class NWise {
         return res;
     }
 
-    public boolean leave() {
-        return removeParticipant(getMyDid());
+    public boolean leave(Context context) {
+        return removeParticipant(getMyDid(), context);
     }
 
-    public boolean removeParticipant(String did) {
+    public boolean removeParticipant(String did, Context context) {
         RemoveParticipantTx tx = new RemoveParticipantTx();
         tx.setDid(did);
         boolean res = pushTransaction(tx);
         if (res)
-            notify();
+            notify(context);
         return res;
     }
 

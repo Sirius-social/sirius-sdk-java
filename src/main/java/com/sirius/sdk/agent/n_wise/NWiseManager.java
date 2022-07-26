@@ -149,7 +149,7 @@ public class NWiseManager {
     public boolean leave(String internalId, Context context) {
         if (!getNWiseMap().containsKey(internalId))
             return false;
-        boolean res = getNWiseMap().get(internalId).leave();
+        boolean res = getNWiseMap().get(internalId).leave(context);
         if (res) {
             new NWiseList(context.getNonSecrets()).remove(internalId);
         }

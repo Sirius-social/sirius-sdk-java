@@ -23,6 +23,9 @@ import com.sirius.sdk.utils.Pair;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import helpers.Smartphone;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import models.AgentParams;
 import org.hyperledger.indy.sdk.wallet.Wallet;
@@ -105,6 +108,11 @@ public class TestNWise {
                             Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
                         }
                     }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Throwable {
+
+                    }
                 });
             } finally {
                 listener.unsubscribe();
@@ -133,11 +141,15 @@ public class TestNWise {
         Assert.assertEquals(chatName, bobChat.getChatName());
         Assert.assertEquals(chatName, carolChat.getChatName());
 
-        bobChat.leave();
+        try (Context context = getContext(bob)) {
+            bobChat.leave(context);
+        }
         carolChat.fetchFromLedger();
         Assert.assertEquals(2, carolChat.getParticipants().size());
 
-        aliceChat.removeParticipant(carolChat.getMyDid());
+        try (Context context = getContext(alice)) {
+            aliceChat.removeParticipant(carolChat.getMyDid(), context);
+        }
         Assert.assertEquals(1, aliceChat.getParticipants().size());
 
         aliceThread.interrupt();
@@ -209,9 +221,14 @@ public class TestNWise {
             try (Context context = getContext(alice)) {
                 listener = context.subscribe();
                 System.out.println("Start listening...");
-                listener.listen().blockingSubscribe(new Consumer<Event>() {
+                listener.listen().timeout(15, TimeUnit.SECONDS).blockingSubscribe(new Observer<Event>() {
                     @Override
-                    public void accept(Event event) throws Throwable {
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Event event) {
                         System.out.println("Event:" + event.message());
                         if (event.message() instanceof Request) {
                             context.getNWiseManager().acceptRequest((Request) event.message(), event.getRecipientVerkey());
@@ -226,6 +243,18 @@ public class TestNWise {
                             Assert.fail("Unexpected message to Alice");
                         }
                     }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+
+
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -243,7 +272,7 @@ public class TestNWise {
             Assert.assertTrue(context.getNWiseManager().send(internalId, Message.builder().setContent("Hello world").build()));
         }
 
-        Assert.assertTrue(aliceFuture.get(10, TimeUnit.SECONDS));
+        Assert.assertTrue(aliceFuture.get(30, TimeUnit.SECONDS));
     }
 
     @Test
