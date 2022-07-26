@@ -59,11 +59,21 @@ public class TestAriesFeature0048 {
                 setResponseRequested(false).
                 build();
 
-        Iterable<Event> eventIterable = listener2.listen().timeout(10, TimeUnit.SECONDS).blockingNext();
-        agent1.sendTo(ping, to);
+        Pairwise finalTo = to;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                agent1.sendTo(ping, finalTo);
+            }
+        }).start();
 
         // Check OK
-        Event event = eventIterable.iterator().next();
+        Event event = listener2.listen().timeout(10, TimeUnit.SECONDS).blockingLatest().iterator().next();
         JSONObject recv = event.getJSONOBJECTFromJSON("message");
         Pair<Boolean, Message> result = Message.restoreMessageInstance(recv.toString());
         Assert.assertTrue(result.first);
