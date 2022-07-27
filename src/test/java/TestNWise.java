@@ -380,13 +380,13 @@ public class TestNWise {
     }
 
     JSONObject aliceWalletConfig = new JSONObject().
-            put("id", "alice6").
+            put("id", UUID.randomUUID()).
             put("storage_type", "default");
     JSONObject aliceWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
             put("key_derivation_method", "RAW");
     JSONObject bobWalletConfig = new JSONObject().
-            put("id", "bob6").
+            put("id", UUID.randomUUID()).
             put("storage_type", "default");
     JSONObject bobWalletCredentials = new JSONObject().
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
