@@ -51,7 +51,7 @@ public class ConfTest {
     public void configureTestEnv() {
         test_suite_baseurl = System.getenv("TEST_SUITE_BASE_URL");
         if (test_suite_baseurl == null || test_suite_baseurl.isEmpty()) {
-            test_suite_baseurl = "http://192.168.56.101";
+            test_suite_baseurl = "http://localhost";
         }
         test_suite_overlay_address = "http://10.0.0.90";
 
@@ -237,7 +237,7 @@ public class ConfTest {
         return Invitation.builder().
                 setLabel("Testable-Mediator").
                 setRecipientKeys(Arrays.asList("F5BERxEyX6uDhgXCbizxJB1z3SGnjHbjfzwuTytuK4r5")).
-                setEndpoint("ws://192.168.56.101:8000/ws").
+                setEndpoint("ws://localhost:8000/ws").
                 build();
     }
 }
