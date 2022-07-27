@@ -392,7 +392,7 @@ public class TestNWise {
             put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
             put("key_derivation_method", "RAW");
 
-    @Test
+    //@Test
     public void testMobileAgent() throws InterruptedException, ExecutionException, TimeoutException {
         MobileHub.Config aliceConfig = new MobileHub.Config();
         aliceConfig.walletConfig = aliceWalletConfig;
