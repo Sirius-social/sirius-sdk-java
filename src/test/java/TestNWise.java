@@ -13,24 +13,20 @@ import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
 import com.sirius.sdk.hub.CloudContext;
+import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
-import helpers.ConfTest;
-import helpers.ServerTestSuite;
-import helpers.Smartphone;
+import helpers.*;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import models.AgentParams;
-import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,91 +64,14 @@ public class TestNWise {
                 build();
     }
 
-    @Test
-    public void testIotaChat() {
-        String chatName = "test chat";
-
-        Invitation invitationForBob;
-        Invitation invitationForCarol;
-
-        IotaNWise aliceChat = null;
-        try (Context context = getContext(alice)) {
-            aliceChat = IotaNWise.createChat(chatName, "Alice", context);
-            String internalId = new NWiseList(context.getNonSecrets()).add(aliceChat);
-            invitationForBob = aliceChat.createInvitation(context);
-            new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitationForBob.getInviterVerkey());
-            invitationForCarol = aliceChat.createInvitation(context);
-            new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitationForCarol.getInviterVerkey());
-        }
-
-        IotaNWise finalAliceChat = aliceChat;
-        Thread aliceThread = new Thread(() -> {
-            Listener listener = null;
-            try (Context context = getContext(alice)) {
-                listener = context.subscribe();
-                System.out.println("Start listening...");
-                listener.listen().blockingSubscribe(new Consumer<Event>() {
-                    @Override
-                    public void accept(Event event) throws Throwable {
-                        System.out.println("Event:" + event.message());
-                        if (finalAliceChat.getCurrentParticipantsVerkeysBase58().contains(event.getSenderVerkey())) {
-                            if (event.message() instanceof Message) {
-                                Message message = (Message) event.message();
-                                finalAliceChat.fetchFromLedger();
-                                String nick = finalAliceChat.resolveNickname(event.getSenderVerkey());
-                                Assert.assertEquals("Carol", nick);
-                                System.out.println("New message from " + nick + " : " + message.getContent());
-                            }
-                        }
-                        if (event.message() instanceof Request) {
-                            Assert.assertTrue(finalAliceChat.acceptRequest((Request) event.message(), context));
-                        }
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Throwable {
-
-                    }
-                });
-            } finally {
-                listener.unsubscribe();
-            }
-        });
-        aliceThread.start();
-
-        IotaNWise bobChat = null;
-        try (Context context = getContext(bob)) {
-            bobChat = IotaNWise.acceptInvitation(invitationForBob, "Bob", context);
-            Assert.assertNotNull(bobChat);
-        }
-
-        IotaNWise carolChat = null;
-        try (Context context = getContext(carol)) {
-            carolChat = IotaNWise.acceptInvitation(invitationForCarol, "Carol", context);
-            Assert.assertNotNull(carolChat);
-            carolChat.send(Message.builder().setContent("Hello world").build(), context);
-        }
-
-        Assert.assertEquals(3, aliceChat.getParticipants().size());
-        Assert.assertEquals(3, bobChat.getParticipants().size());
-        Assert.assertEquals(3, carolChat.getParticipants().size());
-
-        Assert.assertEquals(chatName, aliceChat.getChatName());
-        Assert.assertEquals(chatName, bobChat.getChatName());
-        Assert.assertEquals(chatName, carolChat.getChatName());
-
-        try (Context context = getContext(bob)) {
-            bobChat.leave(context);
-        }
-        carolChat.fetchFromLedger();
-        Assert.assertEquals(2, carolChat.getParticipants().size());
-
-        try (Context context = getContext(alice)) {
-            aliceChat.removeParticipant(carolChat.getMyDid(), context);
-        }
-        Assert.assertEquals(1, aliceChat.getParticipants().size());
-
-        aliceThread.interrupt();
+    public CloudHub.Config getCloudConfig(String agentName) {
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
+        AgentParams agent = testSuite.getAgentParams(agentName);
+        CloudHub.Config config = new CloudHub.Config();
+        config.serverUri = agent.getServerAddress();
+        config.credentials = agent.getCredentials().getBytes(StandardCharsets.UTF_8);
+        config.p2p = agent.getConnection();
+        return config;
     }
 
     @Test
@@ -196,83 +115,6 @@ public class TestNWise {
             Assert.assertEquals(nWise.getLedgerType(), restoredNWise.getLedgerType());
             Assert.assertEquals(nWise.getMyDid(), restoredNWise.getMyDid());
         }
-    }
-
-    @Test
-    public void testNWiseManager() throws ExecutionException, InterruptedException, TimeoutException {
-        try (Context context = getContext(alice)) {
-            new NWiseList(context.getNonSecrets()).clearList();
-        }
-
-        try (Context context = getContext(bob)) {
-            new NWiseList(context.getNonSecrets()).clearList();
-        }
-
-
-        String nWise1AliceInternalId;
-        Invitation invitationForBob;
-        try (Context context = getContext(alice)) {
-            nWise1AliceInternalId = context.getNWiseManager().create("NWise1", "Alice");
-            invitationForBob = context.getNWiseManager().createPrivateInvitation(nWise1AliceInternalId);
-        }
-
-        CompletableFuture<Boolean> aliceFuture = CompletableFuture.supplyAsync(() -> {
-            Listener listener = null;
-            try (Context context = getContext(alice)) {
-                listener = context.subscribe();
-                System.out.println("Start listening...");
-                listener.listen().timeout(15, TimeUnit.SECONDS).blockingSubscribe(new Observer<Event>() {
-                    @Override
-                    public void onSubscribe(@NonNull Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onNext(Event event) {
-                        System.out.println("Event:" + event.message());
-                        if (event.message() instanceof Request) {
-                            context.getNWiseManager().acceptRequest((Request) event.message(), event.getRecipientVerkey());
-                        } else if (event.message() instanceof Message) {
-                            String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                            Assert.assertEquals(nWise1AliceInternalId, nWiseId);
-                            String nick = context.getNWiseManager().resolveParticipant(event.getSenderVerkey()).nickname;
-                            Assert.assertEquals("Bob", nick);
-                            Message message = (Message) event.message();
-                            System.out.println("New message from " + nick + " : " + message.getContent());
-                        } else {
-                            Assert.fail("Unexpected message to Alice");
-                        }
-                    }
-
-                    @Override
-                    public void onError(@NonNull Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-
-
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-                listener.unsubscribe();
-            }
-            return true;
-        });
-
-
-        try (Context context = getContext(bob)) {
-            String internalId = context.getNWiseManager().acceptInvitation(invitationForBob, "Bob");
-            Assert.assertNotNull(internalId);
-            Assert.assertTrue(context.getNWiseManager().send(internalId, Message.builder().setContent("Hello world").build()));
-        }
-
-        Assert.assertTrue(aliceFuture.get(30, TimeUnit.SECONDS));
     }
 
     @Test
@@ -379,7 +221,7 @@ public class TestNWise {
         }
     }
 
-    public Smartphone createSmartphone(String nickname) {
+    public MobileNWiseClient createSmartphone(String nickname) {
         JSONObject walletConfig = new JSONObject().
                 put("id", UUID.randomUUID()).
                 put("storage_type", "default");
@@ -391,16 +233,28 @@ public class TestNWise {
         config.walletConfig = walletConfig;
         config.walletCredentials = walletCredentials;
         config.mediatorInvitation = ConfTest.getMediatorInvitation();
-        return new Smartphone(config, nickname);
+        return new MobileNWiseClient(config, nickname);
     }
 
-    //@Test
-    public void testMobileAgent() throws InterruptedException, ExecutionException, TimeoutException {
-        Smartphone alice = createSmartphone("Alice");
-        alice.start();
+    @Test
+    public void testCloudNWiseClient() {
+        CloudNWiseClient aliceClient = new CloudNWiseClient(getCloudConfig(alice), "Alice");
+        CloudNWiseClient bobClient = new CloudNWiseClient(getCloudConfig(bob), "Bob");
+        CloudNWiseClient carolClient = new CloudNWiseClient(getCloudConfig(carol), "Carol");
+        testNWiseClient(aliceClient, bobClient, carolClient);
+    }
 
-        Smartphone bob = createSmartphone("Bob");
+    public void testMobileNWiseClient() {
+        AbstractNWiseClient aliceClient = createSmartphone("Alice");
+        AbstractNWiseClient bobClient = createSmartphone("Bob");
+        AbstractNWiseClient carolClient = createSmartphone("Carol");
+        testNWiseClient(aliceClient, bobClient, carolClient);
+    }
+
+    public void testNWiseClient(AbstractNWiseClient alice, AbstractNWiseClient bob, AbstractNWiseClient carol) {
+        alice.start();
         bob.start();
+        carol.start();
 
         String aliceNWiseInternalId = alice.createNWise("new n-wise");
         Assert.assertNotNull(aliceNWiseInternalId);
@@ -414,9 +268,14 @@ public class TestNWise {
         List<NWiseParticipant> aliceParticipants = alice.getNWiseParticipants(aliceNWiseInternalId);
         Assert.assertEquals(2, aliceParticipants.size());
 
-        bob.sendNWiseMessage(bobNWiseInternalId, Message.builder().setContent("hello world!").build());
-        alice.getMessage().get(30, TimeUnit.SECONDS);
+        Message bobToAlice = Message.builder().setContent("hello world!").build();
+        bob.sendNWiseMessage(bobNWiseInternalId, bobToAlice);
+        alice.getEvents().filter(e -> {
+            return e.message().getId().equals(bobToAlice.getId());
+        }).timeout(30, TimeUnit.SECONDS).blockingFirst();
         Assert.assertEquals(1, alice.getReceivedMessages().size());
+
+        bob.createNWiseInvitation(bobNWiseInternalId);
 
 
         //alice.stop();
