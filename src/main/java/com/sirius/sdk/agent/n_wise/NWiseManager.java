@@ -1,7 +1,6 @@
 package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
-import com.sirius.sdk.agent.n_wise.messages.FastInvitation;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.Context;
@@ -86,34 +85,15 @@ public class NWiseManager {
         return false;
     }
 
-    public Invitation createPrivateInvitation(String internalId) {
+    public Invitation createInvitation(String internalId) {
         if (!getNWiseMap().containsKey(internalId))
             return null;
         NWise nWise = getNWiseMap().get(internalId);
         Invitation invitation = nWise.createInvitation(context);
-        new NWiseList(context.getNonSecrets()).addInvitationKey(internalId, invitation.getInviterVerkey());
-        return invitation;
-    }
-
-    public FastInvitation createFastInvitation(String internalId) {
-        if (!getNWiseMap().containsKey(internalId))
-            return null;
-        NWise nWise = getNWiseMap().get(internalId);
-        FastInvitation invitation = nWise.createFastInvitation(context);
         return invitation;
     }
 
     public String acceptInvitation(Invitation invitation, String nickname) {
-        if (invitation.getLedgerType().equals("iota@v1.0")) {
-            NWise nWise = IotaNWise.acceptInvitation(invitation, nickname, context);
-            if (nWise != null) {
-                return add(nWise);
-            }
-        }
-        return null;
-    }
-
-    public String acceptInvitation(FastInvitation invitation, String nickname) {
         if (invitation.getLedgerType().equals("iota@v1.0")) {
             NWise nWise = IotaNWise.acceptInvitation(invitation, nickname, context);
             if (nWise != null) {

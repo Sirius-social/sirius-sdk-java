@@ -3,12 +3,8 @@ import com.goterl.lazycode.lazysodium.exceptions.SodiumException;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
-import com.sirius.sdk.agent.listener.Event;
-import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.*;
-import com.sirius.sdk.agent.n_wise.messages.FastInvitation;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
-import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.n_wise.transactions.InvitationTx;
@@ -21,10 +17,6 @@ import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
 import helpers.*;
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
 import models.AgentParams;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -33,10 +25,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class TestNWise {
     ConfTest confTest;
@@ -259,9 +248,9 @@ public class TestNWise {
         String aliceNWiseInternalId = alice.createNWise("new n-wise");
         Assert.assertNotNull(aliceNWiseInternalId);
 
-        FastInvitation fastInvitationAliceToBob = alice.createNWiseInvitation(aliceNWiseInternalId);
-        Assert.assertNotNull(fastInvitationAliceToBob);
-        String bobNWiseInternalId = bob.acceptInvitation(fastInvitationAliceToBob);
+        Invitation invitationAliceToBob = alice.createNWiseInvitation(aliceNWiseInternalId);
+        Assert.assertNotNull(invitationAliceToBob);
+        String bobNWiseInternalId = bob.acceptInvitation(invitationAliceToBob);
         Assert.assertNotNull(bobNWiseInternalId);
 
         Assert.assertTrue(alice.updateNWise(aliceNWiseInternalId));

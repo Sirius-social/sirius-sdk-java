@@ -16,7 +16,6 @@ import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
 import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.naclJava.LibSodium;
-import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
@@ -40,10 +39,6 @@ public abstract class NWise {
         return null;
     }
 
-    public static NWise acceptInvitation(Invitation invitation, String nickname, Context context) {
-        throw new NotImplementedException();
-    }
-
     public abstract String getLedgerType();
 
     public abstract JSONObject getRestoreAttach();
@@ -59,16 +54,6 @@ public abstract class NWise {
     }
 
     public Invitation createInvitation(Context context) {
-        String key = context.getCrypto().createKey();
-        return Invitation.builder().
-                setLabel(getChatName()).
-                setInviterKey(key).
-                setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
-                setLedgerType(getLedgerType()).
-                build();
-    }
-
-    public FastInvitation createFastInvitation(Context context) {
         LazySodiumJava s = LibSodium.getInstance().getLazySodium();
         try {
             KeyPair keyPair = s.cryptoSignKeypair();
@@ -77,14 +62,14 @@ public abstract class NWise {
             invitationTx.sign(context.getCrypto(), getMyDid(), myVerkey);
             pushTransaction(invitationTx);
             notify(context);
-            FastInvitation fastInvitation = FastInvitation.builder().
+            Invitation invitation = Invitation.builder().
                     setLabel(getChatName()).
                     setLedgerType(getLedgerType()).
                     setInvitationKeyId(Base58.encode(keyPair.getPublicKey().getAsBytes())).
                     setInvitationPrivateKey(keyPair.getSecretKey().getAsBytes()).
                     setAttach(getAttach()).
                     build();
-            return fastInvitation;
+            return invitation;
         } catch (SodiumException e) {
             e.printStackTrace();
         }

@@ -4,7 +4,7 @@ import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.n_wise.NWiseParticipant;
-import com.sirius.sdk.agent.n_wise.messages.FastInvitation;
+import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.agent.n_wise.messages.LedgerUpdateNotify;
 import com.sirius.sdk.hub.Context;
 import io.reactivex.rxjava3.core.Observable;
@@ -46,12 +46,12 @@ public abstract class AbstractNWiseClient {
         return context.getNWiseManager().create(nWiseName, nickname);
     }
 
-    public String acceptInvitation(FastInvitation invitation) {
+    public String acceptInvitation(Invitation invitation) {
         return context.getNWiseManager().acceptInvitation(invitation, nickname);
     }
 
-    public FastInvitation createNWiseInvitation(String internalId) {
-        return context.getNWiseManager().createFastInvitation(internalId);
+    public Invitation createNWiseInvitation(String internalId) {
+        return context.getNWiseManager().createInvitation(internalId);
     }
 
     public boolean updateNWise(String internalId) {

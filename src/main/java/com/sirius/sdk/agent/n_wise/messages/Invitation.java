@@ -1,11 +1,8 @@
 package com.sirius.sdk.agent.n_wise.messages;
 
 import com.sirius.sdk.messaging.Message;
-import org.json.JSONArray;
+import com.sirius.sdk.utils.Base58;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Invitation extends BaseNWiseMessage {
 
@@ -17,57 +14,49 @@ public class Invitation extends BaseNWiseMessage {
         super(msg);
     }
 
-    public String getInviterVerkey() {
-        return getMessageObj().optString("inviterKey");
+    public String getLabel() {
+        return getMessageObj().optString("label");
     }
 
-    public String getEndpoint() {
-        return getMessageObj().optString("serviceEndpoint");
+    public byte[] getInvitationPrivateKey() {
+        return Base58.decode(getMessageObj().optString("invitationPrivateKeyBase58"));
+    }
+
+    public String getInvitationKeyId() {
+        return getMessageObj().optString("invitationKeyId");
     }
 
     public String getLedgerType() {
         return getMessageObj().optString("ledgerType");
     }
 
-    public List<String> routingKeys() {
-        List<String> res = new ArrayList<>();
-        if (getMessageObj().has("routingKeys")) {
-            JSONArray jsonArr = getMessageObj().getJSONArray("routingKeys");
-            for (Object obj : jsonArr) {
-                res.add((String) obj);
-            }
-        }
-        return res;
+    public JSONObject getAttach() {
+        return getMessageObj().getJSONObject("attach");
     }
 
     public static Builder<?> builder() {
-        return new Invitation.InvitationBuilder();
+        return new InvitationBuilder();
     }
 
     public static abstract class Builder<B extends Invitation.Builder<B>> extends BaseNWiseMessage.Builder<B> {
         String label = null;
-        String inviterKey = null;
-        String endpoint = null;
-        List<String> routingKeys = null;
+        String invitationKeyId = null;
+        String invitationPrivateKeyBase58 = null;
         String ledgerType = null;
+        JSONObject attach = null;
 
         public B setLabel(String label) {
             this.label = label;
             return self();
         }
 
-        public B setInviterKey(String inviterKey) {
-            this.inviterKey = inviterKey;
+        public B setInvitationKeyId(String keyId) {
+            this.invitationKeyId = keyId;
             return self();
         }
 
-        public B setEndpoint(String endpoint) {
-            this.endpoint = endpoint;
-            return self();
-        }
-
-        public B setRoutingKeys(List<String> routingKeys) {
-            this.routingKeys = routingKeys;
+        public B setInvitationPrivateKey(byte[] invitationPrivateKey) {
+            this.invitationPrivateKeyBase58 = Base58.encode(invitationPrivateKey);
             return self();
         }
 
@@ -76,15 +65,20 @@ public class Invitation extends BaseNWiseMessage {
             return self();
         }
 
+        public B setAttach(JSONObject attach) {
+            this.attach = attach;
+            return self();
+        }
+
         @Override
         protected JSONObject generateJSON() {
             JSONObject jsonObject = super.generateJSON();
 
             put(label, "label", jsonObject);
-            put(inviterKey, "inviterKey", jsonObject);
-            put(endpoint, "serviceEndpoint", jsonObject);
-            put(routingKeys, "routingKeys", jsonObject);
+            put(invitationKeyId, "invitationKeyId", jsonObject);
+            put(invitationPrivateKeyBase58, "invitationPrivateKeyBase58", jsonObject);
             put(ledgerType, "ledgerType", jsonObject);
+            put(attach, "attach", jsonObject);
 
             return jsonObject;
         }
@@ -94,9 +88,9 @@ public class Invitation extends BaseNWiseMessage {
         }
     }
 
-    private static class InvitationBuilder extends Invitation.Builder<Invitation.InvitationBuilder> {
+    private static class InvitationBuilder extends Invitation.Builder<InvitationBuilder> {
         @Override
-        protected Invitation.InvitationBuilder self() {
+        protected InvitationBuilder self() {
             return this;
         }
     }

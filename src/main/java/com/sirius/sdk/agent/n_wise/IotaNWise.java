@@ -1,21 +1,13 @@
 package com.sirius.sdk.agent.n_wise;
 
-import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
-import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
-import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.n_wise.messages.*;
 import com.sirius.sdk.agent.n_wise.transactions.AddParticipantTx;
 import com.sirius.sdk.agent.n_wise.transactions.GenesisTx;
 import com.sirius.sdk.agent.n_wise.transactions.NWiseTx;
-import com.sirius.sdk.agent.n_wise.transactions.RemoveParticipantTx;
-import com.sirius.sdk.agent.pairwise.TheirEndpoint;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.hub.coprotocols.AbstractP2PCoProtocol;
-import com.sirius.sdk.hub.coprotocols.CoProtocolP2PAnon;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
-import org.apache.commons.lang.NotImplementedException;
 import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.MessageId;
@@ -23,7 +15,6 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static com.sirius.sdk.utils.IotaUtils.generateTag;
@@ -64,41 +55,6 @@ public class IotaNWise extends NWise {
     }
 
     public static IotaNWise acceptInvitation(Invitation invitation, String nickname, Context context) {
-        Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
-        TheirEndpoint inviterEndpoint = new TheirEndpoint(invitation.getEndpoint(), invitation.getInviterVerkey(), invitation.routingKeys());
-        NWiseStateMachine stateMachine = null;
-        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, didVk.second, inviterEndpoint, protocols, timeToLiveSec)) {
-            Request request = Request.builder().
-                    setNickname(nickname).
-                    setDid(didVk.first).
-                    setVerkey(Base58.decode(didVk.second)).
-                    setEndpoint(context.getEndpointAddressWithEmptyRoutingKeys()).
-                    build();
-
-            Logger log = Logger.getLogger(IotaNWise.class.getName());
-            log.info("Send connection request to " + didVk.second);
-            Pair<Boolean, com.sirius.sdk.messaging.Message> okMsg = cp.sendAndWait(request);
-            if (okMsg.first && okMsg.second instanceof Response) {
-                log.info("Receiver connection response from " + didVk.second);
-                Response response = (Response) okMsg.second;
-                IotaResponseAttach attach = new IotaResponseAttach(response.getAttach());
-                stateMachine = processTransactions(attach.getTag()).first;
-                if (response.hasPleaseAck()) {
-                    Ack ack = Ack.builder().
-                            setStatus(Ack.Status.OK).
-                            build();
-                    ack.setThreadId(response.getAckMessageId());
-                    cp.send(ack);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return new IotaNWise(stateMachine, Base58.decode(didVk.second));
-    }
-
-    public static IotaNWise acceptInvitation(FastInvitation invitation, String nickname, Context context) {
         IotaResponseAttach attach = new IotaResponseAttach(invitation.getAttach());
         Pair<String, String> didVk = context.getDid().createAndStoreMyDid();
         AddParticipantTx tx = new AddParticipantTx();
