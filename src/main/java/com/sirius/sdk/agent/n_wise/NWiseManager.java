@@ -2,7 +2,6 @@ package com.sirius.sdk.agent.n_wise;
 
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
-import com.sirius.sdk.agent.n_wise.messages.Request;
 import com.sirius.sdk.hub.Context;
 
 import java.util.ArrayList;
@@ -101,23 +100,6 @@ public class NWiseManager {
             }
         }
         return null;
-    }
-
-    public boolean acceptRequest(Request request, String invitationKeyBase58) {
-        if (!new NWiseList(context.getNonSecrets()).hasInvitationKey(invitationKeyBase58)) {
-            return false;
-        }
-
-        String internalId = new NWiseList(context.getNonSecrets()).getNWiseInfoByInvitation(invitationKeyBase58).internalId;
-        NWise nWise = getNWiseMap().get(internalId);
-        if (nWise instanceof IotaNWise) {
-            if (((IotaNWise) nWise).acceptRequest(request, context)) {
-                new NWiseList(context.getNonSecrets()).removeInvitationKey(invitationKeyBase58);
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public boolean send(String internalId, Message msg) {

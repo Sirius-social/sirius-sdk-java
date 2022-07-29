@@ -35,12 +35,4 @@ public class AddParticipantTx extends NWiseTx {
     public JSONObject getDidDoc() {
         return getJSONObject("didDoc");
     }
-
-    public void setRole(String role) {
-        put("role", role);
-    }
-
-    public String getRole() {
-        return optString("role");
-    }
 }

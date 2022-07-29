@@ -131,33 +131,4 @@ public abstract class NWise {
         return send(LedgerUpdateNotify.builder().build(), context);
     }
 
-    public boolean acceptRequest(Request request, Context context) {
-        TheirEndpoint inviteeEndpoint = new TheirEndpoint(request.getEndpoint(),
-                Base58.encode(request.getVerkey()), Arrays.asList());
-
-        log.info("Received request from" + Base58.encode(request.getVerkey()));
-
-        try (AbstractP2PCoProtocol cp = new CoProtocolP2PAnon(context, Base58.encode(myVerkey), inviteeEndpoint, protocols, timeToLiveSec)) {
-            AddParticipantTx addParticipantTx = new AddParticipantTx();
-            addParticipantTx.setNickname(request.getNickname());
-            addParticipantTx.setDid(request.getDid());
-            addParticipantTx.setDidDoc(request.getDidDoc());
-            addParticipantTx.setRole("user");
-            addParticipantTx.sign(context.getCrypto(), getMyDid(), myVerkey);
-            pushTransaction(addParticipantTx);
-            notify(context);
-
-            log.info("Send response to" + Base58.encode(request.getVerkey()));
-            Response response = Response.builder().
-                    setLedgerType(getLedgerType()).
-                    setAttach(getAttach()).
-                    build();
-            response.setThreadId(request.getId());
-
-            cp.send(response);
-        }
-
-        return true;
-    }
-
 }

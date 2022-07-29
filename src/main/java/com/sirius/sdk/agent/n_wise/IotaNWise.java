@@ -61,7 +61,6 @@ public class IotaNWise extends NWise {
         tx.setDid(didVk.first);
         JSONObject didDoc = ConnProtocolMessage.buildDidDoc(didVk.first, didVk.second, context.getEndpointAddressWithEmptyRoutingKeys());
         tx.setDidDoc(didDoc);
-        tx.setRole("user");
         tx.setNickname(nickname);
         tx.sign(invitation.getInvitationKeyId(), invitation.getInvitationPrivateKey());
         Pair<Boolean, NWiseStateMachine> res = pushTransactionToIota(tx, attach.getTag());

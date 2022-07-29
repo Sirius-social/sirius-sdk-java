@@ -7,7 +7,6 @@ public class NWiseParticipant {
     public String nickname;
     public String did;
     public JSONObject didDoc;
-    public String role;
 
     public String getEndpoint() {
         return didDoc.optJSONArray("service").optJSONObject(0).optString("serviceEndpoint");

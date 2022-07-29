@@ -21,6 +21,7 @@ public class NWiseStateMachine {
     Map<String, byte[]> invitationKeys = new HashMap<>();
 
     List<NWiseParticipant> participants = new ArrayList<>();
+    NWiseParticipant currentOwner;
 
     public List<NWiseParticipant> getParticipants() {
         return participants;
@@ -34,14 +35,23 @@ public class NWiseStateMachine {
         return label;
     }
 
+    public NWiseParticipant getCurrentOwner() {
+        return currentOwner;
+    }
+
     public boolean check(JSONObject jsonObject) {
         String type = jsonObject.optString("type");
-        if (type.equals("genesisTx")) {
-            return check(new GenesisTx(jsonObject));
-        } else if (type.equals("addParticipantTx")) {
-            return check(new AddParticipantTx(jsonObject));
-        } else if (type.equals("invitationTx")) {
-            return check(new InvitationTx(jsonObject));
+        switch (type) {
+            case "genesisTx":
+                return check(new GenesisTx(jsonObject));
+            case "addParticipantTx":
+                return check(new AddParticipantTx(jsonObject));
+            case "invitationTx":
+                return check(new InvitationTx(jsonObject));
+            case "removeParticipantTx":
+                return check(new RemoveParticipantTx(jsonObject));
+            case "newOwnerTx":
+                return check(new NewOwnerTx(jsonObject));
         }
         return true;
     }
@@ -70,15 +80,10 @@ public class NWiseStateMachine {
         String verificationMethod = proof.optString("verificationMethod");
         if (invitationKeys.containsKey(verificationMethod)) {
             byte[] verkey = invitationKeys.get(verificationMethod);
-            if (tx.getRole().equals("user"))
-                return check(tx, verkey);
-            else
-                return false;
+            return check(tx, verkey);
         }
         byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
         if (verkey == null)
-            return false;
-        if (!resolveParticipant(verkey).role.equals("admin"))
             return false;
         return check(tx, verkey);
     }
@@ -91,7 +96,33 @@ public class NWiseStateMachine {
         byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
         if (verkey == null)
             return false;
-        if (!resolveParticipant(verkey).role.equals("admin"))
+        return check(tx, verkey);
+    }
+
+    public boolean check(RemoveParticipantTx tx) {
+        if (!tx.has("proof"))
+            return false;
+        JSONObject proof = tx.getJSONObject("proof");
+        String verificationMethod = proof.optString("verificationMethod");
+        byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
+        if (verkey == null)
+            return false;
+        NWiseParticipant signer = resolveParticipant(verkey);
+        if (signer.did.equals(tx.getDid()) || signer.did.equals(currentOwner.did))
+            return check(tx, verkey);
+        return false;
+    }
+
+    public boolean check(NewOwnerTx tx) {
+        if (!tx.has("proof"))
+            return false;
+        JSONObject proof = tx.getJSONObject("proof");
+        String verificationMethod = proof.optString("verificationMethod");
+        byte[] verkey = getVerificationMethodPublicKey(verificationMethod);
+        if (verkey == null)
+            return false;
+        NWiseParticipant signer = resolveParticipant(verkey);
+        if (!signer.did.equals(currentOwner.did))
             return false;
         return check(tx, verkey);
     }
@@ -114,8 +145,8 @@ public class NWiseStateMachine {
         creator.nickname = genesisTx.getCreatorNickname();
         creator.did = genesisTx.getCreatorDid();
         creator.didDoc = genesisTx.getCreatorDidDoc();
-        creator.role = "admin";
         participants.add(creator);
+        currentOwner = creator;
         this.genesisCreatorVerkey = Base58.decode(creator.didDoc.optJSONArray("publicKey").getJSONObject(0).getString("publicKeyBase58"));
         return true;
     }
@@ -127,7 +158,6 @@ public class NWiseStateMachine {
         participant.nickname = tx.getNickname();
         participant.did = tx.getDid();
         participant.didDoc = tx.getDidDoc();
-        participant.role = tx.getRole();
         participants.add(participant);
 
         JSONObject proof = tx.getJSONObject("proof");
@@ -157,10 +187,24 @@ public class NWiseStateMachine {
     }
 
     public boolean append(RemoveParticipantTx tx) {
+        if (!check(tx))
+            return false;
         participants.removeIf((NWiseParticipant p) -> {
             return p.did.equals(tx.getDid());
         });
         return true;
+    }
+
+    public boolean append(NewOwnerTx tx) {
+        if (!check(tx))
+            return false;
+        for (NWiseParticipant p : participants) {
+            if (p.did.equals(tx.getDid())) {
+                currentOwner = p;
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean append(JSONObject jsonObject) {
@@ -174,6 +218,8 @@ public class NWiseStateMachine {
                 return append(new RemoveParticipantTx(jsonObject));
             case "invitationTx":
                 return append(new InvitationTx(jsonObject));
+            case "newOwnerTx":
+                return append(new NewOwnerTx(jsonObject));
         }
         return false;
     }
