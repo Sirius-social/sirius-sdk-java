@@ -379,33 +379,27 @@ public class TestNWise {
         }
     }
 
-    JSONObject aliceWalletConfig = new JSONObject().
-            put("id", UUID.randomUUID()).
-            put("storage_type", "default");
-    JSONObject aliceWalletCredentials = new JSONObject().
-            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
-            put("key_derivation_method", "RAW");
-    JSONObject bobWalletConfig = new JSONObject().
-            put("id", UUID.randomUUID()).
-            put("storage_type", "default");
-    JSONObject bobWalletCredentials = new JSONObject().
-            put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
-            put("key_derivation_method", "RAW");
+    public Smartphone createSmartphone(String nickname) {
+        JSONObject walletConfig = new JSONObject().
+                put("id", UUID.randomUUID()).
+                put("storage_type", "default");
+        JSONObject walletCredentials = new JSONObject().
+                put("key", "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY").
+                put("key_derivation_method", "RAW");
+
+        MobileHub.Config config = new MobileHub.Config();
+        config.walletConfig = walletConfig;
+        config.walletCredentials = walletCredentials;
+        config.mediatorInvitation = ConfTest.getMediatorInvitation();
+        return new Smartphone(config, nickname);
+    }
 
     //@Test
     public void testMobileAgent() throws InterruptedException, ExecutionException, TimeoutException {
-        MobileHub.Config aliceConfig = new MobileHub.Config();
-        aliceConfig.walletConfig = aliceWalletConfig;
-        aliceConfig.walletCredentials = aliceWalletCredentials;
-        aliceConfig.mediatorInvitation = ConfTest.getMediatorInvitation();
-        Smartphone alice = new Smartphone(aliceConfig, "Alice");
+        Smartphone alice = createSmartphone("Alice");
         alice.start();
 
-        MobileHub.Config bobConfig = new MobileHub.Config();
-        bobConfig.walletConfig = bobWalletConfig;
-        bobConfig.walletCredentials = bobWalletCredentials;
-        bobConfig.mediatorInvitation = ConfTest.getMediatorInvitation();
-        Smartphone bob = new Smartphone(bobConfig, "Bob");
+        Smartphone bob = createSmartphone("Bob");
         bob.start();
 
         String aliceNWiseInternalId = alice.createNWise("new n-wise");
@@ -429,8 +423,4 @@ public class TestNWise {
         //bob.stop();
     }
 
-    //@After
-    public void deleteWallet() throws Exception {
-        Wallet.deleteWallet(aliceWalletConfig.toString(), aliceWalletCredentials.toString()).get();
-    }
 }
