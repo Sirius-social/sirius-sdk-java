@@ -29,7 +29,7 @@ public abstract class AbstractNWiseClient {
     ReplaySubject<Event> observable = ReplaySubject.create();
 
     public void start() {
-        if (context == null) {
+        if (!loop) {
             loop = true;
             new Thread(() -> routine()).start();
         }
@@ -74,36 +74,42 @@ public abstract class AbstractNWiseClient {
         return observable;
     }
 
+    public NWiseParticipant getMe(String internalId) {
+        return context.getNWiseManager().getMe(internalId, context);
+    }
+
+    public boolean leave(String internalId) {
+        return context.getNWiseManager().leave(internalId, context);
+    }
+
     protected void routine() {
         Listener listener = context.subscribe();
-        try {
-            listener.listen().blockingSubscribe(new Consumer<Event>() {
-                @Override
-                public void accept(Event event) {
-                    System.out.println(nickname + "    " + event.message());
-                    if (event.message() instanceof Message) {
-                        String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                        if (nWiseId != null) {
-                            Message message = (Message) event.message();
-                            NWiseParticipant sender = context.getNWiseManager().resolveParticipant(event.getSenderVerkey());
-                            if (sender != null) {
-                                System.out.println("Received new message from " + sender.nickname + " : " + message.getContent());
-                                NWiseMessage nWiseMessage = new NWiseMessage();
-                                nWiseMessage.message = message;
-                                nWiseMessage.nWiseInternalId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
-                                nWiseMessage.senderDid = sender.did;
-                                receivedMessages.add(nWiseMessage);
-
-                            }
-                        }
-                    } else if (event.message() instanceof LedgerUpdateNotify) {
-                        context.getNWiseManager().getNotify(event.getSenderVerkey());
+        listener.listen().blockingSubscribe(new Consumer<Event>() {
+            @Override
+            public void accept(Event event) {
+                String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
+                NWiseParticipant sender = context.getNWiseManager().resolveParticipant(event.getSenderVerkey());
+                String senderNickname = sender != null ? sender.nickname : "Unknown";
+                System.out.println(nickname + " received new message from " + senderNickname + " : " + event.message().getMessageObj());
+                if (event.message() instanceof Message) {
+                    if (nWiseId != null && sender != null) {
+                        Message message = (Message) event.message();
+                        NWiseMessage nWiseMessage = new NWiseMessage();
+                        nWiseMessage.message = message;
+                        nWiseMessage.nWiseInternalId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());
+                        nWiseMessage.senderDid = sender.did;
+                        receivedMessages.add(nWiseMessage);
                     }
-                    observable.onNext(event);
+                } else if (event.message() instanceof LedgerUpdateNotify) {
+                    context.getNWiseManager().getNotify(event.getSenderVerkey());
                 }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                observable.onNext(event);
+            }
+        }, new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) throws Throwable {
+                throwable.printStackTrace();
+            }
+        });
     }
 }

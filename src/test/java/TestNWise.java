@@ -11,11 +11,11 @@ import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.naclJava.LibSodium;
-import com.sirius.sdk.utils.Base58;
 import com.sirius.sdk.utils.IotaUtils;
 import com.sirius.sdk.utils.Pair;
 import helpers.*;
 import models.AgentParams;
+import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -299,8 +299,7 @@ public class TestNWise {
         Assert.assertNotNull(bobNWiseInternalId);
 
         Assert.assertTrue(alice.updateNWise(aliceNWiseInternalId));
-        List<NWiseParticipant> aliceParticipants = alice.getNWiseParticipants(aliceNWiseInternalId);
-        Assert.assertEquals(2, aliceParticipants.size());
+        Assert.assertEquals(2, alice.getNWiseParticipants(aliceNWiseInternalId).size());
 
         Message bobToAlice = Message.builder().setContent("hello world!").build();
         bob.sendNWiseMessage(bobNWiseInternalId, bobToAlice);
@@ -309,11 +308,23 @@ public class TestNWise {
         }).timeout(30, TimeUnit.SECONDS).blockingFirst();
         Assert.assertEquals(1, alice.getReceivedMessages().size());
 
-        bob.createNWiseInvitation(bobNWiseInternalId);
+        Invitation invitationBobToCarol = bob.createNWiseInvitation(bobNWiseInternalId);
+        Assert.assertNotNull(invitationBobToCarol);
+        String carolNWiseInternalId = carol.acceptInvitation(invitationBobToCarol);
+        Assert.assertNotNull(carolNWiseInternalId);
 
+        bob.getEvents().filter(e -> e.getSenderVerkey().equals(Base58.encode(carol.getMe(carolNWiseInternalId).getVerkey()))).
+                timeout(30, TimeUnit.SECONDS).blockingFirst();
 
-        //alice.stop();
-        //bob.stop();
+        Assert.assertEquals(3, bob.getNWiseParticipants(bobNWiseInternalId).size());
+
+        String bobVkBase58 = Base58.encode(bob.getMe(bobNWiseInternalId).getVerkey());
+        bob.leave(bobNWiseInternalId);
+
+        carol.getEvents().filter(e -> e.getSenderVerkey().equals(bobVkBase58)).
+                timeout(30, TimeUnit.SECONDS).blockingFirst();
+
+        Assert.assertEquals(2, carol.getNWiseParticipants(carolNWiseInternalId).size());
     }
 
 }

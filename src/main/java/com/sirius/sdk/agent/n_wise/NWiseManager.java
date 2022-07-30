@@ -3,6 +3,7 @@ package com.sirius.sdk.agent.n_wise;
 import com.sirius.sdk.agent.aries_rfc.feature_0095_basic_message.Message;
 import com.sirius.sdk.agent.n_wise.messages.Invitation;
 import com.sirius.sdk.hub.Context;
+import org.bitcoinj.core.Base58;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +65,9 @@ public class NWiseManager {
 
     public NWiseParticipant resolveParticipant(String senderVerkeyBase58) {
         String internalId = resolveNWiseId(senderVerkeyBase58);
-        NWise nWise = getNWiseMap().get(internalId);
+        if (internalId == null)
+            return null;
+        NWise nWise = getNWiseMap().getOrDefault(internalId, null);
         if (nWise != null)
             return nWise.resolveParticipant(senderVerkeyBase58);
         return null;
@@ -114,6 +117,7 @@ public class NWiseManager {
         boolean res = getNWiseMap().get(internalId).leave(context);
         if (res) {
             new NWiseList(context.getNonSecrets()).remove(internalId);
+            getNWiseMap().remove(internalId);
         }
         return res;
     }
@@ -123,5 +127,12 @@ public class NWiseManager {
         if (internalId != null)
             return update(internalId);
         return false;
+    }
+
+    public NWiseParticipant getMe(String internalId, Context context) {
+        if (!getNWiseMap().containsKey(internalId))
+            return null;
+        NWise nWise = getNWiseMap().get(internalId);
+        return nWise.resolveParticipant(Base58.encode(nWise.myVerkey));
     }
 }

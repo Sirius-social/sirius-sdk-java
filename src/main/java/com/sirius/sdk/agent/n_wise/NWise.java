@@ -96,6 +96,7 @@ public abstract class NWise {
     public boolean removeParticipant(String did, Context context) {
         RemoveParticipantTx tx = new RemoveParticipantTx();
         tx.setDid(did);
+        tx.sign(context.getCrypto(), getMyDid(), myVerkey);
         boolean res = pushTransaction(tx);
         if (res)
             notify(context);

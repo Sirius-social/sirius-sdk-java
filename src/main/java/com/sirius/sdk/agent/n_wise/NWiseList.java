@@ -45,8 +45,8 @@ public class NWiseList {
         }
     }
 
-    public boolean remove(String internalId) {
-        throw new NotImplementedException();
+    public void remove(String internalId) {
+        nonSecrets.deleteWalletRecord(NON_SECRET_NWISE_LIST, internalId);
     }
 
     public List<NWiseInfo> getNWiseInfoList() {
