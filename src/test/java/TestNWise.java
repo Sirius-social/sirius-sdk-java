@@ -305,7 +305,7 @@ public class TestNWise {
         bob.sendNWiseMessage(bobNWiseInternalId, bobToAlice);
         alice.getEvents().filter(e -> {
             return e.message().getId().equals(bobToAlice.getId());
-        }).timeout(30, TimeUnit.SECONDS).blockingFirst();
+        }).timeout(60, TimeUnit.SECONDS).blockingFirst();
         Assert.assertEquals(1, alice.getReceivedMessages().size());
 
         Invitation invitationBobToCarol = bob.createNWiseInvitation(bobNWiseInternalId);
@@ -314,7 +314,7 @@ public class TestNWise {
         Assert.assertNotNull(carolNWiseInternalId);
 
         bob.getEvents().filter(e -> e.getSenderVerkey().equals(Base58.encode(carol.getMe(carolNWiseInternalId).getVerkey()))).
-                timeout(30, TimeUnit.SECONDS).blockingFirst();
+                timeout(60, TimeUnit.SECONDS).blockingFirst();
 
         Assert.assertEquals(3, bob.getNWiseParticipants(bobNWiseInternalId).size());
 
@@ -322,7 +322,7 @@ public class TestNWise {
         bob.leave(bobNWiseInternalId);
 
         carol.getEvents().filter(e -> e.getSenderVerkey().equals(bobVkBase58)).
-                timeout(30, TimeUnit.SECONDS).blockingFirst();
+                timeout(60, TimeUnit.SECONDS).blockingFirst();
 
         Assert.assertEquals(2, carol.getNWiseParticipants(carolNWiseInternalId).size());
     }
