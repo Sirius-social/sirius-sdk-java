@@ -270,7 +270,7 @@ public class TestNWise {
         return new MobileNWiseClient(config, nickname);
     }
 
-    @Test
+    //@Test
     public void testCloudNWiseClient() {
         CloudNWiseClient aliceClient = new CloudNWiseClient(getCloudConfig(alice), "Alice");
         CloudNWiseClient bobClient = new CloudNWiseClient(getCloudConfig(bob), "Bob");
