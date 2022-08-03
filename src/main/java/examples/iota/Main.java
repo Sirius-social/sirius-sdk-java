@@ -1,29 +1,17 @@
 package examples.iota;
 
-import com.danubetech.keyformats.crypto.ByteSigner;
-import com.nimbusds.jose.shaded.json.JSONArray;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
-import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
-import com.sirius.sdk.utils.Pair;
-import foundation.identity.jsonld.JsonLDObject;
 import foundation.identity.jsonld.JsonLDException;
-import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
-import info.weboftrust.ldsignatures.signer.LdSigner;
 import org.iota.client.Client;
 import org.iota.client.local.NativeAPI;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 
 public class Main {
 
@@ -58,18 +46,19 @@ public class Main {
         MobileContext context = new MobileContext(mobileConfig);
 
         IotaPublicDidDoc didDoc = new IotaPublicDidDoc(context.getCrypto());
-        didDoc.submit();
+        didDoc.submitToLedger(context);
 
-        IotaPublicDidDoc didDoc2 = IotaPublicDidDoc.load(didDoc.getDid(), context.getCrypto());
+        IotaPublicDidDoc didDoc2 = IotaPublicDidDoc.load(didDoc.getDid());
         System.out.println(didDoc.getDidDoc());
         System.out.println(didDoc2.getDidDoc());
 
-        Endpoint endpoint = new Endpoint("address", Arrays.asList("key1"));
-        didDoc2.setEndpoint(endpoint);
+        didDoc2.addAgentServices(context);
         System.out.println(didDoc2.getDidDoc());
-        didDoc2.submit();
+        didDoc2.submitToLedger(context);
 
-        IotaPublicDidDoc didDoc3 = IotaPublicDidDoc.load(didDoc.getDid(), context.getCrypto());
+        IotaPublicDidDoc didDoc3 = IotaPublicDidDoc.load(didDoc.getDid());
         System.out.println(didDoc3.getDidDoc());
+
+        context.close();
     }
 }
