@@ -4,6 +4,7 @@ import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.agent.diddoc.PublicDidDoc;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
+import com.sirius.sdk.utils.IotaUtils;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -17,6 +18,10 @@ import java.util.List;
 public class TestIotaDid {
 
     ConfTest confTest;
+
+    static {
+        IotaUtils.iotaNetwork = IotaUtils.TESTNET;
+    }
 
     @Before
     public void configureTest() {
@@ -59,7 +64,7 @@ public class TestIotaDid {
                 didDoc1fromWallet.extractService(true, "DIDCommMessaging").getString("serviceEndpoint"));
     }
 
-    //@Test
+    @Test
     public void testOnChain() {
         ServerTestSuite testSuite = confTest.getSuiteSingleton();
         AgentParams issuerParams = testSuite.getAgentParams("agent1");

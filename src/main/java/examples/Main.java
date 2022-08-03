@@ -116,7 +116,7 @@ public class Main {
         // Слушаем запросы
         System.out.println("Слушаем запросы");
         Listener listener = context.subscribe();
-        Event event = listener.getOne().get();
+        Event event = listener.listen().blockingLatest().iterator().next();
         System.out.println("Получено событие");
         // В рамках Samples интересны только запросы 0160 на установку соединения для connection_key нашего QR
         if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ConnRequest) {

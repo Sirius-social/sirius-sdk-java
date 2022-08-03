@@ -3,10 +3,10 @@ package com.sirius.sdk.agent.connections;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
-
-import java.util.concurrent.CompletableFuture;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
 
 public interface AgentEvents {
 
-    CompletableFuture<Message> pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure;
+    @NonNull Observable<Message> pull();
 }

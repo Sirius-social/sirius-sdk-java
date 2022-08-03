@@ -34,7 +34,7 @@ public class TestAriesFeature0160 {
         try {
             Endpoint myEndpoint = context.getEndpointWithEmptyRoutingKeys();
             Listener listener = context.subscribe();
-            Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+            Event event = listener.listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
             if (expectedConnectionKey.equals(event.getRecipientVerkey())) {
                 if (event.message() instanceof ConnRequest) {
                     ConnRequest request = (ConnRequest) event.message();
@@ -46,7 +46,7 @@ public class TestAriesFeature0160 {
                     Assert.fail("Wrong request message type");
                 }
             }
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             Assert.fail();
         }

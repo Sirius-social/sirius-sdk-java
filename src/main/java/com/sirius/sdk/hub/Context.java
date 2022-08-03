@@ -3,6 +3,7 @@ package com.sirius.sdk.hub;
 import com.sirius.sdk.agent.microledgers.AbstractMicroledger;
 import com.sirius.sdk.agent.microledgers.LedgerMeta;
 import com.sirius.sdk.agent.microledgers.Transaction;
+import com.sirius.sdk.agent.n_wise.NWiseManager;
 import com.sirius.sdk.agent.pairwise.AbstractPairwiseList;
 import com.sirius.sdk.agent.ledger.Ledger;
 import com.sirius.sdk.agent.listener.Listener;
@@ -50,6 +51,7 @@ public abstract class Context implements Closeable {
     }
 
     AbstractHub currentHub = null;
+    NWiseManager nWiseManager = new NWiseManager(this);
     AbstractNonSecrets nonSecrets = new AbstractNonSecrets() {
         @Override
         public void addWalletRecord(String type, String id, String value, String tags) {
@@ -558,6 +560,10 @@ public abstract class Context implements Closeable {
 
     public AbstractMicroledgerList getMicrolegders() {
         return microlegders;
+    }
+
+    public NWiseManager getNWiseManager() {
+        return nWiseManager;
     }
 
     public String generateQrCode(String value) {

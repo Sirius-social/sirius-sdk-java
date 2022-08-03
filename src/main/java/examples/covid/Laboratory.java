@@ -23,6 +23,7 @@ import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.hub.CloudHub;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.functions.Consumer;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -108,15 +109,17 @@ public class Laboratory extends BaseParticipant {
             initMicroledger(c);
 
             Listener listener = c.subscribe();
-            while (loop) {
-                Event event = listener.getOne().get();
-                if (event.message() instanceof ProposeTransactionsMessage) {
-                    processNewCommit(c, event);
-                } else if (event.message() instanceof ConnRequest) {
-                    processCovidTestRequest(c, event);
+            listener.listen().subscribe(new Consumer<Event>() {
+                @Override
+                public void accept(Event event) {
+                    if (event.message() instanceof ProposeTransactionsMessage) {
+                        processNewCommit(c, event);
+                    } else if (event.message() instanceof ConnRequest) {
+                        processCovidTestRequest(c, event);
+                    }
                 }
-            }
-        } catch (InterruptedException | ExecutionException ignored) {}
+            });
+        }
     }
 
     private void initMicroledger(Context c) {

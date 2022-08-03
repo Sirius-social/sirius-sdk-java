@@ -387,7 +387,7 @@ public class TestCopropocols {
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
-                rcvMessages.add(context.subscribe().getOne().get(30, TimeUnit.SECONDS));
+                rcvMessages.add(context.subscribe().listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -399,7 +399,7 @@ public class TestCopropocols {
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {
-                rcvMessages.add(context.subscribe().getOne().get(30, TimeUnit.SECONDS));
+                rcvMessages.add(context.subscribe().listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -453,7 +453,7 @@ public class TestCopropocols {
                     setServerUri(agent2params.getServerAddress()).
                     setCredentials(agent2params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent2params.getConnection()).build()) {
-                Event event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
+                Event event = context.subscribe().listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
                 String threadId_ = event.message().getJSONOBJECTFromJSON("~thread").optString("thid");
                 Pong pong = Pong.builder().
                         setPingId(threadId_).
@@ -471,7 +471,7 @@ public class TestCopropocols {
                     setServerUri(agent3params.getServerAddress()).
                     setCredentials(agent3params.getCredentials().getBytes(StandardCharsets.UTF_8))
                     .setP2p(agent3params.getConnection()).build()) {
-                Event event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
+                Event event = context.subscribe().listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
                 String threadId_ = event.message().getJSONOBJECTFromJSON("~thread").optString("thid");
                 Pong pong = Pong.builder().
                         setPingId(threadId_).

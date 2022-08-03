@@ -21,6 +21,7 @@ import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 import examples.covid.CredInfo;
+import io.reactivex.rxjava3.functions.Consumer;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
@@ -131,78 +132,79 @@ public class Main {
             System.out.println("Слушаем запросы");
             Listener listener = context.subscribe();
 
-            Pairwise p2p = null;
+            final Pairwise[] p2p = {null};
 
-            while (true) {
-                Event event = listener.getOne().get();
+            Endpoint finalMyEndpoint = myEndpoint;
+            listener.listen().blockingSubscribe(new Consumer<Event>() {
+                @Override
+                public void accept(Event event) throws Throwable {
+                    System.out.println("received: " + event.message().getMessageObj().toString());
 
-                System.out.println("received: " + event.message().getMessageObj().toString());
+                    if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ConnRequest) {
+                        System.out.println("ConnRequest received");
+                        ConnRequest request = (ConnRequest) event.message();
 
-                if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ConnRequest) {
-                    System.out.println("ConnRequest received");
-                    ConnRequest request = (ConnRequest) event.message();
+                        Inviter sm = new Inviter(context, new Pairwise.Me(myDid, myVerkey), connectionKey, finalMyEndpoint);
+                        p2p[0] = sm.createConnection(request);
+                        if (p2p[0] != null) {
+                            // Ensure pairwise is stored
+                            context.getPairwiseList().ensureExists(p2p[0]);
+                            Message hello = Message.builder().
+                                    setContent("Waiting for your credential propose").
+                                    setLocale("en").
+                                    build();
+                            context.sendTo(hello, p2p[0]);
+                        }
+                    }
 
-                    Inviter sm = new Inviter(context, new Pairwise.Me(myDid, myVerkey), connectionKey, myEndpoint);
-                    p2p = sm.createConnection(request);
-                    if (p2p != null) {
-                        // Ensure pairwise is stored
-                        context.getPairwiseList().ensureExists(p2p);
-                        Message hello = Message.builder().
-                                setContent("Waiting for your credential propose").
-                                setLocale("en").
-                                build();
-                        context.sendTo(hello, p2p);
+                    if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ProposeCredentialMessage) {
+                        System.out.println("ProposeCredentialMessage received");
+                        if (p2p[0] == null) {
+                            System.out.println("Connection not established");
+                            return;
+                        }
+                        ProposeCredentialMessage propose = (ProposeCredentialMessage) event.message();
+
+                        if (!propose.getIssuerDid().equals(publicDid)) {
+                            System.out.println("Wrong did");
+                        }
+
+                        if (!propose.getCredDefId().equals(credInfo.credentialDefinition.getId())) {
+                            System.out.println("Wrong credDefId");
+                        }
+
+                        if (!propose.getSchemaId().equals(credInfo.schema.getId())) {
+                            System.out.println("Wrong schemaId");
+                        }
+
+                        if (!propose.getSchemaIssuerDid().equals(publicDid)) {
+                            System.out.println("Wrong schemaIssuerDid");
+                        }
+
+                        List<ProposedAttrib> proposedAttribs = propose.getCredentialProposal();
+                        JSONObject vals = new JSONObject();
+                        for (ProposedAttrib attr : proposedAttribs) {
+                            vals.put(attr.optString("name"), attr.get("value"));
+                        }
+
+                        Issuer issuerMachine = new Issuer(context, p2p[0], 60);
+                        String credId = "cred-id-" + UUID.randomUUID().toString();
+
+                        boolean ok = issuerMachine.issue(new Issuer.IssueParams().
+                                setValues(vals).
+                                setSchema(credInfo.schema).
+                                setCredDef(credInfo.credentialDefinition).
+                                setComment("Here is your passport").
+                                setPreview(proposedAttribs).
+                                setCredId(credId));
+                        if (ok) {
+                            System.out.println("Pasport was successfully issued");
+                        } else {
+                            System.out.println("ERROR while issuing");
+                        }
                     }
                 }
-
-                if (event.getRecipientVerkey().equals(connectionKey) && event.message() instanceof ProposeCredentialMessage) {
-                    System.out.println("ProposeCredentialMessage received");
-                    if (p2p == null) {
-                        System.out.println("Connection not established");
-                        return;
-                    }
-                    ProposeCredentialMessage propose = (ProposeCredentialMessage) event.message();
-
-                    if (!propose.getIssuerDid().equals(publicDid)) {
-                        System.out.println("Wrong did");
-                    }
-
-                    if (!propose.getCredDefId().equals(credInfo.credentialDefinition.getId())) {
-                        System.out.println("Wrong credDefId");
-                    }
-
-                    if (!propose.getSchemaId().equals(credInfo.schema.getId())) {
-                        System.out.println("Wrong schemaId");
-                    }
-
-                    if (!propose.getSchemaIssuerDid().equals(publicDid)) {
-                        System.out.println("Wrong schemaIssuerDid");
-                    }
-
-                    List<ProposedAttrib> proposedAttribs = propose.getCredentialProposal();
-                    JSONObject vals = new JSONObject();
-                    for (ProposedAttrib attr : proposedAttribs) {
-                        vals.put(attr.optString("name"), attr.get("value"));
-                    }
-
-                    Issuer issuerMachine = new Issuer(context, p2p, 60);
-                    String credId = "cred-id-" + UUID.randomUUID().toString();
-
-                    boolean ok = issuerMachine.issue(new Issuer.IssueParams().
-                                    setValues(vals).
-                                    setSchema(credInfo.schema).
-                                    setCredDef(credInfo.credentialDefinition).
-                                    setComment("Here is your passport").
-                                    setPreview(proposedAttribs).
-                                    setCredId(credId));
-                    if (ok) {
-                        System.out.println("Pasport was successfully issued");
-                    } else {
-                        System.out.println("ERROR while issuing");
-                    }
-                }
-
-            }
+            });
         }
     }
 }

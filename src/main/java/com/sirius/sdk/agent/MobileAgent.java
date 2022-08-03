@@ -3,6 +3,7 @@ package com.sirius.sdk.agent;
 import com.sirius.sdk.agent.connections.AgentEvents;
 import com.sirius.sdk.agent.coprotocols.*;
 import com.sirius.sdk.agent.ledger.Ledger;
+import com.sirius.sdk.agent.listener.Event;
 import com.sirius.sdk.agent.listener.Listener;
 import com.sirius.sdk.agent.pairwise.Pairwise;
 import com.sirius.sdk.agent.pairwise.TheirEndpoint;
@@ -12,7 +13,10 @@ import com.sirius.sdk.agent.wallet.MobileWallet;
 import com.sirius.sdk.base.WebSocketConnector;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
-import org.apache.http.HttpResponse;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.subjects.PublishSubject;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -21,7 +25,6 @@ import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -36,25 +39,13 @@ import java.util.function.Function;
 
 public class MobileAgent extends AbstractAgent {
 
-    JSONObject walletConfig = null;
-    JSONObject walletCredentials = null;
+    JSONObject walletConfig;
+    JSONObject walletCredentials;
     int timeoutSec = 60;
-    String mediatorAddress;
 
     Wallet indyWallet;
     Map<String, WebSocketConnector> webSockets = new HashMap<>();
-
-    class MobileAgentEvents implements AgentEvents {
-
-        CompletableFuture<Message> future;
-        @Override
-        public CompletableFuture<Message> pull() {
-            future = new CompletableFuture<>();
-            return future;
-        }
-    }
-
-    List<Pair<MobileAgentEvents, Listener>> events = new ArrayList<>();
+    PublishSubject<Message> publishSubject = PublishSubject.create();
 
     public MobileAgent(JSONObject walletConfig, JSONObject walletCredentials) {
         this.walletConfig = walletConfig;
@@ -143,14 +134,44 @@ public class MobileAgent extends AbstractAgent {
             return webSockets.get(endpoint);
         } else {
             WebSocketConnector webSocket = new WebSocketConnector(endpoint, "", null);
-            final MobileAgent fAgent = this;
-            webSocket.readCallback = new Function<byte[], Void>() {
-                @Override
-                public Void apply(byte[] bytes) {
-                    fAgent.receiveMsg(bytes);
+            webSocket.listen().map(bytes -> {
+                try {
+                    byte[] unpackedMessageBytes;
+                    JSONObject eventMessage;
+                    if (new JSONObject(new String(bytes)).has("protected")) {
+                        unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
+                        JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                        eventMessage = new JSONObject().
+                                put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                                put("content_type", "application/ssi-agent-wire").
+                                put("@id", UUID.randomUUID()).
+                                put("message", new JSONObject(unpackedMessage.optString("message"))).
+                                put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
+                        if (unpackedMessage.has("sender_verkey")) {
+                            eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
+                        }
+                    } else {
+                        unpackedMessageBytes = bytes;
+                        JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
+                        eventMessage = new JSONObject().
+                                put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
+                                put("content_type", "application/ssi-agent-wire").
+                                put("@id", UUID.randomUUID()).
+                                put("message", unpackedMessage);
+                    }
+
+                    return new Message(eventMessage);
+                } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
+                    e.printStackTrace();
                     return null;
                 }
-            };
+            }).filter(Objects::nonNull).
+                    subscribe(new Consumer<Message>() {
+                        @Override
+                        public void accept(Message message) throws Throwable {
+                            publishSubject.onNext(message);
+                        }
+            });
             webSocket.open();
             webSockets.put(endpoint, webSocket);
             return webSocket;
@@ -173,39 +194,6 @@ public class MobileAgent extends AbstractAgent {
         return null;
     }
 
-    public void receiveMsg(byte[] bytes) {
-        try {
-            byte[] unpackedMessageBytes;
-            JSONObject eventMessage;
-            if (new JSONObject(new String(bytes)).has("protected")) {
-                unpackedMessageBytes = Crypto.unpackMessage(this.indyWallet, bytes).get(timeoutSec, TimeUnit.SECONDS);
-                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
-                eventMessage = new JSONObject().
-                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
-                        put("content_type", "application/ssi-agent-wire").
-                        put("@id", UUID.randomUUID()).
-                        put("message", new JSONObject(unpackedMessage.optString("message"))).
-                        put("recipient_verkey", unpackedMessage.optString("recipient_verkey"));
-                if (unpackedMessage.has("sender_verkey")) {
-                    eventMessage.put("sender_verkey", unpackedMessage.optString("sender_verkey"));
-                }
-            } else {
-                unpackedMessageBytes = bytes;
-                JSONObject unpackedMessage = new JSONObject(new String(unpackedMessageBytes));
-                eventMessage = new JSONObject().
-                        put("@type", "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/sirius_rpc/1.0/event").
-                        put("content_type", "application/ssi-agent-wire").
-                        put("@id", UUID.randomUUID()).
-                        put("message", unpackedMessage);
-            }
-
-            for (Pair<MobileAgentEvents, Listener> e : events)
-                e.first.future.complete(new Message(eventMessage));
-        } catch (InterruptedException | ExecutionException | TimeoutException | IndyException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void close() {
         for (Map.Entry<String, WebSocketConnector> ws : webSockets.entrySet()) {
@@ -225,20 +213,17 @@ public class MobileAgent extends AbstractAgent {
 
     @Override
     public Listener subscribe() {
-        MobileAgentEvents e = new MobileAgentEvents();
-        Listener listener = new Listener(e, this);
-        events.add(new Pair<>(e, listener));
+        AgentEvents e = new AgentEvents() {
+            @Override
+            public @NonNull Observable<Message> pull() {
+                return publishSubject;
+            }
+        };
         return new Listener(e, this);
     }
 
     @Override
     public void unsubscribe(Listener listener) {
-        for (Pair<MobileAgentEvents, Listener> e : events) {
-            if (e.second == listener) {
-                events.remove(e);
-                break;
-            }
-        }
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
 import com.sirius.sdk.utils.Pair;
+import io.reactivex.rxjava3.core.Observable;
 import org.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -26,21 +27,15 @@ public class Listener {
         this.agent = agent;
     }
 
-    public CompletableFuture<Event> getOne() {
-        try {
-            return source.pull().thenApply(msg -> {
-                String theirVerkey = msg.getStringFromJSON("sender_verkey");
-                Pairwise pairwise = null;
-                if (pairwiseResolver != null && theirVerkey != null) {
-                    pairwise = pairwiseResolver.loadForVerkey(theirVerkey);
-                }
-                return new Event(pairwise, msg.serialize());
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    public Observable<Event> listen() {
+        return source.pull().map(msg -> {
+            String theirVerkey = msg.getStringFromJSON("sender_verkey");
+            Pairwise pairwise = null;
+            if (pairwiseResolver != null && theirVerkey != null) {
+                pairwise = pairwiseResolver.loadForVerkey(theirVerkey);
+            }
+            return new Event(pairwise, msg.serialize());
+        });
     }
 
     public void unsubscribe() {

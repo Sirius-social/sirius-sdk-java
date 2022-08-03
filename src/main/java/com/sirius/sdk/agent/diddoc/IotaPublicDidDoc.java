@@ -1,18 +1,21 @@
 package com.sirius.sdk.agent.diddoc;
 
+import co.libly.resourceloader.SharedLibraryLoader;
 import com.danubetech.keyformats.crypto.ByteSigner;
+import com.google.common.reflect.ClassPath;
 import com.goterl.lazycode.lazysodium.LazySodiumJava;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.encryption.IndyWalletSigner;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.naclJava.LibSodium;
-import com.sirius.sdk.utils.StringUtils;
+import com.sirius.sdk.utils.IotaUtils;
 import foundation.identity.jsonld.JsonLDObject;
 import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
 import info.weboftrust.ldsignatures.signer.LdSigner;
 import info.weboftrust.ldsignatures.suites.JcsEd25519Signature2020SignatureSuite;
 import info.weboftrust.ldsignatures.verifier.JcsEd25519Signature2020LdVerifier;
 import info.weboftrust.ldsignatures.verifier.LdVerifier;
+import io.ipfs.multibase.Multibase;
 import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.Message;
@@ -20,49 +23,31 @@ import org.iota.client.MessageId;
 import org.iota.client.MessageMetadata;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.scijava.nativelib.NativeLoader;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class IotaPublicDidDoc extends PublicDidDoc {
+import static com.sirius.sdk.utils.IotaUtils.generateTag;
 
+public class IotaPublicDidDoc extends PublicDidDoc {
     Logger log = Logger.getLogger(IotaPublicDidDoc.class.getName());
 
     private JSONObject meta = new JSONObject();
-    String publicKeyBase58;
+    byte[] publicKey;
     String tag;
     String previousMessageId = "";
 
-    static Comparator<Message> msgComparator = new Comparator<Message>() {
-        @Override
-        public int compare(Message o1, Message o2) {
-            MessageMetadata meta1 = node().getMessage().metadata(o1.id());
-            MessageMetadata meta2 = node().getMessage().metadata(o2.id());
-            if (meta1.milestoneIndex() < meta2.milestoneIndex())
-                return -1;
-            else if (meta1.milestoneIndex() > meta2.milestoneIndex())
-                return 1;
-            else
-                return o1.id().toString().compareTo(o2.id().toString());
-        }
-    };
-
     public IotaPublicDidDoc(AbstractCrypto crypto) {
-        this.publicKeyBase58 = crypto.createKey();
-        this.tag = generateTag(publicKeyBase58);
+        this.publicKey = Base58.decode(crypto.createKey());
+        this.tag = generateTag(this.publicKey);
         payload.put("id", "did:iota:" + tag);
-    }
-
-    private static String generateTag(String publicKeyBase58) {
-        LazySodiumJava s = LibSodium.getInstance().getLazySodium();
-        byte[] inputBytes = s.bytes(publicKeyBase58);
-        byte[] outputBytes = new byte[32];
-        s.cryptoGenericHash(outputBytes, 32, inputBytes, inputBytes.length, null, 0);
-        return StringUtils.bytesToBase58String(outputBytes);
     }
 
     private IotaPublicDidDoc(Message msg) {
@@ -71,9 +56,8 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         this.meta = obj.optJSONObject("meta");
         this.previousMessageId = msg.id().toString();
         tag = this.payload.optString("id").substring("did:iota:".length());
-        JSONArray authentications = this.payload.getJSONArray("authentication");
-        JSONObject authentication = (JSONObject) authentications.get(0);
-        this.publicKeyBase58 = authentication.optString("publicKeyBase58");
+        JSONObject verificationMethod = getVerificationMethod(obj);
+        this.publicKey = Multibase.decode(verificationMethod.optString("publicKeyMultibase"));
     }
 
     public JSONObject getDidDoc() {
@@ -94,10 +78,10 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     private static Message loadLastValidIntegrationMessage(String did) {
         try {
             String tag = tagFromId(did);
-            MessageId[] fetchedMessageIds = node().getMessage().indexString(tag);
+            MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
             HashMap<String, List<Message>> map = new HashMap<>();
             for (MessageId msgId : fetchedMessageIds) {
-                Message msg = node().getMessage().data(msgId);
+                Message msg = IotaUtils.node().getMessage().data(msgId);
                 if (msg.payload().isPresent()) {
                     JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
                     String previousMessageId = obj.optJSONObject("meta").optString("previousMessageId", "");
@@ -119,7 +103,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
                     Message finalPrevMessage = prevMessage;
                     List<Message> list = map.get(prevMessageId).stream().
                             filter(m -> checkMessage(m, finalPrevMessage)).
-                            sorted(msgComparator).
+                            sorted(IotaUtils.msgComparator).
                             collect(Collectors.toList());
                     if (list.isEmpty()) {
                         return prevMessage;
@@ -143,12 +127,11 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         JSONObject o = generateIntegrationMessage(context.getCrypto());
         if (o == null)
             return false;
-        Client iota = node();
-        Message message;
+        Client iota = IotaUtils.node();
         try {
-            message = iota.message().
+            Message message = iota.message().
                     withIndexString(tag).
-                    withDataString(o.toString()).
+                    withData(o.toString().getBytes(StandardCharsets.UTF_8)).
                     finish();
             previousMessageId = message.id().toString();
             saveToWallet(context.getNonSecrets());
@@ -159,17 +142,17 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     }
 
     private JSONObject generateIntegrationMessage(AbstractCrypto crypto) {
-        ByteSigner byteSigner = new IndyWalletSigner(crypto, publicKeyBase58);
+        ByteSigner byteSigner = new IndyWalletSigner(crypto, Base58.encode(publicKey));
 
-        JSONArray authentication = new JSONArray();
-        authentication.put(new JSONObject()
+        JSONArray capabilityInvocation = new JSONArray();
+        capabilityInvocation.put(new JSONObject()
                 .put("id", this.payload.optString("id") + "#sign-0")
                 .put("controller", this.payload.optString("id"))
                 .put("type", "Ed25519VerificationKey2018")
-                .put("publicKeyBase58", this.publicKeyBase58));
+                .put("publicKeyMultibase", Multibase.encode(Multibase.Base.Base58BTC, this.publicKey)));
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd'T'hh:mm:ss'Z'");
-        this.payload.put("authentication", authentication);
+        this.payload.put("capabilityInvocation", capabilityInvocation);
 
         if (previousMessageId.isEmpty()) {
             this.meta.put("created", dateFormat.format(new Date()));
@@ -197,7 +180,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     }
 
     private static JSONObject getVerificationMethod(JSONObject obj, String verificationMethodId) {
-        JSONArray verificationMethods = obj.optJSONObject("doc").optJSONArray("authentication");
+        JSONArray verificationMethods = obj.optJSONObject("doc").optJSONArray("capabilityInvocation");
         for (Object o : verificationMethods) {
             JSONObject verificationMethod = (JSONObject) o;
             if (verificationMethod.optString("id").equals(verificationMethodId)) {
@@ -227,9 +210,9 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         if (verificationMethod == null) {
             return false;
         }
-        String b58 = verificationMethod.optString("publicKeyBase58");
+        String pubKeyMultibase = verificationMethod.optString("publicKeyMultibase");
         String tag = tagFromId(jsonMsg.optJSONObject("doc").optString("id"));
-        return tag.equals(generateTag(b58));
+        return tag.equals(generateTag(Multibase.decode(pubKeyMultibase)));
     }
 
     private static boolean checkMessage(Message integrationMsg, Message prevIntegrationMsg) {
@@ -248,8 +231,8 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         if (verificationMethod == null) {
             return false;
         }
-        String pubKeyB58 = verificationMethod.optString("publicKeyBase58");
-        LdVerifier<JcsEd25519Signature2020SignatureSuite> ldVerifier = new JcsEd25519Signature2020LdVerifier(Base58.decode(pubKeyB58));
+        String pubKeyMultibase = verificationMethod.optString("publicKeyMultibase");
+        LdVerifier<JcsEd25519Signature2020SignatureSuite> ldVerifier = new JcsEd25519Signature2020LdVerifier(Multibase.decode(pubKeyMultibase));
         JsonLDObject ldObject = JsonLDObject.fromJson(integrationMsgJson.toString());
         try {
             return ldVerifier.verify(ldObject);
@@ -257,10 +240,5 @@ public class IotaPublicDidDoc extends PublicDidDoc {
             e.printStackTrace();
         }
         return false;
-    }
-
-    private static final String MAINNET = "https://chrysalis-nodes.iota.cafe:443";
-    private static Client node() {
-        return Client.Builder().withNode(MAINNET).finish();
     }
 }

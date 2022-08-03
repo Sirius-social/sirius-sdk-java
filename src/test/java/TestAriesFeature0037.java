@@ -164,8 +164,8 @@ public class TestAriesFeature0037 {
                     build()) {
                 Event event = null;
                 try {
-                    event = context.subscribe().getOne().get(30, TimeUnit.SECONDS);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    event = context.subscribe().listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
+                } catch (Exception e) {
                     e.printStackTrace();
                     return false;
                 }

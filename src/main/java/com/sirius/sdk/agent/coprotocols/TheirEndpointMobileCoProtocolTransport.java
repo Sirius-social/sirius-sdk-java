@@ -54,7 +54,7 @@ public class TheirEndpointMobileCoProtocolTransport extends AbstractCoProtocolTr
     @Override
     public GetOneResult getOne() {
         try {
-            Event event = listener.getOne().get(timeToLiveSec, TimeUnit.SECONDS);
+            Event event = listener.listen().timeout(timeToLiveSec, TimeUnit.SECONDS).blockingLatest().iterator().next();
             return new GetOneResult(event.message(), event.getSenderVerkey(), event.getRecipientVerkey());
         } catch (Exception e) {
             e.printStackTrace();

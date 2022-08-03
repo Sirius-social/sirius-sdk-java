@@ -4,11 +4,13 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusConnectionClosed;
 import com.sirius.sdk.errors.sirius_exceptions.SiriusInvalidPayloadStructure;
 import com.sirius.sdk.messaging.Message;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 /**
@@ -55,11 +57,13 @@ public class CloudAgentEvents extends BaseAgentConnection implements AgentEvents
     }
 
     @Override
-    public CompletableFuture<Message> pull() throws SiriusConnectionClosed, SiriusInvalidPayloadStructure {
+    public @NonNull Observable<Message> pull() {
         if (!connector.isOpen()) {
-            throw new SiriusConnectionClosed("Open agent connection at first");
+            Single<Message> single = Single.error(new SiriusConnectionClosed("Open agent connection at first"));
+            return single.toObservable();
         }
-        return connector.read().thenApply(data -> {
+
+        return connector.listen().map(data -> {
             try {
                 JSONObject payload = new JSONObject(new String(data, StandardCharsets.US_ASCII));
                 if (payload.has("protected")) {
@@ -73,7 +77,6 @@ public class CloudAgentEvents extends BaseAgentConnection implements AgentEvents
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
-                //throw new SiriusInvalidPayloadStructure(e.getMessage());
             }
         });
     }

@@ -205,12 +205,12 @@ public class TestSimpleConsensus {
                     setP2p(p2p).
                     build()) {
                 Listener listener = c.subscribe();
-                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                Event event = listener.listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
                 Message propose = event.message();
                 Assert.assertTrue(propose instanceof InitRequestLedgerMessage);
                 MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
                 return machine.acceptMicroledger(event.getPairwise(), (InitRequestLedgerMessage) propose);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;
@@ -323,7 +323,7 @@ public class TestSimpleConsensus {
                     setP2p(p2p).
                     build()) {
                 Listener listener = c.subscribe();
-                Event event = listener.getOne().get(30, TimeUnit.SECONDS);
+                Event event = listener.listen().timeout(30, TimeUnit.SECONDS).blockingNext().iterator().next();
                 Assert.assertNotNull(event.getPairwise());
                 if (event.message() instanceof ProposeTransactionsMessage) {
                     MicroLedgerSimpleConsensus machine = new MicroLedgerSimpleConsensus(c, event.getPairwise().getMe());
