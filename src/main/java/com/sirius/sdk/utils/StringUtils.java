@@ -26,13 +26,13 @@ public class StringUtils {
     }
 
     public static String escapeStringLikePython(String string){
-        char[] chars =  string.toCharArray();
+        char[] chars = string.toCharArray();
         StringBuilder escapedString = new StringBuilder();
         for(char charOne: chars){
-            if(CharUtils.isAscii(charOne)){
+            if (CharUtils.isAscii(charOne)) {
                 escapedString.append(charOne);
-            }else{
-                String escapedStr =   CharUtils.unicodeEscaped(charOne);
+            } else {
+                String escapedStr = CharUtils.unicodeEscaped(charOne);
                 escapedString.append(escapedStr);
             }
         }
