@@ -37,7 +37,7 @@ public class MobileContext extends Context {
 
     public MobileContext(MobileHub.Config config) {
         super(new MobileHub(config));
-        //connectToMediator();
+        connectToMediator();
     }
 
     public static class MobileContextBuilder {

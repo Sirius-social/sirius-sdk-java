@@ -3,6 +3,7 @@ package examples.iota;
 import com.danubetech.keyformats.crypto.ByteSigner;
 import com.goterl.lazycode.lazysodium.LazySodiumJava;
 import com.sirius.sdk.agent.connections.Endpoint;
+import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.StringUtils;
@@ -25,13 +26,13 @@ import java.util.List;
 public class IotaPublicDidDoc {
 
     private JSONObject payload = new JSONObject();
-    Context context;
+    AbstractCrypto crypto;
     String publicKeyBase58;
     String tag;
 
-    public IotaPublicDidDoc(Context context) {
-        this.context = context;
-        publicKeyBase58 = context.getCrypto().createKey();
+    public IotaPublicDidDoc(AbstractCrypto crypto) {
+        this.crypto = crypto;
+        publicKeyBase58 = crypto.createKey();
         LazySodiumJava s = LibSodium.getInstance().getLazySodium();
         byte[] inputBytes = s.bytes(publicKeyBase58);
         byte[] outputBytes = new byte[32];
@@ -120,7 +121,7 @@ public class IotaPublicDidDoc {
     }
 
     private void proof() {
-        ByteSigner byteSigner = new IndyWalletSigner(context.getCrypto(), publicKeyBase58);
+        ByteSigner byteSigner = new IndyWalletSigner(crypto, publicKeyBase58);
 
         JSONArray authentication = new JSONArray();
         authentication.put(new JSONObject()
