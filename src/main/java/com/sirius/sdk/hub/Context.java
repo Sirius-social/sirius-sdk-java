@@ -603,6 +603,11 @@ public abstract class Context implements Closeable {
         currentHub.getAgentConnectionLazy().sendTo(message, to);
     }
 
+    public void sendMessage(Message message, List<String> theirVk,
+                            String endpoint, String myVk, List<String> routingKeys) {
+        currentHub.getAgentConnectionLazy().sendMessage(message, theirVk, endpoint, myVk, routingKeys);
+    }
+
     public Pair<Boolean, List<String>> acquire(List<String> resources, Double lockTimeoutSec, Double enterTimeoutSec) {
         return currentHub.getAgentConnectionLazy().acquire(resources, lockTimeoutSec, enterTimeoutSec);
     }
