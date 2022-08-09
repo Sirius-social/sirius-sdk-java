@@ -10,6 +10,7 @@ import com.sirius.sdk.encryption.P2PConnection;
 import com.sirius.sdk.hub.CloudContext;
 import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
+import helpers.Agent0160;
 import helpers.ConfTest;
 import helpers.ServerTestSuite;
 import models.AgentParams;
@@ -144,6 +145,26 @@ public class TestAriesFeature0160 {
 
         runInviterFeature.get(60, TimeUnit.SECONDS);
         runInviteeFeature.get(60, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testPersistent0160() {
+        ServerTestSuite testSuite = confTest.getSuiteSingleton();
+        Context inviterContext = testSuite.getContext("agent1");
+        Context inviteeContext = testSuite.getContext("agent2");
+        Agent0160 inviter = new Agent0160(inviterContext, "Inviter");
+        Agent0160 invitee = new Agent0160(inviteeContext, "Invitee");
+        inviter.start();
+        invitee.start();
+
+        Invitation invitation = inviter.createInvitation();
+        invitee.acceptInvitation(invitation);
+
+        Pairwise inviteePw = invitee.getPairwises().timeout(30, TimeUnit.SECONDS).blockingFirst();
+        Pairwise inviterPw = inviter.getPairwises().timeout(30, TimeUnit.SECONDS).blockingFirst();
+
+        Assert.assertEquals(inviteePw.getTheir().getDid(), inviterPw.getMe().getDid());
+        Assert.assertEquals(inviterPw.getTheir().getDid(), inviteePw.getMe().getDid());
     }
 
 }

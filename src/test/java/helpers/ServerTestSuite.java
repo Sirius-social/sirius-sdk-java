@@ -5,6 +5,8 @@ import com.sirius.sdk.agent.connections.Endpoint;
 import com.sirius.sdk.agent.model.Entity;
 import com.sirius.sdk.base.JsonMessage;
 import com.sirius.sdk.encryption.P2PConnection;
+import com.sirius.sdk.hub.CloudContext;
+import com.sirius.sdk.hub.Context;
 import com.sirius.sdk.utils.Pair;
 
 import models.AgentParams;
@@ -20,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -148,41 +151,13 @@ public class ServerTestSuite {
         return "";
     }
 
+    public Context getContext(String agentName) {
+        AgentParams agent = getAgentParams(agentName);
+        return CloudContext.builder().
+                setServerUri(agent.getServerAddress()).
+                setCredentials(agent.getCredentials().getBytes(StandardCharsets.UTF_8)).
+                setP2p(agent.getConnection()).
+                build();
+    }
+
 }
-/*
-
-
-
-
-            async def ensure_is_alive(self):
-            ok, meta = await self.__http_get(self.__url)
-            if ok:
-            self.__metadata = meta
-            else:
-            if self.__test_suite_exists_locally:
-            await self.__run_suite_locally()
-            inc_timeout = 10
-            print('\n\nStarting test suite locally...\n\n')
-
-            for n in range(1, self.SETUP_TIMEOUT, inc_timeout):
-            progress = float(n / self.SETUP_TIMEOUT)*100
-            print('TestSuite setup progress: %.1f %%' % progress)
-            await asyncio.sleep(inc_timeout)
-            ok, meta = await self.__http_get(self.__url)
-            if ok:
-            self.__metadata = meta
-            print('Server test suite was detected')
-            return
-            print('Timeout for waiting TestSuite is alive expired!')
-            raise RuntimeError('Expect server with running TestSuite. See conftest.py: pytest_configure')
-
-@staticmethod
-    async def __run_suite_locally():
-            os.popen('python /app/configure.py --asgi_port=$ASGI_PORT --wsgi_port=$WSGI_PORT --nginx_port=$PORT')
-            await asyncio.sleep(1)
-            os.popen('python /app/manage.py test_suite > /tmp/test_suite.log 2> /tmp/test_suite.err')
-            os.popen('supervisord -c /etc/supervisord.conf & sudo nginx -g "daemon off;"')
-            await asyncio.sleep(5)
-
-
-*/
