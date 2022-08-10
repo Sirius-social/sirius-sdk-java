@@ -54,6 +54,7 @@ public class Agent0160 {
         listener.listen().blockingSubscribe(new Consumer<Event>() {
             @Override
             public void accept(Event event) {
+                System.out.println(nickname + " received message " + event.getMessageObj().toString() + " from " + event.getSenderVerkey());
                 Optional<Pairwise> pw = Persistent0160.receive(context, event);
                 pw.ifPresent(pairwise -> pairwises.onNext(pairwise));
             }

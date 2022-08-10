@@ -1,6 +1,9 @@
 package com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.state_machines;
 
 import com.sirius.sdk.agent.aries_rfc.DidDoc;
+import com.sirius.sdk.agent.aries_rfc.feature_0015_acks.Ack;
+import com.sirius.sdk.agent.aries_rfc.feature_0048_trust_ping.Ping;
+import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnProtocolMessage;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnRequest;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.ConnResponse;
 import com.sirius.sdk.agent.aries_rfc.feature_0160_connection_protocol.messages.Invitation;
@@ -43,6 +46,14 @@ public class Persistent0160 {
                 build();
 
         String connectionKey = invitation.recipientKeys().get(0);
+        JSONObject pairwise = new JSONObject().
+                put("me", new JSONObject().
+                        put("did", myDidVk.first).
+                        put("verkey", myDidVk.first).
+                        put("did_doc", request.didDoc())).
+                put("their", new JSONObject()
+                        .put("label", invitation.label()));
+        invKeyToPairwise.put(connectionKey, pairwise);
         context.sendMessage(request, Arrays.asList(connectionKey), invitation.endpoint(), myDidVk.second, Arrays.asList());
     }
 
@@ -68,6 +79,7 @@ public class Persistent0160 {
         } else {
             response.setThreadId(request.getId());
         }
+        request.setPleaseAck(true);
         DidDoc myDidDoc = response.didDoc();
         JSONObject theirDidDoc = request.didDoc().getPayload();
         response.signConnection(context.getCrypto(), connectionKeyBase58);
@@ -91,8 +103,49 @@ public class Persistent0160 {
     }
 
     private static Pairwise receiveResponse(Context context, ConnResponse response) {
+        if (!response.verifyConnection(context.getCrypto()))
+            return null;
+        String connectionKey = response.getMessageObj().getJSONObject("connection~sig").optString("signer");
+        if (!invKeyToPairwise.containsKey(connectionKey))
+            return null;
 
-        return null;
+        ConnProtocolMessage.ExtractTheirInfoRes theirInfo = null;
+        try {
+            theirInfo = response.extractTheirInfo();
+        } catch (SiriusInvalidMessage e) {
+            return null;
+        }
+        context.getDid().storeTheirDid(theirInfo.did, theirInfo.verkey);
+
+        String myVk = invKeyToPairwise.get(connectionKey).optJSONObject("me").optString("verkey");
+        if (response.hasPleaseAck()) {
+            Ack ack = Ack.builder().
+                    setStatus(Ack.Status.OK).
+                    build();
+            ack.setThreadId(response.getAckMessageId());
+            context.sendMessage(ack, Arrays.asList(theirInfo.verkey), theirInfo.endpoint, myVk, theirInfo.routingKeys);
+        } else {
+            Ping ping = Ping.builder().
+                    setComment("Connection established").
+                    setResponseRequested(false).
+                    build();
+            context.sendMessage(ping, Arrays.asList(theirInfo.verkey), theirInfo.endpoint, myVk, theirInfo.routingKeys);
+        }
+
+        JSONObject their = new JSONObject().
+                put("did", theirInfo.did).
+                put("verkey", theirInfo.verkey).
+                put("label", invKeyToPairwise.get(connectionKey).optJSONObject("their").optString("label")).
+                put("endpoint", (new JSONObject()).
+                        put("address", theirInfo.endpoint).
+                        put("routing_keys", theirInfo.routingKeys)).
+                put("did_doc", response.didDoc().getPayload());
+        invKeyToPairwise.get(connectionKey).put("their", their);
+
+        Pairwise pairwise = createPairwiseObject(invKeyToPairwise.get(connectionKey));
+        invKeyToPairwise.remove(connectionKey);
+
+        return pairwise;
     }
 
     private static Optional<Pairwise> receiveAck(Context context, Event event) {
@@ -100,26 +153,30 @@ public class Persistent0160 {
         for (Map.Entry<String, JSONObject> e : invKeyToPairwise.entrySet()) {
             JSONObject o = e.getValue();
             if (o.optJSONObject("their").optString("verkey").equals(senderVk)) {
-                Pairwise.Me me = new Pairwise.Me(
-                        o.optJSONObject("me").optString("did"),
-                        o.optJSONObject("me").optString("verkey"),
-                        o.optJSONObject("me").optJSONObject("did_doc"));
-
-                List<String> routingKeys = new ArrayList<>();
-                for (Object k : o.optJSONObject("their").optJSONArray("routing_keys"))
-                    routingKeys.add((String) k);
-                Pairwise.Their their = new Pairwise.Their(
-                        o.optJSONObject("their").optString("did"),
-                        o.optJSONObject("their").optString("label"),
-                        o.optJSONObject("their").optJSONObject("endpoint").optString("address"),
-                        o.optJSONObject("their").optString("verkey"),
-                        routingKeys
-                );
-                Pairwise pairwise = new Pairwise(me, their, o);
+                Pairwise pairwise = createPairwiseObject(o);
                 invKeyToPairwise.remove(e.getKey());
                 return Optional.of(pairwise);
             }
         }
         return Optional.empty();
+    }
+
+    private static Pairwise createPairwiseObject(JSONObject o) {
+        Pairwise.Me me = new Pairwise.Me(
+                o.optJSONObject("me").optString("did"),
+                o.optJSONObject("me").optString("verkey"),
+                o.optJSONObject("me").optJSONObject("did_doc"));
+
+        List<String> routingKeys = new ArrayList<>();
+        for (Object k : o.optJSONObject("their").optJSONArray("routing_keys"))
+            routingKeys.add((String) k);
+        Pairwise.Their their = new Pairwise.Their(
+                o.optJSONObject("their").optString("did"),
+                o.optJSONObject("their").optString("label"),
+                o.optJSONObject("their").optJSONObject("endpoint").optString("address"),
+                o.optJSONObject("their").optString("verkey"),
+                routingKeys
+        );
+        return new Pairwise(me, their, o);
     }
 }
