@@ -165,6 +165,12 @@ public class TestAriesFeature0160 {
 
         Assert.assertEquals(inviteePw.getTheir().getDid(), inviterPw.getMe().getDid());
         Assert.assertEquals(inviterPw.getTheir().getDid(), inviteePw.getMe().getDid());
+
+        Assert.assertEquals(inviteePw.getTheir().getVerkey(), inviterPw.getMe().getVerkey());
+        Assert.assertEquals(inviterPw.getTheir().getVerkey(), inviteePw.getMe().getVerkey());
+
+        Assert.assertEquals(inviteePw.getTheir().getEndpointAddress(), inviterContext.getEndpointAddressWithEmptyRoutingKeys());
+        Assert.assertEquals(inviterPw.getTheir().getEndpointAddress(), inviteeContext.getEndpointAddressWithEmptyRoutingKeys());
     }
 
 }
