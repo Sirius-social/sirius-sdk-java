@@ -133,18 +133,6 @@
         </dependency>
 
         <dependency>
-            <groupId>info.weboftrust</groupId>
-            <artifactId>ld-signatures-java</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>decentralized-identity</groupId>
-            <artifactId>jsonld-common-java</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.multiformats</groupId>
             <artifactId>java-multibase</artifactId>
             <version>v1.1.0</version>
@@ -160,6 +148,18 @@
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
             <version>3.1.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.erdtman</groupId>
+            <artifactId>java-json-canonicalization</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bitcoinj</groupId>
+            <artifactId>bitcoinj-core</artifactId>
+            <version>0.16.1</version>
         </dependency>
 
     </dependencies>

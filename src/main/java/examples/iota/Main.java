@@ -5,15 +5,11 @@ import com.sirius.sdk.agent.diddoc.IotaPublicDidDoc;
 import com.sirius.sdk.hub.MobileContext;
 import com.sirius.sdk.hub.MobileHub;
 import com.sirius.sdk.utils.IotaUtils;
-import foundation.identity.jsonld.JsonLDException;
 import org.iota.client.Client;
-import org.iota.client.local.NativeAPI;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class Main {
@@ -26,7 +22,7 @@ public class Main {
         return iota;
     }
 
-    public static void main(String[] args) throws JsonLDException, GeneralSecurityException, IOException {
+    public static void main(String[] args) throws GeneralSecurityException, IOException {
         MobileHub.Config mobileConfig = new MobileHub.Config();
         JSONObject walletConfig = new JSONObject().
                 put("id", "Wallet9").

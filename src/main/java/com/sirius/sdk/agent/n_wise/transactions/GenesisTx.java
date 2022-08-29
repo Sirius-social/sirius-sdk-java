@@ -1,20 +1,9 @@
 package com.sirius.sdk.agent.n_wise.transactions;
 
-import com.danubetech.keyformats.crypto.ByteSigner;
-import com.sirius.sdk.agent.n_wise.messages.BaseNWiseMessage;
-import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
-import com.sirius.sdk.encryption.IndyWalletSigner;
-import com.sirius.sdk.messaging.Message;
-import foundation.identity.jsonld.JsonLDException;
-import foundation.identity.jsonld.JsonLDObject;
-import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
-import info.weboftrust.ldsignatures.signer.LdSigner;
+
 import org.bitcoinj.core.Base58;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 

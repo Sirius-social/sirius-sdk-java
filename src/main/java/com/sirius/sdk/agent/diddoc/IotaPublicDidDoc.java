@@ -1,31 +1,18 @@
 package com.sirius.sdk.agent.diddoc;
 
-import co.libly.resourceloader.SharedLibraryLoader;
-import com.danubetech.keyformats.crypto.ByteSigner;
-import com.google.common.reflect.ClassPath;
-import com.goterl.lazycode.lazysodium.LazySodiumJava;
 import com.sirius.sdk.agent.wallet.abstract_wallet.AbstractCrypto;
-import com.sirius.sdk.encryption.IndyWalletSigner;
 import com.sirius.sdk.hub.Context;
-import com.sirius.sdk.naclJava.LibSodium;
 import com.sirius.sdk.utils.IotaUtils;
-import foundation.identity.jsonld.JsonLDObject;
-import info.weboftrust.ldsignatures.signer.JcsEd25519Signature2020LdSigner;
-import info.weboftrust.ldsignatures.signer.LdSigner;
-import info.weboftrust.ldsignatures.suites.JcsEd25519Signature2020SignatureSuite;
-import info.weboftrust.ldsignatures.verifier.JcsEd25519Signature2020LdVerifier;
-import info.weboftrust.ldsignatures.verifier.LdVerifier;
+import com.sirius.sdk.utils.JcsEd25519Signature2020LdSigner;
+import com.sirius.sdk.utils.JcsEd25519Signature2020LdVerifier;
 import io.ipfs.multibase.Multibase;
 import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.Message;
 import org.iota.client.MessageId;
-import org.iota.client.MessageMetadata;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.scijava.nativelib.NativeLoader;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -142,8 +129,6 @@ public class IotaPublicDidDoc extends PublicDidDoc {
     }
 
     private JSONObject generateIntegrationMessage(AbstractCrypto crypto) {
-        ByteSigner byteSigner = new IndyWalletSigner(crypto, Base58.encode(publicKey));
-
         JSONArray capabilityInvocation = new JSONArray();
         capabilityInvocation.put(new JSONObject()
                 .put("id", this.payload.optString("id") + "#sign-0")
@@ -161,22 +146,13 @@ public class IotaPublicDidDoc extends PublicDidDoc {
         }
         this.meta.put("updated", dateFormat.format(new Date()));
 
-        LdSigner ldSigner = new JcsEd25519Signature2020LdSigner(byteSigner);
-        ldSigner.setVerificationMethod(URI.create(this.payload.optString("id") + "#sign-0"));
-
+        JcsEd25519Signature2020LdSigner signer = new JcsEd25519Signature2020LdSigner();
+        signer.setVerificationMethod(URI.create(this.payload.optString("id") + "#sign-0"));
         JSONObject resMsg = new JSONObject().
                 put("doc", payload).
                 put("meta", meta);
-        JsonLDObject jsonLdObject = JsonLDObject.fromJson(resMsg.toString());
-        JSONObject proof = null;
-        try {
-            proof = new JSONObject(ldSigner.sign(jsonLdObject).toJson());
-            resMsg.put("proof", proof);
-            return resMsg;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        signer.sign(resMsg, publicKey, crypto);
+        return resMsg;
     }
 
     private static JSONObject getVerificationMethod(JSONObject obj, String verificationMethodId) {
@@ -232,13 +208,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
             return false;
         }
         String pubKeyMultibase = verificationMethod.optString("publicKeyMultibase");
-        LdVerifier<JcsEd25519Signature2020SignatureSuite> ldVerifier = new JcsEd25519Signature2020LdVerifier(Multibase.decode(pubKeyMultibase));
-        JsonLDObject ldObject = JsonLDObject.fromJson(integrationMsgJson.toString());
-        try {
-            return ldVerifier.verify(ldObject);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        JcsEd25519Signature2020LdVerifier verifier = new JcsEd25519Signature2020LdVerifier(Multibase.decode(pubKeyMultibase));
+        return verifier.verify(integrationMsgJson);
     }
 }
