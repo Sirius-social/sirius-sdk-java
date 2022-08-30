@@ -12,63 +12,48 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 public class JcsEd25519Signature2020LdSigner {
 
-    URI verificationMethod;
+    JSONObject proof = new JSONObject().
+            put("type", "JcsEd25519Signature2020");
 
     public JcsEd25519Signature2020LdSigner() {
     }
 
     public void setVerificationMethod(URI verificationMethod) {
-        this.verificationMethod = verificationMethod;
+        proof.put("verificationMethod", verificationMethod.toString());
+    }
+
+    public void setCreator(URI creator) {
+        proof.put("creator", creator.toString());
     }
 
     public void sign(JSONObject jsonDoc, byte[] publicKey, AbstractCrypto crypto) {
-        if (jsonDoc.has("proof"))
-            jsonDoc.remove("proof");
-
-        JSONObject proof = new JSONObject().
-                put("type", "JcsEd25519Signature2020");
-
-        if (this.verificationMethod != null)
-            proof.put("verificationMethod", this.verificationMethod.toString());
-
-        jsonDoc.put("proof", proof);
-
-        try {
-            JsonCanonicalizer jc = new JsonCanonicalizer(jsonDoc.toString());
-            String canonicalized = jc.getEncodedString();
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(canonicalized.getBytes());
-            byte[] signature = crypto.cryptoSign(Base58.encode(publicKey), digest);
-            proof.put("signatureValue", Base58.encode(signature));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        byte[] digest = prepare(jsonDoc);
+        byte[] signature = crypto.cryptoSign(Base58.encode(publicKey), digest);
+        proof.put("signatureValue", Base58.encode(signature));
     }
 
     public void sign(JSONObject jsonDoc, byte[] privateKey) {
+        byte[] digest = prepare(jsonDoc);
+        LazySodiumJava s = LibSodium.getInstance().getLazySodium();
+        byte[] signature = new byte[Sign.BYTES];
+        s.cryptoSignDetached(signature, digest, digest.length, privateKey);
+        proof.put("signatureValue", Base58.encode(signature));
+    }
+
+    private byte[] prepare(JSONObject jsonDoc) {
         if (jsonDoc.has("proof"))
             jsonDoc.remove("proof");
-
-        JSONObject proof = new JSONObject().
-                put("type", "JcsEd25519Signature2020");
-
-        if (this.verificationMethod != null)
-                proof.put("verificationMethod", this.verificationMethod.toString());
 
         jsonDoc.put("proof", proof);
 
         try {
             JsonCanonicalizer jc = new JsonCanonicalizer(jsonDoc.toString());
             String canonicalized = jc.getEncodedString();
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(canonicalized.getBytes());
-            LazySodiumJava s = LibSodium.getInstance().getLazySodium();
-            byte[] signature = new byte[Sign.BYTES];
-            s.cryptoSignDetached(signature, digest, digest.length, privateKey);
-            proof.put("signatureValue", Base58.encode(signature));
+            return MessageDigest.getInstance("SHA-256").digest(canonicalized.getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (NoSuchAlgorithmException e) {
