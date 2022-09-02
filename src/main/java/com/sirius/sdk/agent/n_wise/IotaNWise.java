@@ -119,7 +119,7 @@ public class IotaNWise extends NWise {
                         return new Pair<>(stateMachine, prevMessageId);
                     } else {
                         map.remove(prevMessageId);
-                        prevMessage = list.get(list.size() - 1);
+                        prevMessage = list.get(0);
                         stateMachine.append(new JSONObject(new String(prevMessage.payload().get().asIndexation().data())).optJSONObject("transaction"));
                         prevMessageId = prevMessage.id().toString();
                     }

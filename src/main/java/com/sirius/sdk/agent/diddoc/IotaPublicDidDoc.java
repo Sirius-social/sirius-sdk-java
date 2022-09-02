@@ -96,7 +96,7 @@ public class IotaPublicDidDoc extends PublicDidDoc {
                         return prevMessage;
                     } else {
                         map.remove(prevMessageId);
-                        prevMessage = list.get(list.size() - 1);
+                        prevMessage = list.get(0);
                         prevMessageId = prevMessage.id().toString();
                     }
                 } else {
