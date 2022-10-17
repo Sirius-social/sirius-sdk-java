@@ -8,5 +8,6 @@ public class MobileNWiseClient extends AbstractNWiseClient {
     public MobileNWiseClient(MobileHub.Config config, String nickname) {
         this.nickname = nickname;
         context = new MobileContext(config);
+        routine();
     }
 }

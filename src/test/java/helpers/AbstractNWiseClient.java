@@ -9,6 +9,7 @@ import com.sirius.sdk.agent.n_wise.messages.LedgerUpdateNotify;
 import com.sirius.sdk.hub.Context;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.ReplaySubject;
 
 import java.util.ArrayList;
@@ -23,24 +24,9 @@ public abstract class AbstractNWiseClient {
     }
 
     Context context = null;
-    boolean loop = false;
     String nickname;
     List<NWiseMessage> receivedMessages = new ArrayList<>();
     ReplaySubject<Event> observable = ReplaySubject.create();
-
-    public void start() {
-        if (!loop) {
-            loop = true;
-            new Thread(() -> routine()).start();
-        }
-    }
-
-    public void stop() {
-        if (context != null) {
-            loop = false;
-            context.close();
-        }
-    }
 
     public String createNWise(String nWiseName) {
         return context.getNWiseManager().create(nWiseName, nickname);
@@ -84,7 +70,7 @@ public abstract class AbstractNWiseClient {
 
     protected void routine() {
         Listener listener = context.subscribe();
-        listener.listen().blockingSubscribe(new Consumer<Event>() {
+        listener.listen().observeOn(Schedulers.newThread()).subscribe(new Consumer<Event>() {
             @Override
             public void accept(Event event) {
                 String nWiseId = context.getNWiseManager().resolveNWiseId(event.getSenderVerkey());

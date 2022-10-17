@@ -286,10 +286,6 @@ public class TestNWise {
     }
 
     public void testNWiseClient(AbstractNWiseClient alice, AbstractNWiseClient bob, AbstractNWiseClient carol) {
-        alice.start();
-        bob.start();
-        carol.start();
-
         String aliceNWiseInternalId = alice.createNWise("new n-wise");
         Assert.assertNotNull(aliceNWiseInternalId);
 
