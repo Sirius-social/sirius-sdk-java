@@ -52,12 +52,12 @@ public class NWiseManager {
     }
 
     public String resolveNWiseId(String senderVerkeyBase58) {
-        List<NWiseList.NWiseInfo> myInfos = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
-        List<String> myInternalIds = new ArrayList<>();
-        for (NWiseList.NWiseInfo info : myInfos)
-            myInternalIds.add(info.internalId);
+//        List<NWiseList.NWiseInfo> myInfos = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
+//        List<String> myInternalIds = new ArrayList<>();
+//        for (NWiseList.NWiseInfo info : myInfos)
+//            myInternalIds.add(info.internalId);
         for (Map.Entry<String, NWise> e : getNWiseMap().entrySet()) {
-            if (e.getValue().getCurrentParticipantsVerkeysBase58().contains(senderVerkeyBase58) && myInternalIds.contains(e.getKey()))
+            if (e.getValue().getCurrentParticipantsVerkeysBase58().contains(senderVerkeyBase58))
                 return e.getKey();
         }
         return null;
