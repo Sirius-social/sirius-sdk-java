@@ -93,7 +93,7 @@ public class IotaNWise extends NWise {
             MessageId[] fetchedMessageIds = IotaUtils.node().getMessage().indexString(tag);
             HashMap<String, List<org.iota.client.Message>> map = new HashMap<>();
             for (MessageId msgId : fetchedMessageIds) {
-                org.iota.client.Message msg = IotaUtils.node().getMessage().data(msgId);
+                org.iota.client.Message msg = IotaUtils.getMessage(msgId);
                 if (msg.payload().isPresent()) {
                     JSONObject obj = new JSONObject(new String(msg.payload().get().asIndexation().data()));
                     String previousMessageId = obj.optJSONObject("meta").optString("previousMessageId", "");

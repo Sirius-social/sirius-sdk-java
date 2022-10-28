@@ -68,6 +68,10 @@ public abstract class AbstractNWiseClient {
         return context.getNWiseManager().leave(internalId, context);
     }
 
+    public void clearNWiseList() {
+        context.getNWiseManager().clearNWiseList();
+    }
+
     protected void routine() {
         Listener listener = context.subscribe();
         listener.listen().observeOn(Schedulers.newThread()).subscribe(new Consumer<Event>() {

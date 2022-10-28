@@ -5,11 +5,15 @@ import com.sirius.sdk.naclJava.LibSodium;
 import org.bitcoinj.core.Base58;
 import org.iota.client.Client;
 import org.iota.client.Message;
+import org.iota.client.MessageId;
 import org.iota.client.MessageMetadata;
 import org.scijava.nativelib.NativeLoader;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IotaUtils {
 
@@ -26,8 +30,12 @@ public class IotaUtils {
 
     public static String iotaNetwork = MAINNET;
 
+    public static Client node = null;
+
     public static Client node() {
-        return Client.Builder().withNode(iotaNetwork).finish();
+        if (node == null)
+            node = Client.Builder().withNode(iotaNetwork).finish();
+        return node;
     }
 
     public static Comparator<Message> msgComparator = new Comparator<Message>() {
@@ -49,5 +57,14 @@ public class IotaUtils {
         byte[] outputBytes = new byte[32];
         s.cryptoGenericHash(outputBytes, 32, key, key.length, null, 0);
         return Base58.encode(outputBytes);
+    }
+
+    public static Map<MessageId, List<Message>> messages = new HashMap<>();
+    public static Message getMessage(MessageId id) {
+        if (messages.containsKey(id))
+            return messages.get(id).get(0);
+        Message msg = IotaUtils.node().getMessage().data(id);
+        //messages.put(id, msg);
+        return msg;
     }
 }

@@ -30,6 +30,10 @@ public class NWiseManager {
         }
     }
 
+    public void clearNWiseList() {
+        new NWiseList(context.getNonSecrets()).clearList();
+    }
+
     private Map<String, NWise> getNWiseMap() {
         if (nWiseMap == null) {
             nWiseMap = new ConcurrentHashMap<>();
@@ -52,10 +56,6 @@ public class NWiseManager {
     }
 
     public String resolveNWiseId(String senderVerkeyBase58) {
-//        List<NWiseList.NWiseInfo> myInfos = new NWiseList(context.getNonSecrets()).getNWiseInfoList();
-//        List<String> myInternalIds = new ArrayList<>();
-//        for (NWiseList.NWiseInfo info : myInfos)
-//            myInternalIds.add(info.internalId);
         for (Map.Entry<String, NWise> e : getNWiseMap().entrySet()) {
             if (e.getValue().getCurrentParticipantsVerkeysBase58().contains(senderVerkeyBase58))
                 return e.getKey();
