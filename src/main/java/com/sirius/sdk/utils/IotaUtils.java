@@ -59,12 +59,13 @@ public class IotaUtils {
         return Base58.encode(outputBytes);
     }
 
-    public static Map<MessageId, List<Message>> messages = new HashMap<>();
+    public static Map<String, Message> messages = new HashMap<>();
     public static Message getMessage(MessageId id) {
-        if (messages.containsKey(id))
-            return messages.get(id).get(0);
+        String msgId = id.toString();
+        if (messages.containsKey(msgId))
+            return messages.get(msgId);
         Message msg = IotaUtils.node().getMessage().data(id);
-        //messages.put(id, msg);
+        messages.put(msgId, msg);
         return msg;
     }
 }
